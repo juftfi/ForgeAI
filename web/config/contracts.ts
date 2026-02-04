@@ -1,14 +1,12 @@
 import { Address } from 'viem';
 
-// Contract addresses - BSC Mainnet deployed
+// Contract addresses - BSC Mainnet only (not deployed on testnet)
 export const CONTRACTS = {
   HouseForgeAgent: {
     56: '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B' as Address, // BSC Mainnet
-    97: '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B' as Address, // BSC Testnet (same for now)
   },
   FusionCore: {
     56: '0x3FFdfa90E0B8D26f802ACDCEfc101d2f6b0B320F' as Address, // BSC Mainnet (V2 - fixed hash)
-    97: '0x3FFdfa90E0B8D26f802ACDCEfc101d2f6b0B320F' as Address, // BSC Testnet (same for now)
   },
 } as const;
 

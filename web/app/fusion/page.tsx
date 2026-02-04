@@ -182,7 +182,7 @@ function FusionPageContent() {
 
   // Approval hooks
   const chainId = useChainId();
-  const fusionCoreAddress = CONTRACTS.FusionCore[chainId as keyof typeof CONTRACTS.FusionCore] || CONTRACTS.FusionCore[97];
+  const fusionCoreAddress = CONTRACTS.FusionCore[56]; // BSC Mainnet only
   const { data: isApproved, refetch: refetchApproval } = useFusionApproval(address);
   const { setApproval, isPending: approvePending, isSuccess: approveSuccess } = useSetApprovalForAll();
 

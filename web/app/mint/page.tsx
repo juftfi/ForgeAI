@@ -78,7 +78,7 @@ export default function MintPage() {
   const [error, setError] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-  const contractAddress = CONTRACTS.HouseForgeAgent[chainId as keyof typeof CONTRACTS.HouseForgeAgent] || CONTRACTS.HouseForgeAgent[97];
+  const contractAddress = CONTRACTS.HouseForgeAgent[56]; // BSC Mainnet only
 
   // Read mint price from contract
   const { data: mintPrice } = useReadContract({

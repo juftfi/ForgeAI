@@ -1,11 +1,11 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { bsc, bscTestnet } from 'wagmi/chains';
+import { bsc } from 'wagmi/chains';
 
 export const config = getDefaultConfig({
-  appName: 'HouseForge',
+  appName: 'KinForge',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'houseforge-demo',
-  chains: [bsc, bscTestnet],
+  chains: [bsc],  // Only BSC Mainnet - contract not deployed on testnet
   ssr: true,
 });
 
-export const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID === '56' ? 56 : 97;
+export const CHAIN_ID = 56;  // BSC Mainnet only

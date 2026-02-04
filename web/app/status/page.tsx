@@ -64,9 +64,9 @@ export default function StatusPage() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  const agentAddress = CONTRACTS.HouseForgeAgent[chainId as keyof typeof CONTRACTS.HouseForgeAgent] || CONTRACTS.HouseForgeAgent[97];
-  const fusionAddress = CONTRACTS.FusionCore[chainId as keyof typeof CONTRACTS.FusionCore] || CONTRACTS.FusionCore[97];
-  const isTestnet = chainId === 97;
+  const agentAddress = CONTRACTS.HouseForgeAgent[56]; // BSC Mainnet only
+  const fusionAddress = CONTRACTS.FusionCore[56]; // BSC Mainnet only
+  const isMainnet = chainId === 56;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -108,9 +108,9 @@ export default function StatusPage() {
               <div className="text-gray-400 text-sm">BNB 智能链</div>
             </div>
             <div className={`px-3 py-1 rounded-full text-sm ${
-              isTestnet ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'
+              !isMainnet ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'
             }`}>
-              {isTestnet ? '测试网 (97)' : '主网 (56)'}
+              {!isMainnet ? '测试网 (97)' : '主网 (56)'}
             </div>
           </div>
 
@@ -119,7 +119,7 @@ export default function StatusPage() {
             <div className="font-mono text-sm text-gray-400 break-all">{agentAddress}</div>
             {agentAddress !== '0x0000000000000000000000000000000000000000' && (
               <a
-                href={`https://${isTestnet ? 'testnet.' : ''}bscscan.com/address/${agentAddress}`}
+                href={`https://${!isMainnet ? 'testnet.' : ''}bscscan.com/address/${agentAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-amber-400 text-sm hover:text-amber-300 mt-2 inline-block"
@@ -134,7 +134,7 @@ export default function StatusPage() {
             <div className="font-mono text-sm text-gray-400 break-all">{fusionAddress}</div>
             {fusionAddress !== '0x0000000000000000000000000000000000000000' && (
               <a
-                href={`https://${isTestnet ? 'testnet.' : ''}bscscan.com/address/${fusionAddress}`}
+                href={`https://${!isMainnet ? 'testnet.' : ''}bscscan.com/address/${fusionAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-amber-400 text-sm hover:text-amber-300 mt-2 inline-block"
