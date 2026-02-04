@@ -204,19 +204,17 @@ function FusionPageContent() {
 
   // Update simulated hash when salt changes
   useEffect(() => {
-    if (salt && address && parentA && parentB && blockNumber) {
-      const expectedBlock = blockNumber + BigInt(1);
+    if (salt && address && parentA && parentB) {
       const hash = generateCommitHash(
         BigInt(parentA),
         BigInt(parentB),
         salt,
-        expectedBlock,
         address,
         mode
       );
       setSimulatedHash(hash);
     }
-  }, [salt, address, parentA, parentB, blockNumber, mode]);
+  }, [salt, address, parentA, parentB, mode]);
 
   // Log simulation errors
   useEffect(() => {
@@ -342,25 +340,20 @@ function FusionPageContent() {
 
     try {
       setError('');
-      // IMPORTANT: Use currentBlock + 1 because the TX will be mined in the NEXT block
-      // The contract stores block.number at mining time, not at submission time
-      const expectedMiningBlock = (blockNumber || BigInt(0)) + BigInt(1);
 
       // DEBUG: Log all values used in hash calculation
       console.log('=== COMMIT DEBUG ===');
       console.log('parentA:', parentA, 'as BigInt:', BigInt(parentA).toString());
       console.log('parentB:', parentB, 'as BigInt:', BigInt(parentB).toString());
       console.log('salt:', salt);
-      console.log('currentBlock:', blockNumber?.toString());
-      console.log('expectedMiningBlock:', expectedMiningBlock.toString());
       console.log('address:', address);
       console.log('mode:', mode, '(0=BURN, 1=SEAL)');
 
+      // NOTE: commitBlock is NOT included in hash - users cannot predict mining block
       const commitHashValue = generateCommitHash(
         BigInt(parentA),
         BigInt(parentB),
         salt,
-        expectedMiningBlock,
         address,
         mode
       );
@@ -388,12 +381,11 @@ function FusionPageContent() {
     console.log('parentA:', parentA);
     console.log('parentB:', parentB);
 
-    // Recalculate hash with stored commitBlock
+    // Recalculate hash (NOTE: commitBlock is NOT included)
     const recalculatedHash = generateCommitHash(
       BigInt(parentA),
       BigInt(parentB),
       salt,
-      commitData.commitBlock,
       address,
       commitData.mode as FusionMode
     );

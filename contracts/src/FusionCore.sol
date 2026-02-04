@@ -259,7 +259,9 @@ contract FusionCore is IFusionCore {
 
     /**
      * @notice Commit to a fusion operation
-     * @dev commitHash = keccak256(abi.encode(parentA, parentB, salt, commitBlock, msg.sender, mode))
+     * @dev commitHash = keccak256(abi.encode(parentA, parentB, salt, msg.sender, mode))
+     *      NOTE: commitBlock is NOT included in the hash because users cannot predict
+     *      which block their transaction will be mined in.
      */
     function commitFusion(
         uint256 parentA,
@@ -325,12 +327,11 @@ contract FusionCore is IFusionCore {
         require(block.number > commit.commitBlock + MIN_REVEAL_DELAY, "Too early");
         require(block.number <= commit.commitBlock + MAX_COMMIT_AGE, "Commit expired");
 
-        // Verify commit hash
+        // Verify commit hash (NOTE: commitBlock is NOT included)
         bytes32 expectedHash = keccak256(abi.encode(
             parentA,
             parentB,
             salt,
-            commit.commitBlock,
             msg.sender,
             commit.mode
         ));

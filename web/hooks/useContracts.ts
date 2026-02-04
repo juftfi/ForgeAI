@@ -380,23 +380,22 @@ export function generateCommitHash(
   parentA: bigint,
   parentB: bigint,
   salt: `0x${string}`,
-  commitBlock: bigint,
   sender: Address,
   mode: FusionMode
 ): `0x${string}` {
   // IMPORTANT: Must use encodeAbiParameters (abi.encode) NOT encodePacked
-  // Contract uses: keccak256(abi.encode(parentA, parentB, salt, commitBlock, sender, mode))
+  // Contract uses: keccak256(abi.encode(parentA, parentB, salt, sender, mode))
+  // NOTE: commitBlock is NOT included because users cannot predict mining block
   return keccak256(
     encodeAbiParameters(
       [
         { type: 'uint256' },
         { type: 'uint256' },
         { type: 'bytes32' },
-        { type: 'uint256' },
         { type: 'address' },
         { type: 'uint8' },
       ],
-      [parentA, parentB, salt, commitBlock, sender, mode]
+      [parentA, parentB, salt, sender, mode]
     )
   );
 }
