@@ -196,17 +196,6 @@ export function useGetCommitDetails(owner: Address | undefined, parentA: bigint 
   });
 }
 
-export function useCommit(commitId: `0x${string}` | undefined) {
-  const address = useContractAddress('FusionCore');
-  return useReadContract({
-    address,
-    abi: FUSION_CORE_ABI,
-    functionName: 'getCommit',
-    args: commitId ? [commitId] : undefined,
-    query: { enabled: !!commitId },
-  });
-}
-
 export function useRevealWindow() {
   const address = useContractAddress('FusionCore');
   return useReadContract({
