@@ -5,8 +5,23 @@
 
 import { ethers } from 'ethers';
 
-// BSC Mainnet RPC
-const RPC_URL = process.env.RPC_URL || 'https://bsc-dataseed.binance.org/';
+// BSC Mainnet RPC URLs (fallback list)
+const BSC_RPC_URLS = [
+  'https://bsc-dataseed.binance.org/',
+  'https://bsc-dataseed1.binance.org/',
+  'https://bsc-dataseed2.binance.org/',
+  'https://bsc-dataseed3.binance.org/',
+];
+
+// Get RPC URL - use env var only if it's a valid BSC mainnet URL
+function getRpcUrl(): string {
+  const envUrl = process.env.RPC_URL;
+  // Only use env URL if it looks like a mainnet URL (not testnet)
+  if (envUrl && !envUrl.includes('testnet') && !envUrl.includes('blast')) {
+    return envUrl;
+  }
+  return BSC_RPC_URLS[0];
+}
 
 // HouseForgeAgent contract address
 const AGENT_CONTRACT = process.env.HOUSEFORGE_AGENT_ADDRESS || '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B';
@@ -18,12 +33,21 @@ const OWNER_OF_ABI = [
 
 // Cache provider instance
 let providerInstance: ethers.JsonRpcProvider | null = null;
+let currentRpcIndex = 0;
 
 function getProvider(): ethers.JsonRpcProvider {
   if (!providerInstance) {
-    providerInstance = new ethers.JsonRpcProvider(RPC_URL);
+    const rpcUrl = getRpcUrl();
+    console.log(`[Blockchain] Using RPC: ${rpcUrl}`);
+    providerInstance = new ethers.JsonRpcProvider(rpcUrl);
   }
   return providerInstance;
+}
+
+// Reset provider and try next RPC on failure
+function resetProvider(): void {
+  providerInstance = null;
+  currentRpcIndex = (currentRpcIndex + 1) % BSC_RPC_URLS.length;
 }
 
 /**
@@ -33,19 +57,44 @@ function getProvider(): ethers.JsonRpcProvider {
  * @returns true if the address owns the token, false otherwise
  */
 export async function verifyTokenOwnership(tokenId: number, userAddress: string): Promise<boolean> {
-  try {
-    const provider = getProvider();
-    const contract = new ethers.Contract(AGENT_CONTRACT, OWNER_OF_ABI, provider);
+  const maxRetries = 3;
 
-    const owner = await contract.ownerOf(tokenId);
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const provider = getProvider();
+      const contract = new ethers.Contract(AGENT_CONTRACT, OWNER_OF_ABI, provider);
 
-    // Compare addresses (case-insensitive)
-    return owner.toLowerCase() === userAddress.toLowerCase();
-  } catch (error: any) {
-    // Token might not exist yet or other RPC error
-    console.error(`Ownership check failed for token ${tokenId}:`, error?.message);
-    return false;
+      console.log(`[Blockchain] Checking ownership: token=${tokenId}, user=${userAddress.substring(0, 10)}...`);
+      const owner = await contract.ownerOf(tokenId);
+      console.log(`[Blockchain] Token ${tokenId} owner: ${owner}`);
+
+      // Compare addresses (case-insensitive)
+      const isOwner = owner.toLowerCase() === userAddress.toLowerCase();
+      console.log(`[Blockchain] Ownership match: ${isOwner}`);
+      return isOwner;
+    } catch (error: any) {
+      console.error(`[Blockchain] Attempt ${attempt + 1} failed for token ${tokenId}:`, error?.message?.substring(0, 200));
+
+      // If it's a network error, try a different RPC
+      if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('403') || error?.message?.includes('Forbidden')) {
+        resetProvider();
+        console.log(`[Blockchain] Switching to backup RPC...`);
+        continue;
+      }
+
+      // If token doesn't exist (revert), return false
+      if (error?.code === 'CALL_EXCEPTION' || error?.message?.includes('revert')) {
+        console.log(`[Blockchain] Token ${tokenId} does not exist or was burned`);
+        return false;
+      }
+
+      // Unknown error - try again
+      resetProvider();
+    }
   }
+
+  console.error(`[Blockchain] All ${maxRetries} attempts failed for token ${tokenId}`);
+  return false;
 }
 
 /**
@@ -54,14 +103,32 @@ export async function verifyTokenOwnership(tokenId: number, userAddress: string)
  * @returns The owner address or null if token doesn't exist
  */
 export async function getTokenOwner(tokenId: number): Promise<string | null> {
-  try {
-    const provider = getProvider();
-    const contract = new ethers.Contract(AGENT_CONTRACT, OWNER_OF_ABI, provider);
+  const maxRetries = 3;
 
-    const owner = await contract.ownerOf(tokenId);
-    return owner;
-  } catch (error: any) {
-    console.error(`Failed to get owner for token ${tokenId}:`, error?.message);
-    return null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const provider = getProvider();
+      const contract = new ethers.Contract(AGENT_CONTRACT, OWNER_OF_ABI, provider);
+
+      const owner = await contract.ownerOf(tokenId);
+      return owner;
+    } catch (error: any) {
+      console.error(`[Blockchain] getTokenOwner attempt ${attempt + 1} failed:`, error?.message?.substring(0, 200));
+
+      // If it's a network error, try a different RPC
+      if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('403') || error?.message?.includes('Forbidden')) {
+        resetProvider();
+        continue;
+      }
+
+      // Token doesn't exist
+      if (error?.code === 'CALL_EXCEPTION' || error?.message?.includes('revert')) {
+        return null;
+      }
+
+      resetProvider();
+    }
   }
+
+  return null;
 }
