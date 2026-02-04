@@ -76,6 +76,27 @@ function FusionPageContent() {
   const [parentAValid, setParentAValid] = useState(false);
   const [parentBValid, setParentBValid] = useState(false);
 
+  // Helper to get localStorage key for salt
+  const getSaltKey = (pA: string, pB: string, addr: string) => `fusion_salt_${addr}_${pA}_${pB}`;
+
+  // Save salt to localStorage when generated
+  const saveSalt = (newSalt: `0x${string}`) => {
+    if (address && parentA && parentB) {
+      localStorage.setItem(getSaltKey(parentA, parentB, address), newSalt);
+    }
+    setSalt(newSalt);
+  };
+
+  // Load salt from localStorage
+  useEffect(() => {
+    if (address && parentA && parentB && !salt) {
+      const savedSalt = localStorage.getItem(getSaltKey(parentA, parentB, address));
+      if (savedSalt && savedSalt.startsWith('0x')) {
+        setSalt(savedSalt as `0x${string}`);
+      }
+    }
+  }, [address, parentA, parentB, salt]);
+
   // Poll block number every 3 seconds when in commit/waiting state
   useEffect(() => {
     if (step === 'committed' || step === 'waiting') {
@@ -162,7 +183,7 @@ function FusionPageContent() {
   }, [revealSuccess]);
 
   const handleGenerateSalt = () => {
-    setSalt(generateSalt());
+    saveSalt(generateSalt());
   };
 
   const handleProceedToReview = () => {
@@ -207,7 +228,10 @@ function FusionPageContent() {
   };
 
   const handleReveal = async () => {
-    if (!salt) return;
+    if (!salt) {
+      setError('缺少盐值！请输入提交融合时生成的盐值。');
+      return;
+    }
 
     try {
       setError('');
@@ -533,6 +557,23 @@ function FusionPageContent() {
             </div>
           </div>
 
+          {/* Salt input for reveal */}
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">盐值 (Salt)</label>
+            <input
+              type="text"
+              value={salt}
+              onChange={(e) => setSalt(e.target.value as `0x${string}`)}
+              placeholder="0x..."
+              className="w-full bg-black/60 border border-amber-500/20 rounded-lg px-4 py-2 font-mono text-xs text-white"
+            />
+            {!salt && (
+              <p className="text-xs text-red-400">
+                ⚠️ 请输入提交融合时生成的盐值，否则无法揭示！
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-4">
             <button
               onClick={handleCancel}
@@ -543,7 +584,7 @@ function FusionPageContent() {
             </button>
             <button
               onClick={handleReveal}
-              disabled={!canReveal || revealPending}
+              disabled={!canReveal || revealPending || !salt}
               className="flex-1 py-3 btn-primary disabled:opacity-50"
             >
               {revealPending ? '揭示中...' : '揭示融合'}
