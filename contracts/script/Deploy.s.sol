@@ -20,12 +20,12 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy HouseForgeAgent (admin, treasury)
-        HouseForgeAgent agent = new HouseForgeAgent(deployer, treasury);
+        // Deploy HouseForgeAgent (admin only - treasury is hardcoded to OWNER_WALLET)
+        HouseForgeAgent agent = new HouseForgeAgent(deployer);
         console.log("HouseForgeAgent deployed at:", address(agent));
 
-        // Deploy FusionCore (agentContract, admin, treasury)
-        FusionCore fusion = new FusionCore(address(agent), deployer, treasury);
+        // Deploy FusionCore (agentContract, admin - treasury is hardcoded to OWNER_WALLET)
+        FusionCore fusion = new FusionCore(address(agent), deployer);
         console.log("FusionCore deployed at:", address(fusion));
 
         // Set FusionCore as authorized

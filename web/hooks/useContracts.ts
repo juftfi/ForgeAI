@@ -94,6 +94,28 @@ export function useTokenOfOwnerByIndex(owner: Address | undefined, index: bigint
   });
 }
 
+export function useWalletLimit(wallet: Address | undefined) {
+  const address = useContractAddress('HouseForgeAgent');
+  return useReadContract({
+    address,
+    abi: HOUSE_FORGE_AGENT_ABI,
+    functionName: 'getWalletLimit',
+    args: wallet ? [wallet] : undefined,
+    query: { enabled: !!wallet },
+  });
+}
+
+export function useMintCount(wallet: Address | undefined) {
+  const address = useContractAddress('HouseForgeAgent');
+  return useReadContract({
+    address,
+    abi: HOUSE_FORGE_AGENT_ABI,
+    functionName: 'getMintCount',
+    args: wallet ? [wallet] : undefined,
+    query: { enabled: !!wallet },
+  });
+}
+
 // ==================== Approval Hooks ====================
 
 export function useIsApprovedForAll(owner: Address | undefined, operator: Address) {

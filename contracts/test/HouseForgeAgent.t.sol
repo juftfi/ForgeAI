@@ -18,8 +18,8 @@ contract HouseForgeAgentTest is Test {
 
     function setUp() public {
         vm.startPrank(admin);
-        agent = new HouseForgeAgent(admin, treasury);
-        fusion = new FusionCore(address(agent), admin, treasury);
+        agent = new HouseForgeAgent(admin);
+        fusion = new FusionCore(address(agent), admin);
         demoLogic = new DemoLogic();
         agent.setFusionCore(address(fusion));
         vm.stopPrank();

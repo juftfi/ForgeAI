@@ -1,14 +1,23 @@
-version: 1
+version: 3
 economics:
-  treasury_address: "SET_IN_ENV_OR_DEPLOY"
+  # Owner wallet (hardcoded in contracts)
+  owner_wallet: "0x1e87e1d1f317e8c647380ce1e1233e1edd265607"
+  treasury_address: "0x1e87e1d1f317e8c647380ce1e1233e1edd265607"
 
   genesis:
-    allowlist_price_bnb: 0.005
+    allowlist_price_bnb: 0.01
     public_price_bnb: 0.01
-    per_wallet_limit: 3
+    per_wallet_limit: 4           # Standard wallet limit
+    special_wallet: "0x1e87e1d1f317e8c647380ce1e1233e1edd265607"
+    special_wallet_limit: 16      # Owner wallet can mint 16
 
+  # Tiered fusion fees by offspring generation (exponential growth)
   fusion_fees_bnb:
-    base: 0.003
+    base_by_generation:
+      gen_1: 0.01    # Parents are Gen 0
+      gen_2: 0.04
+      gen_3: 0.08
+      gen_4_plus: 0.16
     rare_surcharge: 0.002
     mythic_attempt_surcharge: 0.003
 

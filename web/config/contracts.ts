@@ -3,10 +3,10 @@ import { Address } from 'viem';
 // Contract addresses - BSC Mainnet only (not deployed on testnet)
 export const CONTRACTS = {
   HouseForgeAgent: {
-    56: '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B' as Address, // BSC Mainnet
+    56: '0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f' as Address, // BSC Mainnet (V3 - new economics)
   },
   FusionCore: {
-    56: '0x3FFdfa90E0B8D26f802ACDCEfc101d2f6b0B320F' as Address, // BSC Mainnet (V2 - fixed hash)
+    56: '0xa62E109Db724308FEB530A0b00431cf47BBC1f6E' as Address, // BSC Mainnet (V3 - tiered fees)
   },
 } as const;
 
@@ -139,6 +139,27 @@ export const HOUSE_FORGE_AGENT_ABI = [
     type: 'function',
     name: 'getMintCount',
     inputs: [{ name: 'wallet', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'getWalletLimit',
+    inputs: [{ name: 'wallet', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'specialWallet',
+    inputs: [],
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'specialWalletLimit',
+    inputs: [],
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
   },

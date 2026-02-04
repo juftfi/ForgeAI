@@ -80,6 +80,10 @@ contract HouseForgeAgent is IHouseForgeAgent {
     bool public allowlistActive;
     bool public publicMintActive;
 
+    // Special wallet with higher limit (for project owner)
+    address public specialWallet;
+    uint256 public specialWalletLimit;
+
     // Wallet mint counts
     mapping(address => uint256) private _mintCounts;
 
@@ -131,16 +135,21 @@ contract HouseForgeAgent is IHouseForgeAgent {
     //                         CONSTRUCTOR
     // =============================================================
 
-    constructor(address _admin, address _treasury) {
+    // Project owner wallet (hardcoded)
+    address public constant OWNER_WALLET = 0x1E87e1d1F317e8C647380CE1e1233e1eDD265607;
+
+    constructor(address _admin) {
         admin = _admin;
         minter = _admin;
         learningUpdater = _admin;
-        treasury = _treasury != address(0) ? _treasury : _admin;
+        treasury = OWNER_WALLET;       // All fees go to owner wallet
 
         // Default prices (can be updated)
-        allowlistPrice = 0.005 ether;
-        publicPrice = 0.01 ether;
-        perWalletLimit = 3;
+        allowlistPrice = 0.01 ether;   // 0.01 BNB for allowlist
+        publicPrice = 0.01 ether;      // 0.01 BNB for public
+        perWalletLimit = 4;            // Standard wallet limit
+        specialWallet = OWNER_WALLET;  // Owner wallet is special wallet
+        specialWalletLimit = 16;       // Special wallet can mint 16
     }
 
     // =============================================================
@@ -183,6 +192,11 @@ contract HouseForgeAgent is IHouseForgeAgent {
         publicPrice = _publicPrice;
         perWalletLimit = _perWalletLimit;
         allowlistMerkleRoot = _merkleRoot;
+    }
+
+    function setSpecialWallet(address _wallet, uint256 _limit) external onlyAdmin {
+        specialWallet = _wallet;
+        specialWalletLimit = _limit;
     }
 
     function setAllowlistActive(bool active) external onlyAdmin {
@@ -455,6 +469,10 @@ contract HouseForgeAgent is IHouseForgeAgent {
         return _mintCounts[wallet];
     }
 
+    function getWalletLimit(address wallet) external view returns (uint256) {
+        return (wallet == specialWallet) ? specialWalletLimit : perWalletLimit;
+    }
+
     // =============================================================
     //                      ERC-721 FUNCTIONS
     // =============================================================
@@ -543,7 +561,10 @@ contract HouseForgeAgent is IHouseForgeAgent {
         bytes32[] calldata merkleProof
     ) external payable returns (uint256) {
         require(houseId >= MIN_HOUSE_ID && houseId <= MAX_HOUSE_ID, "Invalid house");
-        require(_mintCounts[msg.sender] < perWalletLimit, "Wallet limit reached");
+
+        // Check wallet limit (special wallet has higher limit)
+        uint256 limit = (msg.sender == specialWallet) ? specialWalletLimit : perWalletLimit;
+        require(_mintCounts[msg.sender] < limit, "Wallet limit reached");
 
         uint256 price;
         if (allowlistActive && merkleProof.length > 0) {

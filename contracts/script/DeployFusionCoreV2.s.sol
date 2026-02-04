@@ -24,8 +24,8 @@ contract DeployFusionCoreV2 is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy new FusionCore (agentContract, admin, treasury)
-        FusionCore fusionV2 = new FusionCore(agentContract, deployer, treasury);
+        // Deploy new FusionCore (agentContract, admin - treasury is hardcoded)
+        FusionCore fusionV2 = new FusionCore(agentContract, deployer);
         console.log("FusionCore V2 deployed at:", address(fusionV2));
 
         vm.stopBroadcast();

@@ -40,8 +40,9 @@ contract FusionCore is IFusionCore {
     /// @notice Treasury address for fee collection
     address public treasury;
 
-    /// @notice Base fusion fee in wei
-    uint256 public baseFee;
+    /// @notice Base fusion fees by offspring generation tier (in wei)
+    /// @dev baseFeeByTier[0] = Gen 1, [1] = Gen 2, [2] = Gen 3, [3] = Gen 4+
+    uint256[4] public baseFeeByTier;
 
     /// @notice Additional fee for rare+ parents
     uint256 public rareSurcharge;
@@ -95,13 +96,22 @@ contract FusionCore is IFusionCore {
     //                         CONSTRUCTOR
     // =============================================================
 
-    constructor(address _agentContract, address _admin, address _treasury) {
+    // Project owner wallet (hardcoded)
+    address public constant OWNER_WALLET = 0x1E87e1d1F317e8C647380CE1e1233e1eDD265607;
+
+    constructor(address _agentContract, address _admin) {
         agentContract = IHouseForgeAgent(_agentContract);
         admin = _admin;
-        treasury = _treasury != address(0) ? _treasury : _admin;
+        treasury = OWNER_WALLET;  // All fees go to owner wallet
 
-        // Default fees (from economics.yaml)
-        baseFee = 0.003 ether;
+        // Tiered base fees by offspring generation (exponential growth)
+        // Gen 1: 0.01 BNB, Gen 2: 0.04 BNB, Gen 3: 0.08 BNB, Gen 4+: 0.16 BNB
+        baseFeeByTier[0] = 0.01 ether;   // Gen 1 offspring (parents are Gen 0)
+        baseFeeByTier[1] = 0.04 ether;   // Gen 2 offspring
+        baseFeeByTier[2] = 0.08 ether;   // Gen 3 offspring
+        baseFeeByTier[3] = 0.16 ether;   // Gen 4+ offspring
+
+        // Surcharges
         rareSurcharge = 0.002 ether;
         mythicAttemptSurcharge = 0.003 ether;
 
@@ -133,14 +143,19 @@ contract FusionCore is IFusionCore {
     }
 
     function setFees(
-        uint256 _baseFee,
+        uint256[4] calldata _baseFeeByTier,
         uint256 _rareSurcharge,
         uint256 _mythicAttemptSurcharge
     ) external onlyAdmin {
-        baseFee = _baseFee;
+        baseFeeByTier = _baseFeeByTier;
         rareSurcharge = _rareSurcharge;
         mythicAttemptSurcharge = _mythicAttemptSurcharge;
-        emit FeeConfigUpdated(_baseFee, _rareSurcharge, _mythicAttemptSurcharge);
+        emit FeeConfigUpdated(_baseFeeByTier[0], _rareSurcharge, _mythicAttemptSurcharge);
+    }
+
+    function setBaseFeeForTier(uint8 tier, uint256 fee) external onlyAdmin {
+        require(tier < 4, "Invalid tier");
+        baseFeeByTier[tier] = fee;
     }
 
     function setMythicEligibleHouses(
@@ -203,6 +218,11 @@ contract FusionCore is IFusionCore {
 
     /**
      * @notice Calculate the fusion fee for two parents
+     * @dev Base fee is tiered by offspring generation:
+     *      - Gen 1 offspring (parents Gen 0): baseFeeByTier[0]
+     *      - Gen 2 offspring: baseFeeByTier[1]
+     *      - Gen 3 offspring: baseFeeByTier[2]
+     *      - Gen 4+ offspring: baseFeeByTier[3]
      * @param parentA First parent token ID
      * @param parentB Second parent token ID
      * @return totalFee Total fee required
@@ -219,7 +239,15 @@ contract FusionCore is IFusionCore {
         uint256 rareAmount,
         uint256 mythicAmount
     ) {
-        baseAmount = baseFee;
+        // Calculate offspring generation to determine base fee tier
+        uint256 genA = agentContract.getGeneration(parentA);
+        uint256 genB = agentContract.getGeneration(parentB);
+        uint256 offspringGen = (genA > genB ? genA : genB) + 1;
+
+        // Map offspring generation to fee tier (0-3)
+        // Gen 1 -> tier 0, Gen 2 -> tier 1, Gen 3 -> tier 2, Gen 4+ -> tier 3
+        uint256 tier = offspringGen >= 4 ? 3 : offspringGen - 1;
+        baseAmount = baseFeeByTier[tier];
         totalFee = baseAmount;
 
         // Check rarity surcharge
@@ -238,6 +266,15 @@ contract FusionCore is IFusionCore {
         }
 
         return (totalFee, baseAmount, rareAmount, mythicAmount);
+    }
+
+    /**
+     * @notice Get base fee for a specific generation tier
+     * @param tier Fee tier (0=Gen1, 1=Gen2, 2=Gen3, 3=Gen4+)
+     */
+    function getBaseFeeForTier(uint8 tier) external view returns (uint256) {
+        require(tier < 4, "Invalid tier");
+        return baseFeeByTier[tier];
     }
 
     /**

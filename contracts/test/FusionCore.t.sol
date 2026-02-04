@@ -18,8 +18,8 @@ contract FusionCoreTest is Test {
 
     function setUp() public {
         vm.startPrank(admin);
-        agent = new HouseForgeAgent(admin, treasury);
-        fusion = new FusionCore(address(agent), admin, treasury);
+        agent = new HouseForgeAgent(admin);
+        fusion = new FusionCore(address(agent), admin);
         agent.setFusionCore(address(fusion));
 
         // Mint two genesis tokens for testing
@@ -625,18 +625,20 @@ contract FusionCoreTest is Test {
     // =============================================================
 
     function test_setFees() public {
+        uint256[4] memory newFees = [uint256(0.005 ether), 0.02 ether, 0.04 ether, 0.08 ether];
         vm.prank(admin);
-        fusion.setFees(0.005 ether, 0.003 ether, 0.004 ether);
+        fusion.setFees(newFees, 0.003 ether, 0.004 ether);
 
-        assertEq(fusion.baseFee(), 0.005 ether);
+        assertEq(fusion.getBaseFeeForTier(0), 0.005 ether);
         assertEq(fusion.rareSurcharge(), 0.003 ether);
         assertEq(fusion.mythicAttemptSurcharge(), 0.004 ether);
     }
 
     function test_setFees_onlyAdmin() public {
+        uint256[4] memory newFees = [uint256(0.005 ether), 0.02 ether, 0.04 ether, 0.08 ether];
         vm.prank(user1);
         vm.expectRevert("Not admin");
-        fusion.setFees(0.005 ether, 0.003 ether, 0.004 ether);
+        fusion.setFees(newFees, 0.003 ether, 0.004 ether);
     }
 
     function test_setTreasury() public {

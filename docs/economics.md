@@ -9,17 +9,26 @@ HouseForge implements a low-barrier, high-participation economic model designed 
 Economics are defined in `config/economics.yaml`:
 
 ```yaml
-version: 1
+version: 3
 economics:
-  treasury_address: "SET_IN_ENV_OR_DEPLOY"
+  # Owner wallet (hardcoded in contracts)
+  owner_wallet: "0x1e87e1d1f317e8c647380ce1e1233e1edd265607"
+  treasury_address: "0x1e87e1d1f317e8c647380ce1e1233e1edd265607"
 
   genesis:
-    allowlist_price_bnb: 0.005
+    allowlist_price_bnb: 0.01
     public_price_bnb: 0.01
-    per_wallet_limit: 3
+    per_wallet_limit: 4
+    special_wallet: "0x1e87e1d1f317e8c647380ce1e1233e1edd265607"
+    special_wallet_limit: 16  # Owner wallet can mint 16
 
   fusion_fees_bnb:
-    base: 0.003
+    # Tiered base fee by offspring generation (exponential growth)
+    base_by_generation:
+      gen_1: 0.01    # Parents are Gen 0
+      gen_2: 0.04
+      gen_3: 0.08
+      gen_4_plus: 0.16
     rare_surcharge: 0.002
     mythic_attempt_surcharge: 0.003
 
@@ -45,10 +54,19 @@ economics:
 
 | Phase | Price (BNB) | USD Equivalent* | Wallet Limit |
 |-------|-------------|-----------------|--------------|
-| Allowlist | 0.005 | ~$3 | 2 |
-| Public | 0.01 | ~$6 | 3 |
+| Allowlist | 0.01 | ~$6 | 2 |
+| Public | 0.01 | ~$6 | 4 (standard) / 16 (special wallet) |
 
 *USD estimates at BNB = $600
+
+### Special Wallet Privilege
+
+The contract owner can designate a "special wallet" with a higher minting limit (default: 16 tokens). This is intended for:
+- Project team reserve
+- Marketing/giveaway allocation
+- Strategic partnerships
+
+Configure via: `setSpecialWallet(address wallet, uint256 limit)`
 
 ### Supply Distribution
 
@@ -81,43 +99,61 @@ Assuming full sellout:
 
 | Scenario | Allowlist (420) | Public (1680) | Total Revenue |
 |----------|-----------------|---------------|---------------|
-| Min (all allowlist) | 420 × 0.005 = 2.1 | 0 | 2.1 BNB |
+| Min (all allowlist) | 420 × 0.01 = 4.2 | 0 | 4.2 BNB |
 | Max (all public) | 0 | 2100 × 0.01 = 21 | 21 BNB |
-| Realistic (20/80) | 420 × 0.005 = 2.1 | 1680 × 0.01 = 16.8 | 18.9 BNB |
+| Realistic (20/80) | 420 × 0.01 = 4.2 | 1680 × 0.01 = 16.8 | 21 BNB |
 
 ## Fusion Economics
 
 ### Fee Structure
 
-Fusion fees are tiered based on parent rarity and mythic eligibility:
+Fusion fees use a **tiered staircase model** based on offspring generation, plus surcharges for rarity and mythic eligibility:
+
+#### Base Fee by Offspring Generation
+
+| Offspring Generation | Base Fee (BNB) | USD Equivalent* | Rationale |
+|---------------------|----------------|-----------------|-----------|
+| Gen 1 (parents are Gen 0) | 0.01 | ~$6 | Entry-level breeding |
+| Gen 2 | 0.04 | ~$24 | Moderate increase |
+| Gen 3 | 0.08 | ~$48 | Higher value offspring |
+| Gen 4+ | 0.16 | ~$96 | Premium for deep lineages |
+
+*USD estimates at BNB = $600
+
+#### Surcharges
 
 | Component | Fee (BNB) | Trigger |
 |-----------|-----------|---------|
-| Base Fee | 0.003 | Always |
-| Rare Surcharge | 0.002 | Either parent is Rare+ |
-| Mythic Attempt | 0.003 | House combination eligible for mythic |
+| Rare Surcharge | +0.002 | Either parent is Rare+ |
+| Mythic Attempt | +0.003 | House combination eligible for mythic |
 
 ### Fee Calculation Examples
 
-**Basic Fusion (Common × Common)**
+**Basic Gen 1 Fusion (Gen 0 Common × Gen 0 Common → Gen 1)**
 ```
-Base: 0.003 BNB
-Total: 0.003 BNB
+Base (Gen 1): 0.01 BNB
+Total: 0.01 BNB (~$6)
 ```
 
-**Rare Parent Fusion (Rare × Common)**
+**Gen 2 Fusion with Rare Parent (Gen 1 Rare × Gen 0 Common → Gen 2)**
 ```
-Base: 0.003 BNB
+Base (Gen 2): 0.04 BNB
 Rare Surcharge: 0.002 BNB
-Total: 0.005 BNB
+Total: 0.042 BNB (~$25)
 ```
 
-**Mythic Attempt (Thunder × Frost, both Rare)**
+**Gen 3 Mythic Attempt (Gen 2 Thunder × Gen 2 Monsoon, both Rare → Gen 3)**
 ```
-Base: 0.003 BNB
+Base (Gen 3): 0.08 BNB
 Rare Surcharge: 0.002 BNB
 Mythic Attempt: 0.003 BNB
-Total: 0.008 BNB
+Total: 0.085 BNB (~$51)
+```
+
+**Deep Lineage Gen 5 (Gen 4 × Gen 3 → Gen 5)**
+```
+Base (Gen 4+): 0.16 BNB
+Total: 0.16 BNB (~$96)
 ```
 
 ### Mythic Eligible Combinations
@@ -130,14 +166,17 @@ Total: 0.008 BNB
 
 ### Fusion Revenue Model
 
-Assuming 1000 fusions/month with distribution:
+Assuming 1000 fusions/month with generational distribution:
 
-| Type | Percentage | Count | Fee | Revenue |
-|------|------------|-------|-----|---------|
-| Basic | 60% | 600 | 0.003 | 1.8 BNB |
-| Rare Parent | 30% | 300 | 0.005 | 1.5 BNB |
-| Mythic Attempt | 10% | 100 | 0.008 | 0.8 BNB |
-| **Monthly Total** | | | | **4.1 BNB** |
+| Generation | Percentage | Count | Base Fee | Avg Total* | Revenue |
+|------------|------------|-------|----------|------------|---------|
+| Gen 1 | 40% | 400 | 0.01 | 0.012 | 4.8 BNB |
+| Gen 2 | 30% | 300 | 0.04 | 0.044 | 13.2 BNB |
+| Gen 3 | 20% | 200 | 0.08 | 0.085 | 17.0 BNB |
+| Gen 4+ | 10% | 100 | 0.16 | 0.165 | 16.5 BNB |
+| **Monthly Total** | | | | | **51.5 BNB** |
+
+*Avg Total includes estimated rare/mythic surcharges based on higher rarity probability in later generations
 
 ## Vault Service (Optional Premium)
 
@@ -257,25 +296,36 @@ Fee changes may be proposed if:
 ## Appendix: Fee Calculation Code
 
 ```solidity
+// Owner wallet (hardcoded)
+address public constant OWNER_WALLET = 0x1e87e1d1f317e8c647380ce1e1233e1edd265607;
+
+// Base fees stored as array: [Gen1, Gen2, Gen3, Gen4+]
+uint256[4] public baseFeeByTier; // [0.01, 0.04, 0.08, 0.16 ether]
+
 function getFusionFee(uint256 parentA, uint256 parentB) public view returns (
     uint256 totalFee,
     uint256 baseAmount,
     uint256 rareAmount,
     uint256 mythicAmount
 ) {
-    baseAmount = baseFee; // 0.003 BNB
+    // Calculate offspring generation to determine fee tier
+    uint256 genA = agentContract.getGeneration(parentA);
+    uint256 genB = agentContract.getGeneration(parentB);
+    uint256 offspringGen = (genA > genB ? genA : genB) + 1;
 
-    // Rare surcharge if either parent is Rare (tier 3) or higher
+    // Map generation to tier (0-3): Gen1→0, Gen2→1, Gen3→2, Gen4+→3
+    uint256 tier = offspringGen >= 4 ? 3 : offspringGen - 1;
+    baseAmount = baseFeeByTier[tier];
+
+    // Rare surcharge if either parent is Rare (tier 2) or higher
     uint8 rarityA = agentContract.getRarityTier(parentA);
     uint8 rarityB = agentContract.getRarityTier(parentB);
-    if (rarityA >= 3 || rarityB >= 3) {
+    if (rarityA >= 2 || rarityB >= 2) {
         rareAmount = rareSurcharge; // 0.002 BNB
     }
 
-    // Mythic attempt surcharge based on house combination
-    uint8 houseA = agentContract.getHouseId(parentA);
-    uint8 houseB = agentContract.getHouseId(parentB);
-    if (mythicEligibleHouses[houseA][houseB]) {
+    // Mythic attempt surcharge based on house combination + generation
+    if (_isMythicAttemptEligible(parentA, parentB)) {
         mythicAmount = mythicAttemptSurcharge; // 0.003 BNB
     }
 
@@ -283,10 +333,27 @@ function getFusionFee(uint256 parentA, uint256 parentB) public view returns (
 }
 ```
 
+### Admin Functions for Fee Management
+
+```solidity
+// Set all fees at once
+function setFees(
+    uint256[4] calldata _baseFeeByTier,  // [Gen1, Gen2, Gen3, Gen4+]
+    uint256 _rareSurcharge,
+    uint256 _mythicAttemptSurcharge
+) external onlyAdmin;
+
+// Set individual tier fee
+function setBaseFeeForTier(uint8 tier, uint256 fee) external onlyAdmin;
+
+// Set treasury address
+function setTreasury(address _treasury) external onlyAdmin;
+```
+
 ## Summary
 
 HouseForge's economic model prioritizes:
-- **Accessibility**: Low entry price (0.005-0.01 BNB)
+- **Accessibility**: Low entry price (0.01 BNB)
 - **Sustainability**: Recurring fusion fees fund ongoing development
 - **Transparency**: All fees calculated on-chain, immediately forwarded
 - **Fairness**: Tiered fees based on value received (rare parents, mythic chances)
