@@ -1,7 +1,7 @@
 'use client';
 
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { useChainId } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useSimulateContract } from 'wagmi';
+import { useChainId, useAccount } from 'wagmi';
 import { Address, keccak256, encodeAbiParameters, toHex } from 'viem';
 import {
   CONTRACTS,
@@ -214,12 +214,61 @@ export function useMinRevealDelay() {
   });
 }
 
+// Check if contract is paused
+export function useFusionCorePaused() {
+  const address = useContractAddress('FusionCore');
+  return useReadContract({
+    address,
+    abi: [
+      {
+        type: 'function',
+        name: 'paused',
+        inputs: [],
+        outputs: [{ name: '', type: 'bool' }],
+        stateMutability: 'view',
+      },
+    ],
+    functionName: 'paused',
+  });
+}
+
+// Simulate commit to check if it would succeed
+export function useSimulateCommitFusion(
+  parentA: bigint | undefined,
+  parentB: bigint | undefined,
+  commitHash: `0x${string}` | undefined,
+  mode: FusionMode | undefined,
+  enabled: boolean = true
+) {
+  const address = useContractAddress('FusionCore');
+  const { address: account } = useAccount();
+
+  return useSimulateContract({
+    address,
+    abi: FUSION_CORE_ABI,
+    functionName: 'commitFusion',
+    args: parentA !== undefined && parentB !== undefined && commitHash && mode !== undefined
+      ? [parentA, parentB, commitHash, mode]
+      : undefined,
+    account,
+    query: {
+      enabled: enabled && !!account && parentA !== undefined && parentB !== undefined && !!commitHash && mode !== undefined,
+    },
+  });
+}
+
 // ==================== FusionCore Write Hooks ====================
 
 export function useCommitFusion() {
   const address = useContractAddress('FusionCore');
   const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const {
+    isLoading: isConfirming,
+    isSuccess,
+    data: receipt,
+    error: receiptError,
+    status: receiptStatus
+  } = useWaitForTransactionReceipt({ hash });
 
   const commit = (
     parentA: bigint,
@@ -235,7 +284,23 @@ export function useCommitFusion() {
     });
   };
 
-  return { commit, hash, isPending, isConfirming, isSuccess, error };
+  // Get the actual block number from receipt
+  const actualBlockNumber = receipt?.blockNumber;
+  // Check if TX reverted (status === 'reverted')
+  const isReverted = receipt?.status === 'reverted';
+
+  return {
+    commit,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess: isSuccess && !isReverted,
+    error: error || receiptError,
+    receipt,
+    actualBlockNumber,
+    isReverted,
+    receiptStatus
+  };
 }
 
 export function useRevealFusion() {

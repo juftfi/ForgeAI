@@ -15,6 +15,8 @@ import {
   useSetApprovalForAll,
   useHasActiveCommit,
   useGetCommitDetails,
+  useFusionCorePaused,
+  useSimulateCommitFusion,
   generateCommitHash,
   generateSalt,
 } from '@/hooks/useContracts';
@@ -111,7 +113,37 @@ function FusionPageContent() {
   }, [step, refetchBlock]);
 
   // Contract hooks
-  const { commit, isPending: commitPending, isSuccess: commitSuccess, hash: commitHash } = useCommitFusion();
+  const {
+    commit,
+    isPending: commitPending,
+    isSuccess: commitSuccess,
+    hash: commitHash,
+    error: commitError,
+    receipt: commitReceipt,
+    actualBlockNumber: commitActualBlock,
+    isReverted: commitReverted,
+    receiptStatus: commitReceiptStatus
+  } = useCommitFusion();
+
+  // Debug: Log commit status changes
+  useEffect(() => {
+    console.log('=== COMMIT STATUS ===');
+    console.log('commitPending:', commitPending);
+    console.log('commitSuccess:', commitSuccess);
+    console.log('commitHash:', commitHash);
+    console.log('commitError:', commitError);
+    console.log('commitReceiptStatus:', commitReceiptStatus);
+    console.log('commitReverted:', commitReverted);
+    console.log('commitActualBlock:', commitActualBlock?.toString());
+    if (commitReceipt) {
+      console.log('commitReceipt.status:', commitReceipt.status);
+      console.log('commitReceipt.blockNumber:', commitReceipt.blockNumber?.toString());
+    }
+    if (commitError) {
+      console.error('Commit error details:', commitError);
+    }
+    console.log('=== END COMMIT STATUS ===');
+  }, [commitPending, commitSuccess, commitHash, commitError, commitReceiptStatus, commitReverted, commitActualBlock, commitReceipt]);
   const { reveal, isPending: revealPending, isSuccess: revealSuccess, hash: revealHash } = useRevealFusion();
   const { cancel, isPending: cancelPending, isSuccess: cancelSuccess } = useCancelFusion();
 
@@ -146,11 +178,54 @@ function FusionPageContent() {
     parentA ? BigInt(parentA) : undefined,
     parentB ? BigInt(parentB) : undefined
   );
-  const { data: existingCommit } = useGetCommitDetails(
+  const { data: existingCommit, refetch: refetchCommitDetails } = useGetCommitDetails(
     address,
     parentA ? BigInt(parentA) : undefined,
     parentB ? BigInt(parentB) : undefined
   );
+
+  // Check if contract is paused
+  const { data: isPaused } = useFusionCorePaused();
+
+  // Simulate commit hash for pre-flight check
+  const [simulatedHash, setSimulatedHash] = useState<`0x${string}` | undefined>();
+
+  // Simulate commit transaction to catch errors early
+  const {
+    error: simulateError,
+    isError: isSimulateError,
+  } = useSimulateCommitFusion(
+    parentA ? BigInt(parentA) : undefined,
+    parentB ? BigInt(parentB) : undefined,
+    simulatedHash,
+    mode,
+    step === 'review' && !!salt && !!address && !!simulatedHash
+  );
+
+  // Update simulated hash when salt changes
+  useEffect(() => {
+    if (salt && address && parentA && parentB && blockNumber) {
+      const expectedBlock = blockNumber + BigInt(1);
+      const hash = generateCommitHash(
+        BigInt(parentA),
+        BigInt(parentB),
+        salt,
+        expectedBlock,
+        address,
+        mode
+      );
+      setSimulatedHash(hash);
+    }
+  }, [salt, address, parentA, parentB, blockNumber, mode]);
+
+  // Log simulation errors
+  useEffect(() => {
+    if (isSimulateError && simulateError) {
+      console.log('=== SIMULATE ERROR ===');
+      console.error('Commit simulation failed:', simulateError);
+      console.log('=== END SIMULATE ERROR ===');
+    }
+  }, [isSimulateError, simulateError]);
 
   // Restore state from existing commit
   useEffect(() => {
@@ -182,13 +257,29 @@ function FusionPageContent() {
     }
   }, [address, ownerB]);
 
-  // Handle commit success - only set commitBlock ONCE
+  // Handle commit success - use actual block from receipt
   useEffect(() => {
-    if (commitSuccess && blockNumber && !commitBlock) {
-      setCommitBlock(blockNumber);
+    if (commitSuccess && commitActualBlock && !commitBlock) {
+      console.log('=== COMMIT SUCCESS ===');
+      console.log('Using actual block from receipt:', commitActualBlock.toString());
+      setCommitBlock(commitActualBlock);
       setStep('waiting');
+      // Refetch commit data to verify it was stored
+      setTimeout(() => {
+        refetchActiveCommit();
+        refetchCommitDetails();
+      }, 2000);
     }
-  }, [commitSuccess, blockNumber, commitBlock]);
+  }, [commitSuccess, commitActualBlock, commitBlock, refetchActiveCommit, refetchCommitDetails]);
+
+  // Handle commit reverted
+  useEffect(() => {
+    if (commitReverted && commitHash) {
+      console.error('=== COMMIT REVERTED ===');
+      console.error('Transaction was reverted on-chain');
+      setError('交易被回滚！请检查：1) 你是否拥有两个代币 2) 代币是否已被封印 3) 是否已有活跃的融合提交');
+    }
+  }, [commitReverted, commitHash]);
 
   // Handle reveal success
   useEffect(() => {
@@ -218,6 +309,10 @@ function FusionPageContent() {
     saveSalt(generateSalt());
   };
 
+  // Check if tokens are sealed
+  const isParentASealed = lineageA?.sealed === true;
+  const isParentBSealed = lineageB?.sealed === true;
+
   const handleProceedToReview = () => {
     if (!parentA || !parentB) {
       setError('请选择两个亲本');
@@ -229,6 +324,10 @@ function FusionPageContent() {
     }
     if (!parentAValid || !parentBValid) {
       setError('请确保你拥有两个智能体');
+      return;
+    }
+    if (isParentASealed || isParentBSealed) {
+      setError(`无法融合：${isParentASealed ? '亲本 A' : ''}${isParentASealed && isParentBSealed ? ' 和 ' : ''}${isParentBSealed ? '亲本 B' : ''} 已被封印`);
       return;
     }
     if (!salt) {
@@ -454,6 +553,9 @@ function FusionPageContent() {
                 <div className="text-xs text-gray-500">
                   家族: {HOUSE_NAMES[lineageA.houseId] || '未知'} |
                   世代: {lineageA.generation.toString()}
+                  {lineageA.sealed && (
+                    <span className="text-red-400 ml-2">⚠️ 已封印</span>
+                  )}
                 </div>
               )}
             </div>
@@ -477,6 +579,9 @@ function FusionPageContent() {
                 <div className="text-xs text-gray-500">
                   家族: {HOUSE_NAMES[lineageB.houseId] || '未知'} |
                   世代: {lineageB.generation.toString()}
+                  {lineageB.sealed && (
+                    <span className="text-red-400 ml-2">⚠️ 已封印</span>
+                  )}
                 </div>
               )}
             </div>
@@ -517,10 +622,10 @@ function FusionPageContent() {
 
           <button
             onClick={handleProceedToReview}
-            disabled={!isConnected || !parentA || !parentB || !parentAValid || !parentBValid}
+            disabled={!isConnected || !parentA || !parentB || !parentAValid || !parentBValid || isParentASealed || isParentBSealed}
             className="w-full py-4 btn-primary text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            继续确认
+            {isParentASealed || isParentBSealed ? '无法融合 - 代币已封印' : '继续确认'}
           </button>
         </div>
       )}
@@ -571,6 +676,27 @@ function FusionPageContent() {
             </p>
           </div>
 
+          {/* Contract Paused Warning */}
+          {isPaused && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-400 text-sm">
+                ⛔ 融合合约当前已暂停，无法进行融合操作
+              </p>
+            </div>
+          )}
+
+          {/* Simulation Error Warning */}
+          {isSimulateError && simulateError && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-400 text-sm mb-2">
+                ⚠️ 交易预检失败 - 此交易可能会回滚：
+              </p>
+              <p className="text-red-300 text-xs font-mono break-all">
+                {(simulateError as any)?.shortMessage || (simulateError as any)?.message || '未知错误'}
+              </p>
+            </div>
+          )}
+
           {/* Approval Check */}
           {!isApproved && (
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
@@ -596,10 +722,11 @@ function FusionPageContent() {
             </button>
             <button
               onClick={handleCommit}
-              disabled={!salt || commitPending || !isApproved}
+              disabled={!salt || commitPending || !isApproved || isPaused || isSimulateError}
               className="flex-1 py-3 btn-primary disabled:opacity-50"
+              title={isPaused ? '合约已暂停' : isSimulateError ? '交易预检失败' : ''}
             >
-              {commitPending ? '确认中...' : '提交融合'}
+              {commitPending ? '确认中...' : isPaused ? '合约已暂停' : '提交融合'}
             </button>
           </div>
 
@@ -680,6 +807,24 @@ function FusionPageContent() {
                 ⚠️ 请输入提交融合时生成的盐值，否则无法揭示！
               </p>
             )}
+          </div>
+
+          {/* Debug: Refresh and verify commit */}
+          <div className="p-3 bg-gray-800/50 rounded-lg">
+            <button
+              onClick={() => {
+                refetchActiveCommit();
+                refetchCommitDetails();
+                setTimeout(verifyCommitHash, 1000);
+              }}
+              className="text-xs text-amber-400 hover:text-amber-300"
+            >
+              🔍 刷新并验证提交数据
+            </button>
+            <div className="text-xs text-gray-500 mt-1">
+              已提交: {hasActiveCommit ? '是' : '否'} |
+              提交区块: {(existingCommit as any)?.commitBlock?.toString() || '无'}
+            </div>
           </div>
 
           <div className="flex gap-4">
