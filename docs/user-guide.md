@@ -21,7 +21,7 @@
 
 ### 访问平台
 
-1. 打开浏览器访问 https://kinforge-mauve.vercel.app
+1. 打开浏览器访问 https://www.kinforge.xyz/
 2. 确保您的钱包已连接到 **BSC 主网 (Chain ID: 56)**
 3. 准备一些 BNB 用于 Gas 费用
 

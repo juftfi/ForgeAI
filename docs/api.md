@@ -2,7 +2,7 @@
 
 ## 基础信息
 
-- **Base URL**: `https://houseforgeserver-production.up.railway.app`
+- **Base URL**: `https://api.kinforge.xyz` (或您自己的后端地址)
 - **格式**: JSON
 - **认证**: 无 (公开 API)
 

@@ -1,14 +1,13 @@
 # KinForge
 
-[![在线演示](https://img.shields.io/badge/在线-kinforge--mauve.vercel.app-blue)](https://kinforge-mauve.vercel.app)
+[![在线演示](https://img.shields.io/badge/在线-kinforge.xyz-blue)](https://www.kinforge.xyz/)
 [![BSC 主网](https://img.shields.io/badge/BSC-主网-yellow)](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
 
 基于 BNB Chain 的 BAP-578 兼容非同质化智能体 (NFA) 系统，包含 7 大天气家族、AI 驱动的个性化对话、记忆系统和 commit-reveal 融合机制。
 
 ## 在线部署
 
-- **前端**: https://kinforge-mauve.vercel.app
-- **后端 API**: https://houseforgeserver-production.up.railway.app
+- **官网**: https://www.kinforge.xyz/
 - **智能合约**: [0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
 - **融合合约**: [0x8a7fdf8e6b3E7C23744de8eE893D0C1899189004](https://bscscan.com/address/0x8a7fdf8e6b3E7C23744de8eE893D0C1899189004)
 
@@ -367,7 +366,7 @@ cd server && pnpm test
 
 ## 链接
 
-- 在线演示: https://kinforge-mauve.vercel.app
+- 官网: https://www.kinforge.xyz/
 - GitHub: https://github.com/KinForgeLab/kinforge
 - BSCScan: [合约](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
 
