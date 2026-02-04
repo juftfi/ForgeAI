@@ -404,15 +404,18 @@ router.get('/lineage/:tokenId', async (req: Request, res: Response) => {
       5: 'AURORA', 6: 'SAND', 7: 'ECLIPSE'
     };
 
+    // Convert all values to ensure no BigInt serialization issues
+    const houseId = Number(lineage.houseId);
+
     res.json({
       tokenId,
       parent1: Number(lineage.parent1),
       parent2: Number(lineage.parent2),
       generation: Number(lineage.generation),
-      houseId: lineage.houseId,
-      houseName: HOUSE_ID_TO_NAME[lineage.houseId] || 'UNKNOWN',
-      sealed: lineage.isSealed,  // Frontend expects 'sealed'
-      isSealed: lineage.isSealed, // Keep for compatibility
+      houseId: houseId,
+      houseName: HOUSE_ID_TO_NAME[houseId] || 'UNKNOWN',
+      sealed: Boolean(lineage.isSealed),  // Frontend expects 'sealed'
+      isSealed: Boolean(lineage.isSealed), // Keep for compatibility
     });
   } catch (error: any) {
     console.error('Lineage get error:', error);
