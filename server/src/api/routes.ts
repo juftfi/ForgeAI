@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { getVaultService } from '../services/vault.js';
 import { generateGenesisMetadata, toOpenSeaMetadata } from '../services/traitEngine.js';
 import { loadGenesis } from '../utils/yaml.js';
+import { AbiCoder } from 'ethers';
 import path from 'path';
 import fs from 'fs';
 
@@ -331,17 +332,43 @@ router.post('/fusion/prepare-reveal', async (req: Request, res: Response) => {
       CLEAR: 1, MONSOON: 2, THUNDER: 3, FROST: 4, AURORA: 5, SAND: 6, ECLIPSE: 7
     };
 
+    const offspringHouseId = HOUSE_KEY_TO_ID[offspringMetadata.traits.House] || 1;
+    const traitsHash = computeTraitsHash(offspringMetadata.traits);
+
+    // Encode offspring data for contract call
+    // mintOffspring expects: (to, parent1, parent2, houseId, persona, vaultURI, vaultHash)
+    // offspringData encodes: (houseId, persona, vaultURI, vaultHash)
+    const abiCoder = new AbiCoder();
+    const offspringData = abiCoder.encode(
+      ['uint8', 'string', 'string', 'bytes32'],
+      [
+        offspringHouseId,
+        JSON.stringify(offspringMetadata.persona),
+        vault.vaultURI,
+        vault.vaultHash
+      ]
+    );
+
     res.json({
       offspring: toOpenSeaMetadata(offspringMetadata),
-      vault,
-      offspringHouseId: HOUSE_KEY_TO_ID[offspringMetadata.traits.House],
-      traitsHash: computeTraitsHash(offspringMetadata.traits),
+      vault: {
+        vaultId: vault.vaultId,
+        vaultURI: vault.vaultURI,
+        vaultHash: vault.vaultHash,
+        learningRoot: vault.learningRoot,
+      },
+      offspringHouseId,
+      traitsHash,
       isMythic: offspringMetadata.isMythic,
       mythicKey: offspringMetadata.mythicKey,
+      offspringData: offspringData as `0x${string}`,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Prepare reveal error:', error);
-    res.status(500).json({ error: 'Failed to prepare reveal' });
+    res.status(500).json({
+      error: 'Failed to prepare reveal',
+      details: error?.message || String(error)
+    });
   }
 });
 
