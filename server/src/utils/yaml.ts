@@ -104,10 +104,32 @@ export interface MythicConfig {
   mythics: Mythic[];
 }
 
-// Config loader
-const CONFIG_DIR = path.resolve(__dirname, '../../../config');
+// Config loader - try multiple possible paths
+function getConfigDir(): string {
+  const possiblePaths = [
+    path.resolve(__dirname, '../../../config'),  // From dist/utils/ -> config/
+    path.resolve(__dirname, '../../config'),     // Alternative
+    path.resolve(process.cwd(), '../config'),    // From server/ -> config/
+    path.resolve(process.cwd(), 'config'),       // From root/ -> config/
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p) && fs.existsSync(path.join(p, 'traits.yaml'))) {
+      console.log(`Config directory found at: ${p}`);
+      return p;
+    }
+  }
+
+  console.error('Config directory not found. Tried:', possiblePaths);
+  throw new Error('Config directory not found');
+}
+
+let CONFIG_DIR: string | null = null;
 
 function loadYaml<T>(filename: string): T {
+  if (!CONFIG_DIR) {
+    CONFIG_DIR = getConfigDir();
+  }
   const filepath = path.join(CONFIG_DIR, filename);
   const content = fs.readFileSync(filepath, 'utf8');
   return yaml.load(content) as T;
