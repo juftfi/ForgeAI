@@ -366,6 +366,67 @@ router.post('/fusion/prepare-reveal', async (req: Request, res: Response) => {
 });
 
 // =============================================================
+//                    LINEAGE ROUTES
+// =============================================================
+
+// Minimal ABI for getLineage
+const AGENT_ABI_LINEAGE = [
+  'function getLineage(uint256 tokenId) view returns (tuple(uint256 parent1, uint256 parent2, uint256 generation, uint8 houseId, bool isSealed))',
+  'function ownerOf(uint256 tokenId) view returns (address)',
+];
+
+/**
+ * GET /lineage/:tokenId
+ * Get lineage data for a token from the blockchain
+ */
+router.get('/lineage/:tokenId', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId) || tokenId < 1) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const { ethers } = await import('ethers');
+
+    // BSC Mainnet RPC and contract address
+    const rpcUrl = process.env.RPC_URL || 'https://bsc-dataseed1.binance.org';
+    const agentAddress = process.env.HOUSEFORGE_AGENT_ADDRESS || '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B';
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const contract = new ethers.Contract(agentAddress, AGENT_ABI_LINEAGE, provider);
+
+    // Get lineage from contract
+    const lineage = await contract.getLineage(tokenId);
+
+    // House ID to name mapping
+    const HOUSE_ID_TO_NAME: Record<number, string> = {
+      1: 'CLEAR', 2: 'MONSOON', 3: 'THUNDER', 4: 'FROST',
+      5: 'AURORA', 6: 'SAND', 7: 'ECLIPSE'
+    };
+
+    res.json({
+      tokenId,
+      parent1: Number(lineage.parent1),
+      parent2: Number(lineage.parent2),
+      generation: Number(lineage.generation),
+      houseId: lineage.houseId,
+      houseName: HOUSE_ID_TO_NAME[lineage.houseId] || 'UNKNOWN',
+      sealed: lineage.isSealed,  // Frontend expects 'sealed'
+      isSealed: lineage.isSealed, // Keep for compatibility
+    });
+  } catch (error: any) {
+    console.error('Lineage get error:', error);
+
+    // Check if it's a "token doesn't exist" error
+    if (error?.message?.includes('revert') || error?.code === 'CALL_EXCEPTION') {
+      return res.status(404).json({ error: 'Token not found or has no lineage data' });
+    }
+
+    res.status(500).json({ error: 'Failed to get lineage data', details: error?.message });
+  }
+});
+
+// =============================================================
 //                    STATS ROUTES
 // =============================================================
 
