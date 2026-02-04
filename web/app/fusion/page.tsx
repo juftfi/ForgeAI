@@ -237,12 +237,14 @@ function FusionPageContent() {
 
     try {
       setError('');
-      const currentBlock = blockNumber || BigInt(0);
+      // IMPORTANT: Use currentBlock + 1 because the TX will be mined in the NEXT block
+      // The contract stores block.number at mining time, not at submission time
+      const expectedMiningBlock = (blockNumber || BigInt(0)) + BigInt(1);
       const commitHashValue = generateCommitHash(
         BigInt(parentA),
         BigInt(parentB),
         salt,
-        currentBlock,
+        expectedMiningBlock,
         address,
         mode
       );
