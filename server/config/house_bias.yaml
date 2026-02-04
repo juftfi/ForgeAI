@@ -1,0 +1,67 @@
+version: 1
+bias:
+  CLEAR:
+    prefer:
+      FrameType: ["TitaniumBlack_Brushed", "Glass_PrismCut"]
+      CoreMaterial: ["VolumetricCloud", "Crystal_PrismCore"]
+      LightSignature: ["Sunbeam", "PrismaticRay"]
+      InstrumentMark: ["IsobarLines", "FineScale"]
+      Atmosphere: ["Clean"]
+      PaletteTemperature: ["Neutral", "Cold"]
+
+  MONSOON:
+    prefer:
+      FrameType: ["BlackChrome_Mirror", "Resin_Clear"]
+      CoreMaterial: ["RainStrands", "CondensationDroplets"]
+      LightSignature: ["NeonRain", "WetGlow"]
+      InstrumentMark: ["CompassArc", "WaveTicks"]
+      Atmosphere: ["Humid"]
+      PaletteTemperature: ["NeonCool", "Cold"]
+
+  THUNDER:
+    prefer:
+      FrameType: ["BlackChrome_Mirror", "Glass_StressCrack"]
+      CoreMaterial: ["Plasma_Ion"]
+      LightSignature: ["LightningFork", "IonBloom"]
+      InstrumentMark: ["HardScale", "WarningChevrons"]
+      Atmosphere: ["Charged"]
+      PaletteTemperature: ["Cold"]
+
+  FROST:
+    prefer:
+      FrameType: ["IceCrystal_Rim", "TitaniumBlack_Brushed"]
+      CoreMaterial: ["Frost_Crystals", "Snow_Particles"]
+      LightSignature: ["PolarGlow", "FrostScatter"]
+      InstrumentMark: ["ArchiveGrid", "ThermoTicks"]
+      Atmosphere: ["Icy"]
+      PaletteTemperature: ["Cold"]
+
+  AURORA:
+    prefer:
+      FrameType: ["Resin_Clear", "Glass_PrismCut"]
+      CoreMaterial: ["Aurora_Ribbons", "Crystal_PrismCore"]
+      LightSignature: ["AuroraRibbon", "SpectrumVeil"]
+      InstrumentMark: ["FieldLines", "OrbitTicks"]
+      Atmosphere: ["Iridescent"]
+      PaletteTemperature: ["Iridescent", "NeonCool"]
+
+  SAND:
+    prefer:
+      FrameType: ["Bronze_Matte", "Brass_Brushed"]
+      CoreMaterial: ["Dust_Vortex"]
+      LightSignature: ["GoldenHaze", "DustHalo"]
+      InstrumentMark: ["WindRose", "ErosionScale"]
+      Atmosphere: ["Dusty"]
+      PaletteTemperature: ["Warm"]
+
+  ECLIPSE:
+    prefer:
+      FrameType: ["BlackChrome_Mirror", "Glass_PrismCut"]
+      CoreMaterial: ["Eclipse_Sphere"]
+      LightSignature: ["EclipseHalo", "RingRim"]
+      InstrumentMark: ["CrownScale", "OccultSigils"]
+      Atmosphere: ["Void"]
+      PaletteTemperature: ["BlackGold"]
+
+# Bias multiplier: how much to boost preferred traits
+bias_multiplier: 2.0

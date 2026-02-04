@@ -1,0 +1,78 @@
+version: 1
+mythics:
+  - key: "EYE_OF_STORM"
+    name: "Eye of the Storm"
+    description: "Born from the fusion of storm energies, this agent channels the raw power of lightning."
+    conditions:
+      - type: "parents_houses"
+        any_of:
+          - ["THUNDER", "THUNDER"]
+          - ["THUNDER", "MONSOON"]
+      - type: "required_traits"
+        must_include:
+          CoreMaterial: ["Plasma_Ion"]
+          LightSignature: ["LightningFork", "IonBloom"]
+      - type: "min_generation"
+        value: 2
+    trigger:
+      type: "seed_threshold"
+      # 1 / 200 chance once conditions met
+      modulo: 200
+      equals: 0
+    override_traits:
+      Atmosphere: "Charged"
+      LensBloom: "HaloHeavy"
+      MicroEngraving: "Serial+CircuitMicro"
+
+  - key: "FROZEN_TIME"
+    name: "Frozen Time"
+    description: "A crystalline entity that embodies the stillness of absolute zero, freezing moments in eternal clarity."
+    conditions:
+      - type: "parents_houses"
+        any_of:
+          - ["FROST", "FROST"]
+          - ["FROST", "CLEAR"]
+      - type: "required_traits"
+        must_include:
+          FrameType: ["IceCrystal_Rim"]
+          CoreMaterial: ["Frost_Crystals"]
+      - type: "min_generation"
+        value: 2
+    trigger:
+      type: "seed_threshold"
+      modulo: 220
+      equals: 0
+    override_traits:
+      Atmosphere: "Icy"
+      SurfaceAging: "FrostedEdges"
+      MicroEngraving: "Serial+TinyGrid"
+
+  - key: "BLACK_SUN"
+    name: "Black Sun"
+    description: "The rarest of all agents, born when eclipse meets aurora. Commands both void and light."
+    conditions:
+      - type: "parents_houses"
+        any_of:
+          - ["ECLIPSE", "ECLIPSE"]
+          - ["ECLIPSE", "AURORA"]
+      - type: "required_traits"
+        must_include:
+          CoreMaterial: ["Eclipse_Sphere"]
+          PaletteTemperature: ["BlackGold"]
+      - type: "min_generation"
+        value: 3
+    trigger:
+      type: "seed_threshold"
+      modulo: 333
+      equals: 0
+    override_traits:
+      LightSignature: "EclipseHalo"
+      InstrumentMark: "CrownScale"
+      LensBloom: "Cinematic"
+
+# Rules explanation (for documentation/transparency):
+# 1. Mythic can ONLY occur during fusion (not genesis)
+# 2. ALL conditions must be met before trigger check
+# 3. Trigger uses deterministic seed modulo - fully reproducible
+# 4. Override traits replace generated traits for mythic distinction
+# 5. Rarity tier is automatically set to "Mythic" if triggered

@@ -107,10 +107,10 @@ export interface MythicConfig {
 // Config loader - try multiple possible paths
 function getConfigDir(): string {
   const possiblePaths = [
-    path.resolve(__dirname, '../../../config'),  // From dist/utils/ -> config/
-    path.resolve(__dirname, '../../config'),     // Alternative
-    path.resolve(process.cwd(), '../config'),    // From server/ -> config/
-    path.resolve(process.cwd(), 'config'),       // From root/ -> config/
+    path.resolve(__dirname, '../../config'),     // From dist/utils/ -> dist/config/ or server/config/
+    path.resolve(process.cwd(), 'config'),       // From server/ -> server/config/
+    path.resolve(__dirname, '../../../config'),  // From dist/utils/ -> config/ at root
+    path.resolve(process.cwd(), '../config'),    // From server/ -> config/ at root
   ];
 
   for (const p of possiblePaths) {

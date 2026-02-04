@@ -1,0 +1,155 @@
+version: 1
+
+domains:
+  Season:
+    values: ["S0"]
+
+  RarityTier:
+    values: ["Common", "Uncommon", "Rare", "Epic", "Mythic"]
+
+  FrameType:
+    values:
+      - { key: "TitaniumBlack_Brushed", w: 20 }
+      - { key: "BlackChrome_Mirror", w: 18 }
+      - { key: "Brass_Brushed", w: 16 }
+      - { key: "Bronze_Matte", w: 12 }
+      - { key: "Resin_Clear", w: 14 }
+      - { key: "Glass_PrismCut", w: 10 }
+      - { key: "Glass_StressCrack", w: 6 }
+      - { key: "IceCrystal_Rim", w: 4 }
+
+  CoreMaterial:
+    values:
+      - { key: "VolumetricCloud", w: 14 }
+      - { key: "CondensationDroplets", w: 10 }
+      - { key: "RainStrands", w: 10 }
+      - { key: "Plasma_Ion", w: 8 }
+      - { key: "Crystal_PrismCore", w: 10 }
+      - { key: "Frost_Crystals", w: 10 }
+      - { key: "Snow_Particles", w: 8 }
+      - { key: "Dust_Vortex", w: 10 }
+      - { key: "Eclipse_Sphere", w: 4 }
+      - { key: "Aurora_Ribbons", w: 6 }
+
+  LightSignature:
+    values:
+      - { key: "Sunbeam", w: 12 }
+      - { key: "PrismaticRay", w: 8 }
+      - { key: "NeonRain", w: 10 }
+      - { key: "WetGlow", w: 8 }
+      - { key: "LightningFork", w: 8 }
+      - { key: "IonBloom", w: 6 }
+      - { key: "PolarGlow", w: 8 }
+      - { key: "FrostScatter", w: 6 }
+      - { key: "AuroraRibbon", w: 8 }
+      - { key: "SpectrumVeil", w: 6 }
+      - { key: "GoldenHaze", w: 8 }
+      - { key: "DustHalo", w: 6 }
+      - { key: "EclipseHalo", w: 4 }
+      - { key: "RingRim", w: 2 }
+
+  InstrumentMark:
+    values:
+      - { key: "FineScale", w: 14 }
+      - { key: "IsobarLines", w: 10 }
+      - { key: "CompassArc", w: 10 }
+      - { key: "WaveTicks", w: 8 }
+      - { key: "HardScale", w: 10 }
+      - { key: "WarningChevrons", w: 6 }
+      - { key: "ArchiveGrid", w: 8 }
+      - { key: "ThermoTicks", w: 8 }
+      - { key: "FieldLines", w: 8 }
+      - { key: "OrbitTicks", w: 6 }
+      - { key: "WindRose", w: 8 }
+      - { key: "ErosionScale", w: 6 }
+      - { key: "CrownScale", w: 2 }
+      - { key: "OccultSigils", w: 1 }
+
+  Atmosphere:
+    values:
+      - { key: "Clean", w: 16 }
+      - { key: "Humid", w: 12 }
+      - { key: "Charged", w: 10 }
+      - { key: "Icy", w: 12 }
+      - { key: "Iridescent", w: 8 }
+      - { key: "Dusty", w: 12 }
+      - { key: "Void", w: 2 }
+
+  DioramaGeometry:
+    values:
+      - { key: "Capsule", w: 18 }
+      - { key: "Obelisk", w: 10 }
+      - { key: "Cube", w: 10 }
+      - { key: "Sphere", w: 6 }
+      - { key: "Prism", w: 8 }
+      - { key: "BarometerAssembly", w: 4 }
+
+  PaletteTemperature:
+    values:
+      - { key: "Cold", w: 18 }
+      - { key: "Neutral", w: 18 }
+      - { key: "Warm", w: 18 }
+      - { key: "NeonCool", w: 10 }
+      - { key: "Iridescent", w: 8 }
+      - { key: "BlackGold", w: 2 }
+
+  SurfaceAging:
+    values:
+      - { key: "Pristine", w: 18 }
+      - { key: "MicroScratches", w: 12 }
+      - { key: "EdgeWear", w: 6 }
+      - { key: "FrostedEdges", w: 8 }
+      - { key: "Condensed", w: 6 }
+
+  MicroEngraving:
+    values:
+      - { key: "SerialOnly", w: 16 }
+      - { key: "Serial+TinyGrid", w: 10 }
+      - { key: "Serial+Contour", w: 10 }
+      - { key: "Serial+CircuitMicro", w: 6 }
+      - { key: "Serial+SigilMicro", w: 2 }
+
+  LensBloom:
+    values:
+      - { key: "None", w: 10 }
+      - { key: "Soft", w: 18 }
+      - { key: "Cinematic", w: 8 }
+      - { key: "HaloHeavy", w: 2 }
+
+# rarity multipliers: reduce common, boost rare-only traits
+rarity_multipliers:
+  Common:   { rareTraitBoost: 0.5, epicTraitBoost: 0.25 }
+  Uncommon: { rareTraitBoost: 1.0, epicTraitBoost: 0.5 }
+  Rare:     { rareTraitBoost: 1.5, epicTraitBoost: 1.0 }
+  Epic:     { rareTraitBoost: 2.0, epicTraitBoost: 1.5 }
+  Mythic:   { rareTraitBoost: 3.0, epicTraitBoost: 3.0 }
+
+# Traits considered "rare" (lower base weight)
+rare_traits:
+  FrameType: ["Glass_StressCrack", "IceCrystal_Rim"]
+  CoreMaterial: ["Eclipse_Sphere", "Aurora_Ribbons"]
+  LightSignature: ["EclipseHalo", "RingRim"]
+  InstrumentMark: ["CrownScale", "OccultSigils"]
+  Atmosphere: ["Void"]
+  DioramaGeometry: ["BarometerAssembly"]
+  PaletteTemperature: ["BlackGold"]
+  MicroEngraving: ["Serial+SigilMicro"]
+  LensBloom: ["HaloHeavy"]
+
+# Traits considered "epic" (very low base weight)
+epic_traits:
+  FrameType: ["IceCrystal_Rim"]
+  CoreMaterial: ["Eclipse_Sphere"]
+  LightSignature: ["RingRim"]
+  InstrumentMark: ["OccultSigils"]
+  Atmosphere: ["Void"]
+  PaletteTemperature: ["BlackGold"]
+  MicroEngraving: ["Serial+SigilMicro"]
+  LensBloom: ["HaloHeavy"]
+
+# Core traits that have special inheritance rules in fusion
+core_traits:
+  - FrameType
+  - CoreMaterial
+  - LightSignature
+  - InstrumentMark
