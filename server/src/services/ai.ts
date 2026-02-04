@@ -7,6 +7,30 @@ import { AIMessage, ChatOptions, EmbeddingResult } from '../types/chat.js';
 
 export type AIProvider = 'openai' | 'anthropic';
 
+// API Response Types
+interface OpenAIChatResponse {
+  choices: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+}
+
+interface AnthropicChatResponse {
+  content: Array<{
+    text?: string;
+  }>;
+}
+
+interface OpenAIEmbeddingResponse {
+  data: Array<{
+    embedding?: number[];
+  }>;
+  usage?: {
+    total_tokens?: number;
+  };
+}
+
 interface AIConfig {
   provider: AIProvider;
   apiKey: string;
@@ -113,7 +137,7 @@ export class AIClient {
       throw new Error(`OpenAI API error: ${response.status} - ${JSON.stringify(error)}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as OpenAIChatResponse;
     return data.choices[0]?.message?.content || '';
   }
 
@@ -158,7 +182,7 @@ export class AIClient {
       throw new Error(`Anthropic API error: ${response.status} - ${JSON.stringify(error)}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as AnthropicChatResponse;
     return data.content[0]?.text || '';
   }
 
@@ -192,7 +216,7 @@ export class AIClient {
       throw new Error(`OpenAI Embeddings API error: ${response.status} - ${JSON.stringify(error)}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as OpenAIEmbeddingResponse;
     return {
       embedding: data.data[0]?.embedding || [],
       tokenCount: data.usage?.total_tokens || 0,
