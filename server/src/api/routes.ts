@@ -5,6 +5,7 @@ import { loadGenesis } from '../utils/yaml.js';
 import { getChatService } from '../services/chat.js';
 import { getMemoryService } from '../services/memory.js';
 import { getLearningService } from '../services/learning.js';
+import { verifyTokenOwnership } from '../utils/blockchain.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -978,8 +979,9 @@ router.get('/render/recipes', (req: Request, res: Response) => {
 /**
  * POST /chat/session
  * Create a new chat session with an agent
+ * Only the token owner can create a chat session
  */
-router.post('/chat/session', (req: Request, res: Response) => {
+router.post('/chat/session', async (req: Request, res: Response) => {
   try {
     const { tokenId, userAddress } = req.body;
 
@@ -988,6 +990,15 @@ router.post('/chat/session', (req: Request, res: Response) => {
     }
     if (!userAddress || typeof userAddress !== 'string') {
       return res.status(400).json({ error: 'userAddress is required' });
+    }
+
+    // Verify token ownership on-chain
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({
+        error: '您不是此智能体的持有者',
+        message: 'Only the token owner can chat with this agent'
+      });
     }
 
     const chatService = getChatService();

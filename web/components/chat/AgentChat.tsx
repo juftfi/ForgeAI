@@ -172,7 +172,7 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
           与 {agentName || `Agent #${tokenId}`} 对话
         </h3>
         <p className="text-gray-400 text-sm mb-4 text-center px-4">
-          开始与这个独特的 AI Agent 交流，它会记住你们的对话并随时间成长
+          只有持有者才能与智能体对话。它会记住你们的对话并随时间成长。
         </p>
         {error && (
           <p className="text-red-400 text-sm mb-4">{error}</p>
