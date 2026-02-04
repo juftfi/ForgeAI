@@ -235,11 +235,14 @@ router.post('/fusion/prepare-commit', async (req: Request, res: Response) => {
  */
 router.post('/fusion/prepare-reveal', async (req: Request, res: Response) => {
   try {
-    const { parentAId, parentBId, salt, commitBlockHash } = req.body;
+    const { parentAId, parentBId, salt, commitBlock, commitBlockHash } = req.body;
 
-    if (!parentAId || !parentBId || !salt || !commitBlockHash) {
+    // Accept either commitBlock (number) or commitBlockHash (hash)
+    const blockIdentifier = commitBlockHash || (commitBlock ? `0x${BigInt(commitBlock).toString(16).padStart(64, '0')}` : null);
+
+    if (!parentAId || !parentBId || !salt || !blockIdentifier) {
       return res.status(400).json({
-        error: 'Missing required fields: parentAId, parentBId, salt, commitBlockHash'
+        error: 'Missing required fields: parentAId, parentBId, salt, commitBlock or commitBlockHash'
       });
     }
 
@@ -306,7 +309,7 @@ router.post('/fusion/prepare-reveal', async (req: Request, res: Response) => {
       parentA.learningRoot,
       parentB.learningRoot,
       salt,
-      commitBlockHash
+      blockIdentifier
     );
 
     // Generate offspring
