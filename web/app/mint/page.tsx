@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
 import Link from 'next/link';
@@ -95,6 +95,23 @@ export default function MintPage() {
 
   const { writeContract, data: hash, isPending, error: writeError, reset: resetWrite } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  // 用户取消钱包签名时自动重置状态
+  useEffect(() => {
+    if (writeError) {
+      const msg = writeError.message || '';
+      if (msg.includes('User rejected') || msg.includes('User denied')) {
+        // 用户取消，静默重置
+        resetWrite();
+      }
+    }
+  }, [writeError, resetWrite]);
+
+  // 取消预订，重新选择
+  const cancelReservation = () => {
+    setReservedAgent(null);
+    resetWrite();
+  };
 
   // 解析用户友好的错误信息
   const getErrorMessage = (error: Error | null): string | null => {
@@ -388,9 +405,19 @@ export default function MintPage() {
             <div className="space-y-4">
               {/* Reserved Agent Info */}
               <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-green-400">✓</span>
-                  <span className="font-semibold text-green-300">智能体已预订</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span className="font-semibold text-green-300">智能体已预订</span>
+                  </div>
+                  {!isSuccess && !isPending && !isConfirming && (
+                    <button
+                      onClick={cancelReservation}
+                      className="text-xs text-gray-400 hover:text-white"
+                    >
+                      取消预订
+                    </button>
+                  )}
                 </div>
                 <p className="text-gray-400 text-sm">
                   保险库已创建，哈希值: <code className="text-xs text-amber-400">{reservedAgent.vault.vaultHash.slice(0, 18)}...</code>
