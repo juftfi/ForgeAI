@@ -93,8 +93,32 @@ export default function MintPage() {
     functionName: 'publicMintActive',
   });
 
-  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
+  const { writeContract, data: hash, isPending, error: writeError, reset: resetWrite } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  // 解析用户友好的错误信息
+  const getErrorMessage = (error: Error | null): string | null => {
+    if (!error) return null;
+    const msg = error.message || '';
+
+    // 用户取消
+    if (msg.includes('User rejected') || msg.includes('User denied')) {
+      return null; // 不显示任何错误，用户主动取消
+    }
+    // 余额不足
+    if (msg.includes('insufficient funds') || msg.includes('Insufficient')) {
+      return '余额不足，请确保有足够的 BNB 支付铸造费用和 Gas。';
+    }
+    // 合约错误
+    if (msg.includes('execution reverted')) {
+      if (msg.includes('Not active')) return '铸造尚未开放。';
+      if (msg.includes('Already minted')) return '此智能体已被铸造。';
+      if (msg.includes('Invalid')) return '参数无效，请刷新页面重试。';
+      return '交易被合约拒绝，请刷新页面重试。';
+    }
+    // 其他错误 - 简化显示
+    return '交易失败，请重试。';
+  };
 
   // Fetch preview agent when house is selected
   const fetchPreview = useCallback(async (house: string) => {
@@ -383,14 +407,16 @@ export default function MintPage() {
                 </div>
                 <button
                   onClick={handleMint}
-                  disabled={isPending || isConfirming || !mintActive}
+                  disabled={isPending || isConfirming || !mintActive || isSuccess}
                   className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
-                    !isPending && !isConfirming && mintActive
+                    !isPending && !isConfirming && mintActive && !isSuccess
                       ? 'btn-primary'
                       : 'bg-gray-700 cursor-not-allowed text-gray-400'
                   }`}
                 >
-                  {isPending
+                  {isSuccess
+                    ? '已铸造'
+                    : isPending
                     ? '请在钱包确认...'
                     : isConfirming
                     ? '铸造中...'
@@ -420,17 +446,36 @@ export default function MintPage() {
                   <p className="text-green-400 mb-2">
                     成功铸造智能体 #{reservedAgent.tokenId}！
                   </p>
-                  <Link href={`/agent/${reservedAgent.tokenId}`} className="text-amber-400 hover:text-amber-300 text-sm">
-                    查看你的智能体 →
-                  </Link>
+                  <div className="flex gap-4 mt-3">
+                    <Link href={`/agent/${reservedAgent.tokenId}`} className="text-amber-400 hover:text-amber-300 text-sm">
+                      查看你的智能体 →
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setReservedAgent(null);
+                        setPreviewAgent(null);
+                        setSelectedHouse(null);
+                        resetWrite();
+                      }}
+                      className="text-gray-400 hover:text-white text-sm"
+                    >
+                      铸造另一个
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {writeError && (
+              {writeError && getErrorMessage(writeError) && (
                 <div className="p-4 rounded-lg bg-red-900/30 border border-red-500">
                   <p className="text-red-400 text-sm">
-                    错误: {writeError.message}
+                    {getErrorMessage(writeError)}
                   </p>
+                  <button
+                    onClick={resetWrite}
+                    className="text-xs text-gray-400 hover:text-white mt-2"
+                  >
+                    关闭
+                  </button>
                 </div>
               )}
             </div>
