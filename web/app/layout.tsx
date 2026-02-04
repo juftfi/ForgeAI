@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 
 const NAV_LINKS = [
   { href: '/mint', label: '铸造' },
+  { href: '/my-agents', label: '我的' },
   { href: '/gallery', label: '图鉴' },
   { href: '/fusion', label: '融合' },
   { href: '/tree', label: '血脉' },

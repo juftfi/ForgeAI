@@ -11,7 +11,7 @@ import {
 } from '@/config/contracts';
 
 // Get contract address for current chain
-function useContractAddress(contract: keyof typeof CONTRACTS): Address {
+export function useContractAddress(contract: keyof typeof CONTRACTS): Address {
   const chainId = useChainId();
   const addresses = CONTRACTS[contract];
   return addresses[chainId as keyof typeof addresses] || addresses[97];

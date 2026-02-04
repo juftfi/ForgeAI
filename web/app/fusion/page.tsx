@@ -25,13 +25,53 @@ import { useChainId } from 'wagmi';
 
 // 家族名称映射
 const HOUSE_NAMES: Record<number, string> = {
-  1: 'Clear 家族',
-  2: 'Monsoon 家族',
-  3: 'Thunder 家族',
-  4: 'Frost 家族',
-  5: 'Aurora 家族',
-  6: 'Sand 家族',
-  7: 'Eclipse 家族',
+  1: 'Clear 晴空',
+  2: 'Monsoon 季风',
+  3: 'Thunder 雷霆',
+  4: 'Frost 霜冻',
+  5: 'Aurora 极光',
+  6: 'Sand 沙尘',
+  7: 'Eclipse 日蚀',
+};
+
+// 特性名称中英文映射
+const TRAIT_NAMES_CN: Record<string, string> = {
+  'Season': '季节',
+  'House': '家族',
+  'RarityTier': '稀有度',
+  'Generation': '世代',
+  'WeatherID': '气象编号',
+  'FrameType': '框架类型',
+  'CoreMaterial': '核心材质',
+  'LightSignature': '光纹特征',
+  'InstrumentMark': '仪表标记',
+  'Atmosphere': '氛围',
+  'DioramaGeometry': '透视结构',
+  'PaletteTemperature': '色温',
+  'SurfaceAging': '表面质感',
+  'MicroEngraving': '微雕',
+  'LensBloom': '镜头光晕',
+  'Eye Style': '眼睛样式',
+  'EyeStyle': '眼睛样式',
+  'Accent Mark': '装饰标记',
+  'AccentMark': '装饰标记',
+  'Voice Tone': '声音音调',
+  'VoiceTone': '声音音调',
+  'Behavior Mode': '行为模式',
+  'BehaviorMode': '行为模式',
+  'Data Preference': '数据偏好',
+  'DataPreference': '数据偏好',
+  'Energy Pattern': '能量模式',
+  'EnergyPattern': '能量模式',
+};
+
+// 稀有度中文映射
+const RARITY_NAMES: Record<string, string> = {
+  'Common': '普通',
+  'Uncommon': '稀有',
+  'Rare': '珍稀',
+  'Epic': '史诗',
+  'Mythic': '神话',
 };
 
 interface FusionResult {
@@ -844,12 +884,27 @@ function FusionPageContent() {
           <div className="glass-card p-6">
             <h3 className="font-bold mb-4 text-amber-400">遗传特征</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {result.offspring.attributes.map(attr => (
-                <div key={attr.trait_type} className="bg-black/60 rounded-lg p-3 border border-amber-500/10">
-                  <div className="text-xs text-gray-500">{attr.trait_type}</div>
-                  <div className="font-medium text-white">{attr.value}</div>
-                </div>
-              ))}
+              {result.offspring.attributes.map(attr => {
+                const traitNameCN = TRAIT_NAMES_CN[attr.trait_type] || attr.trait_type;
+                let displayValue = attr.value;
+                // 翻译稀有度
+                if (attr.trait_type === 'RarityTier') {
+                  displayValue = RARITY_NAMES[attr.value] || attr.value;
+                }
+                // 翻译家族
+                if (attr.trait_type === 'House') {
+                  const houseId = Object.entries(HOUSES).find(([_, h]) => h.name === attr.value)?.[0];
+                  if (houseId) {
+                    displayValue = HOUSE_NAMES[Number(houseId)] || attr.value;
+                  }
+                }
+                return (
+                  <div key={attr.trait_type} className="bg-black/60 rounded-lg p-3 border border-amber-500/10">
+                    <div className="text-xs text-gray-500">{traitNameCN}</div>
+                    <div className="font-medium text-white">{displayValue}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -880,12 +935,20 @@ function FusionPageContent() {
             </div>
           )}
 
-          <button
-            onClick={reset}
-            className="w-full py-4 btn-secondary"
-          >
-            开始新融合
-          </button>
+          <div className="flex gap-4">
+            <Link
+              href="/my-agents"
+              className="flex-1 py-4 btn-primary text-center"
+            >
+              查看我的智能体
+            </Link>
+            <button
+              onClick={reset}
+              className="flex-1 py-4 btn-secondary"
+            >
+              继续融合
+            </button>
+          </div>
         </div>
       )}
     </div>
