@@ -1,15 +1,33 @@
 # KinForge
 
-A BAP-578 compliant Non-Fungible Agent (NFA) system on BNB Chain featuring 7 Weather Houses, deterministic trait generation, and commit-reveal fusion mechanics.
+[![Live Demo](https://img.shields.io/badge/Live-kinforge--mauve.vercel.app-blue)](https://kinforge-mauve.vercel.app)
+[![BSC Mainnet](https://img.shields.io/badge/BSC-Mainnet-yellow)](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
+
+A BAP-578 compliant Non-Fungible Agent (NFA) system on BNB Chain featuring 7 Weather Houses, AI-powered dialogue with personality, memory system, and commit-reveal fusion mechanics.
+
+## Live Deployment
+
+- **Frontend**: https://kinforge-mauve.vercel.app
+- **Backend API**: https://houseforgeserver-production.up.railway.app
+- **Smart Contract**: [0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
+- **Fusion Contract**: [0x8a7fdf8e6b3E7C23744de8eE893D0C1899189004](https://bscscan.com/address/0x8a7fdf8e6b3E7C23744de8eE893D0C1899189004)
 
 ## Features
 
+### Core Features
 - **7 Weather Houses**: CLEAR, MONSOON, THUNDER, FROST, AURORA, SAND, ECLIPSE
 - **2,100 Genesis Agents**: Deterministic trait generation with house bias system
 - **Fusion System**: Commit-reveal breeding with parent trait inheritance
 - **BAP-578 Compliance**: Full interface implementation with learning updates
 - **Mythic Rarity**: Special agents from specific house combinations
 - **On-chain Verification**: vaultHash and learningRoot for data integrity
+
+### AI Dialogue System (NEW)
+- **Personality-driven Chat**: Each Agent has unique personality based on House traits
+- **Memory System**: Agents remember conversations and accumulate knowledge
+- **Learning Growth**: Personality evolves over time through interactions
+- **PersonaVector**: 5-dimensional personality (calm, curious, bold, social, disciplined)
+- **learningRoot Verification**: On-chain verifiable learning history
 
 ## Project Structure
 
@@ -33,27 +51,36 @@ KinForge/
 ├── server/                    # Node.js + TypeScript
 │   ├── src/
 │   │   ├── services/
-│   │   │   ├── vault.ts
-│   │   │   ├── traitEngine.ts
-│   │   │   └── fusionOrchestrator.ts
-│   │   ├── scripts/
-│   │   │   ├── generateGenesis.ts
-│   │   │   ├── exportVaultPack.ts
-│   │   │   └── importVaultPack.ts
+│   │   │   ├── vault.ts      # Vault storage
+│   │   │   ├── traitEngine.ts # Trait generation
+│   │   │   ├── ai.ts         # AI client (OpenAI/Anthropic)
+│   │   │   ├── chat.ts       # Chat orchestration
+│   │   │   ├── memory.ts     # Memory management
+│   │   │   ├── learning.ts   # Learning system
+│   │   │   └── prompt.ts     # Prompt engineering
+│   │   ├── types/
+│   │   │   └── chat.ts       # Type definitions
 │   │   └── api/routes.ts
 │   └── package.json
 ├── web/                       # Next.js frontend
 │   ├── app/
-│   │   ├── gallery/
-│   │   ├── agent/[id]/
-│   │   ├── fusion/
-│   │   └── tree/
+│   │   ├── gallery/          # Agent gallery
+│   │   ├── agent/[id]/       # Agent detail + chat
+│   │   ├── fusion/           # Fusion interface
+│   │   └── tree/             # Lineage tree
+│   ├── components/
+│   │   ├── chat/             # Chat components
+│   │   ├── learning/         # Learning panel
+│   │   └── memory/           # Memory browser
 │   └── package.json
 ├── docs/
-│   ├── bap578-compliance.md
-│   ├── security.md
-│   ├── economics.md
-│   └── demo.md
+│   ├── user-guide.md         # User guide
+│   ├── whitepaper.md         # Technical whitepaper
+│   ├── api.md                # API documentation
+│   ├── deployment.md         # Deployment guide
+│   ├── bap578-compliance.md  # BAP-578 compliance
+│   ├── security.md           # Security documentation
+│   └── economics.md          # Economics model
 └── assets/metadata/           # Generated metadata files
 ```
 
@@ -69,7 +96,8 @@ KinForge/
 
 ```bash
 # Clone and install
-cd HouseForge
+git clone https://github.com/KinForgeLab/kinforge.git
+cd kinforge
 pnpm install
 
 # Copy environment variables
@@ -77,14 +105,32 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
-### Generate Genesis Metadata
+### Environment Configuration
 
-```bash
-cd server
-pnpm gen:metadata
+```env
+# Server
+SERVER_PORT=3001
+DATABASE_PATH=./data/vault.db
+
+# Blockchain
+RPC_URL=https://bsc-dataseed.binance.org/
+CHAIN_ID=56
+HOUSEFORGE_AGENT_ADDRESS=0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B
+
+# AI Configuration (Required for chat)
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-xxx
+OPENAI_MODEL=gpt-4o-mini
+
+# Learning System
+LEARNING_AUTO_SYNC=false
+LEARNING_SYNC_THRESHOLD=10
+MEMORY_MAX_COUNT=1000
+
+# Frontend
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_CHAIN_ID=56
 ```
-
-This creates 2,100 JSON metadata files in `assets/metadata/`.
 
 ### Run Development Server
 
@@ -101,53 +147,55 @@ pnpm dev
 - API: http://localhost:3001
 - Web: http://localhost:3000
 
-### Deploy Contracts
+## AI Dialogue System
 
-```bash
-cd contracts
+### How It Works
 
-# Build
-forge build
+1. **Start Session**: Connect wallet and start a chat session with any Agent
+2. **Conversation**: AI responds based on Agent's House personality and memories
+3. **End Session**: Memories are extracted and stored
+4. **Learning**: PersonaVector gradually evolves through interactions
 
-# Test
-forge test
+### PersonaVector
 
-# Deploy (update script with your parameters)
-forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast
-```
+Each Agent has a 5-dimensional personality vector:
 
-## Configuration
+| Dimension | Description | Range |
+|-----------|-------------|-------|
+| Calm | Emotional stability | -1.0 to 1.0 |
+| Curious | Intellectual openness | -1.0 to 1.0 |
+| Bold | Risk-taking tendency | -1.0 to 1.0 |
+| Social | Interpersonal orientation | -1.0 to 1.0 |
+| Disciplined | Self-control | -1.0 to 1.0 |
 
-### Houses (config/houses.yaml)
+### House Personalities
 
-Each house has unique persona seeds and visual anchors:
+| House | Base Personality |
+|-------|-----------------|
+| CLEAR | calm +0.4, curious +0.2 |
+| MONSOON | social +0.3, curious +0.3 |
+| THUNDER | bold +0.5, social +0.2 |
+| FROST | calm +0.5, disciplined +0.3 |
+| AURORA | curious +0.4, bold +0.2 |
+| SAND | disciplined +0.4, calm +0.2 |
+| ECLIPSE | calm +0.3, bold +0.3 |
 
-| House | Theme | Color Palette |
-|-------|-------|---------------|
-| CLEAR | Minimalist clarity | White, silver, pale blue |
-| MONSOON | Adaptive flow | Teal, deep blue, silver |
-| THUNDER | Bold energy | Electric blue, black, gold |
-| FROST | Precise calm | Ice blue, white, silver |
-| AURORA | Vibrant creativity | Gradient rainbow, purple |
-| SAND | Grounded wisdom | Warm tan, gold, orange |
-| ECLIPSE | Mysterious depth | Deep purple, black, gold |
+### Memory Types
 
-### Traits (config/traits.yaml)
-
-12+ trait domains with weighted values:
-- Expression, Posture, Material, Environment
-- LightingMood, Weather, SeasonHint, SoundTexture
-- InteractionStyle, AuraGlow, TimeOfDay, Movement
-
-### Economics (config/economics.yaml)
-
-| Item | Price (BNB) |
+| Type | Description |
 |------|-------------|
-| Allowlist Mint | 0.005 |
-| Public Mint | 0.01 |
-| Fusion Base Fee | 0.003 |
-| Rare Surcharge | +0.002 |
-| Mythic Attempt | +0.003 |
+| Fact | Information about the user or world |
+| Preference | User likes and dislikes |
+| Experience | Notable interactions |
+| Relationship | Connection with the user |
+
+### learningRoot Calculation
+
+```
+memoriesHash = merkleRoot(memories.map(m => keccak256(m)))
+summaryHash = keccak256(AI_generated_summary)
+learningRoot = keccak256(vaultHash + memoriesHash + summaryHash)
+```
 
 ## Smart Contracts
 
@@ -156,7 +204,7 @@ Each house has unique persona seeds and visual anchors:
 ERC-721 with BAP-578 extensions:
 - `mintGenesisPublic/Allowlist` - Mint genesis agents
 - `mintOffspring` - Mint fusion offspring (FusionCore only)
-- `updateLearning` - Update learning state
+- `updateLearning` - Update learning state (learningRoot, version)
 - `executeAction` - Delegate to logic contract
 - `pause/unpause/terminate` - State management
 
@@ -167,69 +215,116 @@ Commit-reveal fusion system:
 - `revealFusion` - Reveal and mint offspring
 - `getFusionFee` - Calculate tiered fees
 
-### DemoLogic.sol
-
-Example logic contract for executeAction:
-- `incrementCounter` - Simple state modification
-- `logMessage` - Store messages per agent
-- `incrementMultiple` - Batch operations
-
 ## API Endpoints
 
-### Vault Service
+### Chat Endpoints
 
 ```
-POST /vault/create     - Create new vault
-GET  /vault/:id        - Get vault by ID
-GET  /vault/token/:id  - Get vault by token ID
-GET  /vault/hash/:hash - Get vault by hash
+POST /chat/session              - Create new chat session
+POST /chat/message              - Send message and get AI response
+GET  /chat/session/:sessionId   - Get session details
+POST /chat/session/:id/end      - End session and extract memories
 ```
 
-### Metadata
+### Memory Endpoints
 
 ```
-GET /metadata/:tokenId - OpenSea-compatible metadata
+GET  /agent/:tokenId/memories        - Get agent memories
+GET  /agent/:tokenId/memories/search - Search memories
+```
+
+### Learning Endpoints
+
+```
+GET  /agent/:tokenId/learning           - Get learning history
+POST /agent/:tokenId/learning/snapshot  - Create learning snapshot
+POST /agent/:tokenId/learning/sync      - Sync to blockchain
+```
+
+### Vault & Metadata
+
+```
+POST /vault/create              - Create new vault
+GET  /vault/:id                 - Get vault by ID
+GET  /vault/token/:tokenId      - Get vault by token ID
+GET  /metadata/:tokenId         - OpenSea-compatible metadata
 ```
 
 ### Fusion
 
 ```
-POST /fusion/prepare   - Prepare fusion (generate traits)
-POST /fusion/commit    - Submit commit transaction
-POST /fusion/reveal    - Execute reveal transaction
+POST /fusion/prepare-commit     - Prepare commit data
+POST /fusion/prepare-reveal     - Generate offspring traits
 ```
 
-## Migration Tools
+## Fusion Mechanics
 
-### Export Vault Data
+### Trait Inheritance
+
+1. **House**: Same house = 100% inherit, Different = 70/30 weighted
+2. **Rarity**: Average of parents + bonuses (cross-house +1, gen≥2 +1)
+3. **Core Traits** (4): 50% inherit from parents, 50% weighted pick
+4. **Other Traits**: 20% inherit, 80% weighted pick with house bias
+
+### Mythic Triggers
+
+| Mythic | Houses Required | Probability |
+|--------|-----------------|-------------|
+| EYE_OF_STORM | THUNDER + MONSOON | 1/200 |
+| FROZEN_TIME | FROST + CLEAR | 1/220 |
+| BLACK_SUN | ECLIPSE + AURORA | 1/333 |
+
+## Rarity Distribution
+
+| Tier | Probability | Rarity Multiplier |
+|------|-------------|-------------------|
+| Common | 62% | 1.0x |
+| Uncommon | 23% | 1.5x |
+| Rare | 10% | 2.0x |
+| Epic | 4% | 3.0x |
+| Legendary | 0.9% | 5.0x |
+| Mythic | 0.1% | N/A |
+
+## Deployment
+
+### Frontend (Vercel)
+
+The frontend auto-deploys from GitHub to Vercel.
 
 ```bash
-# Export specific tokens
-pnpm export-vault --tokenId 1,2,3 --out pack.json
-
-# Export range
-pnpm export-vault --tokenId 1-100 --out batch.json
-
-# Export all
-pnpm export-vault --all --out backup.json
+# Manual deployment
+cd web
+vercel --prod
 ```
 
-### Import Vault Data
+### Backend (Railway)
 
 ```bash
-# Preview import
-pnpm import-vault --file pack.json --dry-run
+# Connect to Railway
+railway login
+railway link
 
-# Import skipping existing
-pnpm import-vault --file pack.json --skip-existing
+# Deploy
+railway up
+```
 
-# Full import
-pnpm import-vault --file pack.json
+Required environment variables on Railway:
+- `OPENAI_API_KEY`
+- `RPC_URL`
+- `CHAIN_ID`
+- `HOUSEFORGE_AGENT_ADDRESS`
+- `DATABASE_PATH`
+
+### Contracts (Foundry)
+
+```bash
+cd contracts
+forge build
+forge test
+forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast
 ```
 
 ## BAP-578 Compliance
-
-HouseForge implements the full BAP-578 interface:
 
 | Feature | Status |
 |---------|--------|
@@ -241,60 +336,6 @@ HouseForge implements the full BAP-578 interface:
 | Logic Upgrade | ✅ Per-agent logic address |
 | Fund Management | ✅ Agent balance tracking |
 
-See [docs/bap578-compliance.md](docs/bap578-compliance.md) for details.
-
-## Testing
-
-### Contract Tests
-
-```bash
-cd contracts
-forge test -vvv
-```
-
-### Server Tests
-
-```bash
-cd server
-pnpm test
-```
-
-## Rarity System
-
-### Distribution
-
-| Tier | Probability | Rarity Multiplier |
-|------|-------------|-------------------|
-| Common | 62% | 1.0x |
-| Uncommon | 23% | 1.5x |
-| Rare | 10% | 2.0x |
-| Epic | 4% | 3.0x |
-| Legendary | 0.9% | 5.0x |
-| Mythic | 0.1% | N/A |
-
-### Mythic Triggers
-
-| Mythic | Houses Required | Probability |
-|--------|-----------------|-------------|
-| EYE_OF_STORM | THUNDER + MONSOON | 1/200 |
-| FROZEN_TIME | FROST + CLEAR | 1/220 |
-| BLACK_SUN | ECLIPSE + AURORA | 1/333 |
-
-## Fusion Mechanics
-
-### Trait Inheritance
-
-1. **House**: Same house = 100% inherit, Different = 70/30 weighted
-2. **Rarity**: Average of parents + bonuses (cross-house +1, gen≥2 +1)
-3. **Core Traits** (4): 50% inherit from parents, 50% weighted pick
-4. **Other Traits**: 20% inherit, 80% weighted pick with house bias
-
-### Generation Calculation
-
-```
-offspring.generation = max(parentA.generation, parentB.generation) + 1
-```
-
 ## Security
 
 - Commit-reveal prevents front-running
@@ -302,39 +343,34 @@ offspring.generation = max(parentA.generation, parentB.generation) + 1
 - Merkle proof allowlist verification
 - Immediate treasury forwarding
 - No stored funds in contracts
+- API key encryption for AI services
 
-See [docs/security.md](docs/security.md) for full security documentation.
+## Testing
 
-## Environment Variables
+```bash
+# Contract tests
+cd contracts && forge test -vvv
 
-```env
-# Server
-PORT=3001
-DATABASE_PATH=./data/vault.db
-API_BASE_URL=http://localhost:3001
-
-# Blockchain
-RPC_URL=https://bsc-dataseed.binance.org/
-CHAIN_ID=56
-PRIVATE_KEY=your_deployer_private_key
-
-# Contracts (set after deployment)
-AGENT_CONTRACT_ADDRESS=0x...
-FUSION_CONTRACT_ADDRESS=0x...
-TREASURY_ADDRESS=0x...
-
-# Frontend
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_CHAIN_ID=56
+# Server tests
+cd server && pnpm test
 ```
+
+## Documentation
+
+- [User Guide](docs/user-guide.md) - How to use KinForge
+- [Whitepaper](docs/whitepaper.md) - Technical design
+- [API Reference](docs/api.md) - Full API documentation
+- [Deployment Guide](docs/deployment.md) - Deployment instructions
+- [BAP-578 Compliance](docs/bap578-compliance.md) - Standard compliance
+- [Security](docs/security.md) - Security documentation
+- [Economics](docs/economics.md) - Economic model
+
+## Links
+
+- Live Demo: https://kinforge-mauve.vercel.app
+- GitHub: https://github.com/KinForgeLab/kinforge
+- BSCScan: [Contract](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
 
 ## License
 
 MIT
-
-## Links
-
-- Documentation: [docs/](docs/)
-- BAP-578 Spec: [docs/bap578-compliance.md](docs/bap578-compliance.md)
-- Economics: [docs/economics.md](docs/economics.md)
-- Security: [docs/security.md](docs/security.md)
