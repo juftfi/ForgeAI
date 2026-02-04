@@ -155,11 +155,10 @@ function AgentCard({ agent, onSelect }: { agent: AgentCardData; onSelect?: (id: 
 
 export default function MyAgentsPage() {
   const { address, isConnected } = useAccount();
-  const { data: balance, isLoading: isBalanceLoading, error: balanceError } = useAgentBalance(address);
+  const { data: balance, isLoading: isBalanceLoading } = useAgentBalance(address);
   const [agents, setAgents] = useState<AgentCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgents, setSelectedAgents] = useState<number[]>([]);
-  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const agentContractAddress = useContractAddress('HouseForgeAgent');
 
@@ -180,7 +179,7 @@ export default function MyAgentsPage() {
   const allTokenIds = supply ? Array.from({ length: Number(supply) }, (_, i) => BigInt(i + 1)) : [];
 
   // 批量查询所有token的ownerOf - 合约不支持ERC721Enumerable，所以需要遍历所有token
-  const { data: owners, isLoading: isOwnersLoading, error: ownersError } = useReadContracts({
+  const { data: owners, isLoading: isOwnersLoading } = useReadContracts({
     contracts: allTokenIds.map(tokenId => ({
       address: agentContractAddress,
       abi: HOUSE_FORGE_AGENT_ABI,
@@ -197,7 +196,7 @@ export default function MyAgentsPage() {
   });
 
   // 批量读取lineage
-  const { data: lineages, isLoading: isLineagesLoading, error: lineagesError } = useReadContracts({
+  const { data: lineages, isLoading: isLineagesLoading } = useReadContracts({
     contracts: userTokenIds.map(tokenId => ({
       address: agentContractAddress,
       abi: HOUSE_FORGE_AGENT_ABI,
@@ -206,22 +205,6 @@ export default function MyAgentsPage() {
     })),
     query: { enabled: userTokenIds.length > 0 },
   });
-
-  // Debug: 记录数据加载状态
-  useEffect(() => {
-    const info = `Balance: ${balance?.toString() || 'loading'}, TotalSupply: ${supply?.toString() || 'loading'}, UserTokens: ${userTokenIds.length}, Lineages: ${lineages?.length || 0}`;
-    setDebugInfo(info);
-    console.log('[MyAgents Debug]', {
-      address,
-      balance: balance?.toString(),
-      totalSupply: supply?.toString(),
-      allTokenIds: allTokenIds.map(t => t.toString()),
-      owners: owners?.map(o => o.result),
-      userTokenIds: userTokenIds.map(t => t.toString()),
-      lineages: lineages?.map(l => l.result),
-      errors: { balanceError, ownersError, lineagesError }
-    });
-  }, [address, balance, supply, allTokenIds, owners, userTokenIds, lineages, balanceError, ownersError, lineagesError]);
 
   // 加载metadata并组装数据
   useEffect(() => {
@@ -278,8 +261,8 @@ export default function MyAgentsPage() {
 
         agentData.push({
           tokenId,
-          houseId: Number(lineage.houseId || lineage[3]),
-          generation: Number(lineage.generation || lineage[2]),
+          houseId: Number(lineage.houseId ?? lineage[3] ?? 1),
+          generation: Number(lineage.generation ?? lineage[2] ?? 0),
           sealed: lineage.sealed ?? lineage.isSealed ?? lineage[4] ?? false,
           state: (lineage.sealed || lineage.isSealed) ? 1 : 0,
           metadata,
@@ -319,17 +302,6 @@ export default function MyAgentsPage() {
           管理你的基因智能体，发起融合创造新生命
         </p>
       </div>
-
-      {/* Debug Info - 临时调试用 */}
-      {isConnected && (
-        <div className="glass-card p-4 text-xs text-gray-500 font-mono">
-          <div>Debug: {debugInfo}</div>
-          <div>Contract: {agentContractAddress}</div>
-          {balanceError && <div className="text-red-400">Balance Error: {balanceError.message}</div>}
-          {ownersError && <div className="text-red-400">Owners Error: {String(ownersError)}</div>}
-          {lineagesError && <div className="text-red-400">Lineages Error: {String(lineagesError)}</div>}
-        </div>
-      )}
 
       {/* Connection Check */}
       {!isConnected ? (
