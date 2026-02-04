@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAccount, useBlockNumber } from 'wagmi';
 import {
@@ -99,6 +99,7 @@ type FusionStep = 'select' | 'waiting' | 'revealed';
 
 function FusionPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const { data: blockNumber, refetch: refetchBlock } = useBlockNumber();
 
@@ -216,8 +217,9 @@ function FusionPageContent() {
     parentB ? BigInt(parentB) : undefined
   );
 
-  // Check if contract is paused
+  // Check if contract is paused (可用于显示暂停警告)
   const { data: isPaused } = useFusionCorePaused();
+  const _ = isPaused; // 暂时标记为使用，后续可添加暂停检查
 
   // Simulate commit hash for pre-flight check
   const [simulatedHash, setSimulatedHash] = useState<`0x${string}` | undefined>();
@@ -314,9 +316,13 @@ function FusionPageContent() {
   // Handle reveal success
   useEffect(() => {
     if (revealSuccess) {
+      // 清除 localStorage 中的 salt（融合完成后不再需要）
+      if (address && parentA && parentB) {
+        localStorage.removeItem(getSaltKey(parentA, parentB, address));
+      }
       setStep('revealed');
     }
-  }, [revealSuccess]);
+  }, [revealSuccess, address, parentA, parentB]);
 
   // Handle cancel success
   useEffect(() => {
@@ -334,10 +340,6 @@ function FusionPageContent() {
       refetchActiveCommit();
     }
   }, [cancelSuccess, address, parentA, parentB, refetchActiveCommit]);
-
-  const handleGenerateSalt = () => {
-    saveSalt(generateSalt());
-  };
 
   // Check if tokens are sealed
   const isParentASealed = lineageA?.sealed === true;
@@ -392,38 +394,6 @@ function FusionPageContent() {
       console.log('salt:', currentSalt);
       console.log('commitHash:', commitHashValue);
       console.log('=== END ===');
-
-      commit(BigInt(parentA), BigInt(parentB), commitHashValue, mode);
-    } catch (err: any) {
-      setError(err.message || '提交融合失败');
-    }
-  };
-
-  const handleCommit = async () => {
-    if (!address || !salt) return;
-
-    try {
-      setError('');
-
-      // DEBUG: Log all values used in hash calculation
-      console.log('=== COMMIT DEBUG ===');
-      console.log('parentA:', parentA, 'as BigInt:', BigInt(parentA).toString());
-      console.log('parentB:', parentB, 'as BigInt:', BigInt(parentB).toString());
-      console.log('salt:', salt);
-      console.log('address:', address);
-      console.log('mode:', mode, '(0=BURN, 1=SEAL)');
-
-      // NOTE: commitBlock is NOT included in hash - users cannot predict mining block
-      const commitHashValue = generateCommitHash(
-        BigInt(parentA),
-        BigInt(parentB),
-        salt,
-        address,
-        mode
-      );
-
-      console.log('commitHash:', commitHashValue);
-      console.log('=== END DEBUG ===');
 
       commit(BigInt(parentA), BigInt(parentB), commitHashValue, mode);
     } catch (err: any) {
@@ -517,6 +487,10 @@ function FusionPageContent() {
   };
 
   const reset = () => {
+    // 清除 localStorage 中的 salt
+    if (address && parentA && parentB) {
+      localStorage.removeItem(getSaltKey(parentA, parentB, address));
+    }
     setParentA('');
     setParentB('');
     setSalt('');
@@ -524,6 +498,8 @@ function FusionPageContent() {
     setStep('select');
     setCommitBlock(null);
     setError('');
+    // 清除 URL 参数
+    router.replace('/fusion');
   };
 
   const canReveal = commitBlock && blockNumber && blockNumber > commitBlock;
@@ -785,10 +761,7 @@ function FusionPageContent() {
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
               <p className="text-red-400 text-sm">⚠️ 盐值丢失！无法揭示此融合。</p>
               <button
-                onClick={() => {
-                  setStep('select');
-                  setCommitBlock(null);
-                }}
+                onClick={reset}
                 className="mt-2 text-xs text-amber-400 hover:text-amber-300"
               >
                 返回重新开始
@@ -816,11 +789,7 @@ function FusionPageContent() {
             {/* 如果没有活跃commit，显示返回按钮 */}
             {!hasActiveCommit ? (
               <button
-                onClick={() => {
-                  setStep('select');
-                  setCommitBlock(null);
-                  setSalt('');
-                }}
+                onClick={reset}
                 className="flex-1 py-3 btn-secondary"
               >
                 返回选择
