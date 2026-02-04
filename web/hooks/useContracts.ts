@@ -2,7 +2,7 @@
 
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useChainId } from 'wagmi';
-import { Address, keccak256, encodePacked, toHex } from 'viem';
+import { Address, keccak256, encodeAbiParameters, toHex } from 'viem';
 import {
   CONTRACTS,
   HOUSE_FORGE_AGENT_ABI,
@@ -319,9 +319,18 @@ export function generateCommitHash(
   sender: Address,
   mode: FusionMode
 ): `0x${string}` {
+  // IMPORTANT: Must use encodeAbiParameters (abi.encode) NOT encodePacked
+  // Contract uses: keccak256(abi.encode(parentA, parentB, salt, commitBlock, sender, mode))
   return keccak256(
-    encodePacked(
-      ['uint256', 'uint256', 'bytes32', 'uint256', 'address', 'uint8'],
+    encodeAbiParameters(
+      [
+        { type: 'uint256' },
+        { type: 'uint256' },
+        { type: 'bytes32' },
+        { type: 'uint256' },
+        { type: 'address' },
+        { type: 'uint8' },
+      ],
       [parentA, parentB, salt, commitBlock, sender, mode]
     )
   );
