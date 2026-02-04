@@ -1,15 +1,15 @@
 # KinForge
 
 [![在线演示](https://img.shields.io/badge/在线-kinforge.xyz-blue)](https://www.kinforge.xyz/)
-[![BSC 主网](https://img.shields.io/badge/BSC-主网-yellow)](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
+[![BSC 主网](https://img.shields.io/badge/BSC-主网-yellow)](https://bscscan.com/address/0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f)
 
 基于 BNB Chain 的 BAP-578 兼容非同质化智能体 (NFA) 系统，包含 7 大天气家族、AI 驱动的个性化对话、记忆系统和 commit-reveal 融合机制。
 
 ## 在线部署
 
 - **官网**: https://www.kinforge.xyz/
-- **智能合约**: [0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
-- **融合合约**: [0x8a7fdf8e6b3E7C23744de8eE893D0C1899189004](https://bscscan.com/address/0x8a7fdf8e6b3E7C23744de8eE893D0C1899189004)
+- **智能合约**: [0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f](https://bscscan.com/address/0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f) (V3)
+- **融合合约**: [0xa62E109Db724308FEB530A0b00431cf47BBC1f6E](https://bscscan.com/address/0xa62E109Db724308FEB530A0b00431cf47BBC1f6E) (V3)
 
 ## 功能特性
 
@@ -114,7 +114,8 @@ DATABASE_PATH=./data/vault.db
 # 区块链
 RPC_URL=https://bsc-dataseed.binance.org/
 CHAIN_ID=56
-HOUSEFORGE_AGENT_ADDRESS=0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B
+HOUSEFORGE_AGENT_ADDRESS=0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f
+FUSION_CORE_ADDRESS=0xa62E109Db724308FEB530A0b00431cf47BBC1f6E
 
 # AI 配置（对话必需）
 AI_PROVIDER=openai
@@ -368,7 +369,7 @@ cd server && pnpm test
 
 - 官网: https://www.kinforge.xyz/
 - GitHub: https://github.com/KinForgeLab/kinforge
-- BSCScan: [合约](https://bscscan.com/address/0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B)
+- BSCScan: [HouseForgeAgent](https://bscscan.com/address/0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f) | [FusionCore](https://bscscan.com/address/0xa62E109Db724308FEB530A0b00431cf47BBC1f6E)
 
 ## 许可证
 

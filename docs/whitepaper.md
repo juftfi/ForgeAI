@@ -611,10 +611,10 @@ learningRoot = keccak256(
 
 ### A. 合约地址
 
-| 合约 | 地址 |
-|------|------|
-| HouseForgeAgent | 0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B |
-| FusionCore | 0x8a7fdf8e6b3E7C23744de8eE893D0C1899189004 |
+| 合约 | 地址 | 版本 |
+|------|------|------|
+| HouseForgeAgent | 0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f | V3 |
+| FusionCore | 0xa62E109Db724308FEB530A0b00431cf47BBC1f6E | V3 |
 
 ### B. API 端点
 
