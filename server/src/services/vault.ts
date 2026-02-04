@@ -83,6 +83,65 @@ export class VaultService {
 
       CREATE INDEX IF NOT EXISTS idx_vaults_token_id ON vaults(token_id);
       CREATE INDEX IF NOT EXISTS idx_vaults_vault_hash ON vaults(vault_hash);
+
+      -- Chat sessions table
+      CREATE TABLE IF NOT EXISTS chat_sessions (
+        id TEXT PRIMARY KEY,
+        token_id INTEGER NOT NULL,
+        user_address TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        ended_at TEXT,
+        message_count INTEGER DEFAULT 0,
+        summary TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_sessions_token ON chat_sessions(token_id);
+      CREATE INDEX IF NOT EXISTS idx_sessions_user ON chat_sessions(user_address);
+
+      -- Chat messages table
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        token_count INTEGER,
+        FOREIGN KEY (session_id) REFERENCES chat_sessions(id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_messages_session ON chat_messages(session_id);
+
+      -- Agent memories table
+      CREATE TABLE IF NOT EXISTS agent_memories (
+        id TEXT PRIMARY KEY,
+        token_id INTEGER NOT NULL,
+        memory_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        importance REAL DEFAULT 0.5,
+        created_at TEXT NOT NULL,
+        last_accessed TEXT,
+        access_count INTEGER DEFAULT 0,
+        source_session_id TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_memories_token ON agent_memories(token_id);
+      CREATE INDEX IF NOT EXISTS idx_memories_type ON agent_memories(memory_type);
+
+      -- Learning snapshots table
+      CREATE TABLE IF NOT EXISTS learning_snapshots (
+        id TEXT PRIMARY KEY,
+        token_id INTEGER NOT NULL,
+        version INTEGER NOT NULL,
+        persona_delta TEXT NOT NULL,
+        memories_hash TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        learning_root TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        synced_to_chain INTEGER DEFAULT 0,
+        UNIQUE(token_id, version)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_snapshots_token ON learning_snapshots(token_id);
     `);
   }
 
@@ -243,6 +302,20 @@ export class VaultService {
    */
   close(): void {
     this.db.close();
+  }
+
+  /**
+   * Get the database instance (for other services)
+   */
+  getDatabase(): Database.Database {
+    return this.db;
+  }
+
+  /**
+   * Get base URL
+   */
+  getBaseUrl(): string {
+    return this.baseUrl;
   }
 }
 

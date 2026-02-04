@@ -13,6 +13,12 @@ import {
   useBurnAgent,
 } from '@/hooks/useContracts';
 import { HOUSES, AgentState } from '@/config/contracts';
+import AgentChat from '@/components/chat/AgentChat';
+import LearningPanel from '@/components/learning/LearningPanel';
+import MemoryBrowser from '@/components/memory/MemoryBrowser';
+
+// Tab types
+type TabType = 'info' | 'chat' | 'learning' | 'memories';
 
 // 家族名称映射
 const HOUSE_NAMES: Record<number, string> = {
@@ -125,6 +131,7 @@ export default function AgentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showActions, setShowActions] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('info');
 
   // On-chain data
   const { data: onChainMetadata } = useAgentMetadata(tokenId);
@@ -266,119 +273,166 @@ export default function AgentDetailPage() {
             <p className="text-amber-400 text-sm mt-2 font-mono">{weatherId}</p>
           </div>
 
-          {/* Owner Info */}
-          {owner && (
-            <div className="glass-card p-4">
-              <div className="text-xs text-gray-500 mb-1">持有者</div>
-              <div className="font-mono text-sm break-all text-white">
-                {owner}
-                {isOwner && <span className="ml-2 text-green-400">(你)</span>}
-              </div>
-            </div>
-          )}
-
-          {/* Lineage */}
-          {lineage && (lineage.parent1 > BigInt(0) || lineage.parent2 > BigInt(0)) && (
-            <div className="glass-card p-4">
-              <h2 className="text-lg font-bold mb-3 text-amber-400">血脉</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {lineage.parent1 > BigInt(0) && (
-                  <Link
-                    href={`/agent/${lineage.parent1}`}
-                    className="bg-black/60 rounded-lg p-3 hover:bg-amber-500/10 transition-colors border border-amber-500/20"
-                  >
-                    <div className="text-xs text-gray-500">亲本 A</div>
-                    <div className="text-amber-400 font-medium">智能体 #{lineage.parent1.toString()}</div>
-                  </Link>
-                )}
-                {lineage.parent2 > BigInt(0) && (
-                  <Link
-                    href={`/agent/${lineage.parent2}`}
-                    className="bg-black/60 rounded-lg p-3 hover:bg-amber-500/10 transition-colors border border-amber-500/20"
-                  >
-                    <div className="text-xs text-gray-500">亲本 B</div>
-                    <div className="text-amber-400 font-medium">智能体 #{lineage.parent2.toString()}</div>
-                  </Link>
-                )}
-              </div>
-              <Link
-                href={`/tree?root=${id}`}
-                className="inline-block mt-3 text-sm text-amber-400 hover:text-amber-300"
+          {/* Tab Navigation */}
+          <div className="flex gap-1 bg-black/40 p-1 rounded-lg">
+            {[
+              { key: 'info', label: '基本信息', icon: '📋' },
+              { key: 'chat', label: '对话', icon: '💬' },
+              { key: 'learning', label: '学习成长', icon: '📈' },
+              { key: 'memories', label: '记忆', icon: '🧠' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as TabType)}
+                className={`flex-1 px-3 py-2 text-sm rounded-md transition-all ${
+                  activeTab === tab.key
+                    ? 'bg-amber-500/20 text-amber-400 font-medium'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
               >
-                查看完整血脉树 →
-              </Link>
-            </div>
-          )}
-
-          {/* Core Traits */}
-          <div className="glass-card p-4">
-            <h2 className="text-lg font-bold mb-3 text-amber-400">核心特征</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {metadata.attributes
-                .filter(a => coreTraits.includes(a.trait_type))
-                .map(attr => (
-                  <div key={attr.trait_type} className="bg-black/60 rounded-lg p-3 border border-amber-500/10">
-                    <div className="text-xs text-gray-500">{TRAIT_NAMES[attr.trait_type] || attr.trait_type}</div>
-                    <div className="text-sm font-medium text-white">{attr.value}</div>
-                  </div>
-                ))}
-            </div>
+                <span className="mr-1">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* Visual Traits */}
-          <div className="glass-card p-4">
-            <h2 className="text-lg font-bold mb-3 text-amber-400">视觉特征</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {metadata.attributes
-                .filter(a => visualTraits.includes(a.trait_type))
-                .map(attr => (
-                  <div key={attr.trait_type} className="bg-black/60 rounded-lg p-3 border border-amber-500/10">
-                    <div className="text-xs text-gray-500">{TRAIT_NAMES[attr.trait_type] || attr.trait_type}</div>
-                    <div className="text-sm font-medium text-white">{attr.value}</div>
+          {/* Tab Content */}
+          {activeTab === 'info' && (
+            <>
+              {/* Owner Info */}
+              {owner && (
+                <div className="glass-card p-4">
+                  <div className="text-xs text-gray-500 mb-1">持有者</div>
+                  <div className="font-mono text-sm break-all text-white">
+                    {owner}
+                    {isOwner && <span className="ml-2 text-green-400">(你)</span>}
                   </div>
-                ))}
-            </div>
-          </div>
+                </div>
+              )}
 
-          {/* On-Chain Data */}
-          {onChainMetadata && (
-            <div className="glass-card p-4">
-              <h2 className="text-lg font-bold mb-3 text-amber-400">链上数据</h2>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="text-gray-500">保险库 URI: </span>
-                  <span className="font-mono text-xs break-all text-white">
-                    {onChainMetadata.vaultURI || '(未设置)'}
-                  </span>
+              {/* Lineage */}
+              {lineage && (lineage.parent1 > BigInt(0) || lineage.parent2 > BigInt(0)) && (
+                <div className="glass-card p-4">
+                  <h2 className="text-lg font-bold mb-3 text-amber-400">血脉</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {lineage.parent1 > BigInt(0) && (
+                      <Link
+                        href={`/agent/${lineage.parent1}`}
+                        className="bg-black/60 rounded-lg p-3 hover:bg-amber-500/10 transition-colors border border-amber-500/20"
+                      >
+                        <div className="text-xs text-gray-500">亲本 A</div>
+                        <div className="text-amber-400 font-medium">智能体 #{lineage.parent1.toString()}</div>
+                      </Link>
+                    )}
+                    {lineage.parent2 > BigInt(0) && (
+                      <Link
+                        href={`/agent/${lineage.parent2}`}
+                        className="bg-black/60 rounded-lg p-3 hover:bg-amber-500/10 transition-colors border border-amber-500/20"
+                      >
+                        <div className="text-xs text-gray-500">亲本 B</div>
+                        <div className="text-amber-400 font-medium">智能体 #{lineage.parent2.toString()}</div>
+                      </Link>
+                    )}
+                  </div>
+                  <Link
+                    href={`/tree?root=${id}`}
+                    className="inline-block mt-3 text-sm text-amber-400 hover:text-amber-300"
+                  >
+                    查看完整血脉树 →
+                  </Link>
                 </div>
-                <div>
-                  <span className="text-gray-500">保险库哈希: </span>
-                  <span className="font-mono text-xs break-all text-white">
-                    {formatBytes32(onChainMetadata.vaultHash)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">学习根: </span>
-                  <span className="font-mono text-xs break-all text-white">
-                    {formatBytes32(onChainMetadata.learningRoot)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">学习版本: </span>
-                  <span className="text-white">
-                    {formatLearningVersion(onChainMetadata.learningVersion)}
-                  </span>
+              )}
+
+              {/* Core Traits */}
+              <div className="glass-card p-4">
+                <h2 className="text-lg font-bold mb-3 text-amber-400">核心特征</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {metadata.attributes
+                    .filter(a => coreTraits.includes(a.trait_type))
+                    .map(attr => (
+                      <div key={attr.trait_type} className="bg-black/60 rounded-lg p-3 border border-amber-500/10">
+                        <div className="text-xs text-gray-500">{TRAIT_NAMES[attr.trait_type] || attr.trait_type}</div>
+                        <div className="text-sm font-medium text-white">{attr.value}</div>
+                      </div>
+                    ))}
                 </div>
               </div>
-            </div>
+
+              {/* Visual Traits */}
+              <div className="glass-card p-4">
+                <h2 className="text-lg font-bold mb-3 text-amber-400">视觉特征</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {metadata.attributes
+                    .filter(a => visualTraits.includes(a.trait_type))
+                    .map(attr => (
+                      <div key={attr.trait_type} className="bg-black/60 rounded-lg p-3 border border-amber-500/10">
+                        <div className="text-xs text-gray-500">{TRAIT_NAMES[attr.trait_type] || attr.trait_type}</div>
+                        <div className="text-sm font-medium text-white">{attr.value}</div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* On-Chain Data */}
+              {onChainMetadata && (
+                <div className="glass-card p-4">
+                  <h2 className="text-lg font-bold mb-3 text-amber-400">链上数据</h2>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">保险库 URI: </span>
+                      <span className="font-mono text-xs break-all text-white">
+                        {onChainMetadata.vaultURI || '(未设置)'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">保险库哈希: </span>
+                      <span className="font-mono text-xs break-all text-white">
+                        {formatBytes32(onChainMetadata.vaultHash)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">学习根: </span>
+                      <span className="font-mono text-xs break-all text-white">
+                        {formatBytes32(onChainMetadata.learningRoot)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">学习版本: </span>
+                      <span className="text-white">
+                        {formatLearningVersion(onChainMetadata.learningVersion)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Vault Info */}
+              {vault && (
+                <div className="glass-card p-4">
+                  <h2 className="text-lg font-bold mb-3 text-amber-400">保险库摘要</h2>
+                  <p className="text-gray-300">{vault.summary}</p>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Vault Info */}
-          {vault && (
-            <div className="glass-card p-4">
-              <h2 className="text-lg font-bold mb-3 text-amber-400">保险库摘要</h2>
-              <p className="text-gray-300">{vault.summary}</p>
-            </div>
+          {/* Chat Tab */}
+          {activeTab === 'chat' && (
+            <AgentChat
+              tokenId={Number(id)}
+              agentName={metadata.name.replace('HouseForge', 'KinForge')}
+              houseName={house}
+            />
+          )}
+
+          {/* Learning Tab */}
+          {activeTab === 'learning' && (
+            <LearningPanel tokenId={Number(id)} />
+          )}
+
+          {/* Memories Tab */}
+          {activeTab === 'memories' && (
+            <MemoryBrowser tokenId={Number(id)} />
           )}
 
           {/* Actions */}

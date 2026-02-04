@@ -2,6 +2,9 @@ import { Router, Request, Response } from 'express';
 import { getVaultService } from '../services/vault.js';
 import { generateGenesisMetadata, toOpenSeaMetadata } from '../services/traitEngine.js';
 import { loadGenesis } from '../utils/yaml.js';
+import { getChatService } from '../services/chat.js';
+import { getMemoryService } from '../services/memory.js';
+import { getLearningService } from '../services/learning.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -965,6 +968,362 @@ router.get('/render/recipes', (req: Request, res: Response) => {
   } catch (error) {
     console.error('List recipes error:', error);
     res.status(500).json({ error: 'Failed to list recipes' });
+  }
+});
+
+// =============================================================
+//                    CHAT ROUTES
+// =============================================================
+
+/**
+ * POST /chat/session
+ * Create a new chat session with an agent
+ */
+router.post('/chat/session', (req: Request, res: Response) => {
+  try {
+    const { tokenId, userAddress } = req.body;
+
+    if (!tokenId || typeof tokenId !== 'number') {
+      return res.status(400).json({ error: 'tokenId is required and must be a number' });
+    }
+    if (!userAddress || typeof userAddress !== 'string') {
+      return res.status(400).json({ error: 'userAddress is required' });
+    }
+
+    const chatService = getChatService();
+    const session = chatService.createSession(tokenId, userAddress);
+
+    res.json(session);
+  } catch (error: any) {
+    console.error('Create session error:', error);
+    res.status(500).json({ error: 'Failed to create session', details: error?.message });
+  }
+});
+
+/**
+ * POST /chat/message
+ * Send a message and get AI response
+ */
+router.post('/chat/message', async (req: Request, res: Response) => {
+  try {
+    const { sessionId, content } = req.body;
+
+    if (!sessionId || typeof sessionId !== 'string') {
+      return res.status(400).json({ error: 'sessionId is required' });
+    }
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({ error: 'content is required' });
+    }
+    if (content.length > 2000) {
+      return res.status(400).json({ error: 'Message too long (max 2000 characters)' });
+    }
+
+    const chatService = getChatService();
+    const response = await chatService.sendMessage(sessionId, content);
+
+    res.json(response);
+  } catch (error: any) {
+    console.error('Send message error:', error);
+
+    // Handle specific errors
+    if (error?.message?.includes('not found')) {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error?.message?.includes('ended')) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(500).json({ error: 'Failed to send message', details: error?.message });
+  }
+});
+
+/**
+ * GET /chat/session/:sessionId
+ * Get session details and history
+ */
+router.get('/chat/session/:sessionId', (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const limit = parseInt(req.query.limit as string, 10) || 50;
+
+    const chatService = getChatService();
+    const session = chatService.getSession(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const history = chatService.getHistory(sessionId, limit);
+
+    res.json({
+      ...session,
+      messages: history,
+    });
+  } catch (error: any) {
+    console.error('Get session error:', error);
+    res.status(500).json({ error: 'Failed to get session', details: error?.message });
+  }
+});
+
+/**
+ * GET /chat/sessions/:tokenId
+ * Get all sessions for a token
+ */
+router.get('/chat/sessions/:tokenId', (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const limit = parseInt(req.query.limit as string, 10) || 20;
+
+    const chatService = getChatService();
+    const sessions = chatService.getSessionsByToken(tokenId, limit);
+
+    res.json({ tokenId, sessions });
+  } catch (error: any) {
+    console.error('Get sessions error:', error);
+    res.status(500).json({ error: 'Failed to get sessions', details: error?.message });
+  }
+});
+
+/**
+ * POST /chat/session/:sessionId/end
+ * End a session and extract memories
+ */
+router.post('/chat/session/:sessionId/end', async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+
+    const chatService = getChatService();
+    const summary = await chatService.endSession(sessionId);
+
+    res.json(summary);
+  } catch (error: any) {
+    console.error('End session error:', error);
+
+    if (error?.message?.includes('not found')) {
+      return res.status(404).json({ error: error.message });
+    }
+
+    res.status(500).json({ error: 'Failed to end session', details: error?.message });
+  }
+});
+
+// =============================================================
+//                    MEMORY ROUTES
+// =============================================================
+
+/**
+ * GET /agent/:tokenId/memories
+ * Get agent memories
+ */
+router.get('/agent/:tokenId/memories', (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const limit = parseInt(req.query.limit as string, 10) || 50;
+    const type = req.query.type as string;
+
+    const memoryService = getMemoryService();
+
+    let memories;
+    if (type && ['fact', 'preference', 'experience', 'relationship'].includes(type)) {
+      memories = memoryService.getByType(tokenId, type as any, limit);
+    } else {
+      memories = memoryService.getByTokenId(tokenId, limit);
+    }
+
+    res.json({
+      tokenId,
+      count: memories.length,
+      totalCount: memoryService.getCount(tokenId),
+      memories,
+    });
+  } catch (error: any) {
+    console.error('Get memories error:', error);
+    res.status(500).json({ error: 'Failed to get memories', details: error?.message });
+  }
+});
+
+/**
+ * GET /agent/:tokenId/memories/search
+ * Search agent memories
+ */
+router.get('/agent/:tokenId/memories/search', (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const query = req.query.q as string;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter q is required' });
+    }
+
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+
+    const memoryService = getMemoryService();
+    const memories = memoryService.search(tokenId, query, limit);
+
+    res.json({
+      tokenId,
+      query,
+      count: memories.length,
+      memories,
+    });
+  } catch (error: any) {
+    console.error('Search memories error:', error);
+    res.status(500).json({ error: 'Failed to search memories', details: error?.message });
+  }
+});
+
+// =============================================================
+//                    LEARNING ROUTES
+// =============================================================
+
+/**
+ * GET /agent/:tokenId/learning
+ * Get agent learning history
+ */
+router.get('/agent/:tokenId/learning', (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const learningService = getLearningService();
+    const history = learningService.getHistory(tokenId);
+
+    res.json(history);
+  } catch (error: any) {
+    console.error('Get learning history error:', error);
+    res.status(500).json({ error: 'Failed to get learning history', details: error?.message });
+  }
+});
+
+/**
+ * GET /agent/:tokenId/learning/:version
+ * Get specific learning snapshot
+ */
+router.get('/agent/:tokenId/learning/:version', (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    const version = parseInt(req.params.version, 10);
+
+    if (isNaN(tokenId) || isNaN(version)) {
+      return res.status(400).json({ error: 'Invalid token ID or version' });
+    }
+
+    const learningService = getLearningService();
+    const snapshot = learningService.getSnapshot(tokenId, version);
+
+    if (!snapshot) {
+      return res.status(404).json({ error: 'Snapshot not found' });
+    }
+
+    res.json(snapshot);
+  } catch (error: any) {
+    console.error('Get snapshot error:', error);
+    res.status(500).json({ error: 'Failed to get snapshot', details: error?.message });
+  }
+});
+
+/**
+ * POST /agent/:tokenId/learning/snapshot
+ * Create a new learning snapshot
+ */
+router.post('/agent/:tokenId/learning/snapshot', (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const learningService = getLearningService();
+    const snapshot = learningService.createSnapshot(tokenId);
+
+    res.json(snapshot);
+  } catch (error: any) {
+    console.error('Create snapshot error:', error);
+    res.status(500).json({ error: 'Failed to create snapshot', details: error?.message });
+  }
+});
+
+/**
+ * POST /agent/:tokenId/learning/sync
+ * Sync learning root to blockchain
+ */
+router.post('/agent/:tokenId/learning/sync', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const { version, privateKey } = req.body;
+
+    const learningService = getLearningService();
+
+    // If no version specified, get latest
+    let targetVersion = version;
+    if (!targetVersion) {
+      const latest = learningService.getLatestSnapshot(tokenId);
+      if (!latest) {
+        return res.status(404).json({ error: 'No snapshots found for this agent' });
+      }
+      targetVersion = latest.version;
+    }
+
+    const txHash = await learningService.syncToChain(tokenId, targetVersion, privateKey);
+
+    res.json({
+      tokenId,
+      version: targetVersion,
+      txHash,
+      synced: true,
+    });
+  } catch (error: any) {
+    console.error('Sync to chain error:', error);
+
+    if (error?.message?.includes('not found')) {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error?.message?.includes('already synced')) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error?.message?.includes('private key')) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(500).json({ error: 'Failed to sync to chain', details: error?.message });
+  }
+});
+
+/**
+ * GET /agent/:tokenId/profile
+ * Get agent profile (including persona)
+ */
+router.get('/agent/:tokenId/profile', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const chatService = getChatService();
+    const profile = await chatService.getAgentProfile(tokenId);
+
+    res.json(profile);
+  } catch (error: any) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Failed to get profile', details: error?.message });
   }
 });
 
