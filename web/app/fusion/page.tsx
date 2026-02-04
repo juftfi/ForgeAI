@@ -155,7 +155,13 @@ function FusionPageContent() {
   // Restore state from existing commit
   useEffect(() => {
     if (hasActiveCommit && existingCommit && parentA && parentB) {
-      const commitData = existingCommit as { commitHash: string; commitBlock: bigint; revealed: boolean };
+      const commitData = existingCommit as unknown as { commitHash: string; commitBlock: bigint; revealed: boolean; mode: number };
+      console.log('=== EXISTING COMMIT DATA ===');
+      console.log('commitHash from contract:', commitData.commitHash);
+      console.log('commitBlock from contract:', commitData.commitBlock?.toString());
+      console.log('revealed:', commitData.revealed);
+      console.log('mode from contract:', commitData.mode);
+      console.log('=== END ===');
       if (commitData.commitBlock > BigInt(0) && !commitData.revealed) {
         setCommitBlock(commitData.commitBlock);
         setStep('waiting');
@@ -240,6 +246,17 @@ function FusionPageContent() {
       // IMPORTANT: Use currentBlock + 1 because the TX will be mined in the NEXT block
       // The contract stores block.number at mining time, not at submission time
       const expectedMiningBlock = (blockNumber || BigInt(0)) + BigInt(1);
+
+      // DEBUG: Log all values used in hash calculation
+      console.log('=== COMMIT DEBUG ===');
+      console.log('parentA:', parentA, 'as BigInt:', BigInt(parentA).toString());
+      console.log('parentB:', parentB, 'as BigInt:', BigInt(parentB).toString());
+      console.log('salt:', salt);
+      console.log('currentBlock:', blockNumber?.toString());
+      console.log('expectedMiningBlock:', expectedMiningBlock.toString());
+      console.log('address:', address);
+      console.log('mode:', mode, '(0=BURN, 1=SEAL)');
+
       const commitHashValue = generateCommitHash(
         BigInt(parentA),
         BigInt(parentB),
@@ -249,10 +266,41 @@ function FusionPageContent() {
         mode
       );
 
+      console.log('commitHash:', commitHashValue);
+      console.log('=== END DEBUG ===');
+
       commit(BigInt(parentA), BigInt(parentB), commitHashValue, mode);
     } catch (err: any) {
       setError(err.message || '提交融合失败');
     }
+  };
+
+  // Debug: Verify hash calculation matches contract
+  const verifyCommitHash = () => {
+    if (!existingCommit || !salt || !address || !parentA || !parentB) return;
+    const commitData = existingCommit as unknown as { commitHash: string; commitBlock: bigint; revealed: boolean; mode: number };
+
+    console.log('=== VERIFY HASH ===');
+    console.log('Stored commitHash:', commitData.commitHash);
+    console.log('Stored commitBlock:', commitData.commitBlock?.toString());
+    console.log('Stored mode:', commitData.mode);
+    console.log('Current salt:', salt);
+    console.log('Current address:', address);
+    console.log('parentA:', parentA);
+    console.log('parentB:', parentB);
+
+    // Recalculate hash with stored commitBlock
+    const recalculatedHash = generateCommitHash(
+      BigInt(parentA),
+      BigInt(parentB),
+      salt,
+      commitData.commitBlock,
+      address,
+      commitData.mode as FusionMode
+    );
+    console.log('Recalculated hash:', recalculatedHash);
+    console.log('Match:', recalculatedHash.toLowerCase() === commitData.commitHash.toLowerCase());
+    console.log('=== END VERIFY ===');
   };
 
   const handleReveal = async () => {
@@ -260,6 +308,9 @@ function FusionPageContent() {
       setError('缺少盐值！请输入提交融合时生成的盐值。');
       return;
     }
+
+    // Debug verification
+    verifyCommitHash();
 
     try {
       setError('');

@@ -347,6 +347,7 @@ export const FUSION_CORE_ABI = [
           { name: 'commitHash', type: 'bytes32' },
           { name: 'commitBlock', type: 'uint256' },
           { name: 'revealed', type: 'bool' },
+          { name: 'mode', type: 'uint8' },
         ],
       },
     ],
