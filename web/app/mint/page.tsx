@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId, useSimulateContract } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
 import Link from 'next/link';
 import { CONTRACTS, HOUSE_FORGE_AGENT_ABI } from '@/config/contracts';
@@ -95,6 +95,45 @@ export default function MintPage() {
 
   const { writeContract, data: hash, isPending, error: writeError, reset: resetWrite } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  // 模拟铸造交易，提前检测错误
+  const { error: simulateError, isError: isSimulateError } = useSimulateContract({
+    address: contractAddress,
+    abi: HOUSE_FORGE_AGENT_ABI,
+    functionName: 'mintGenesisPublic',
+    args: reservedAgent ? [
+      reservedAgent.mintParams.houseId,
+      reservedAgent.mintParams.persona,
+      reservedAgent.mintParams.experience,
+      reservedAgent.mintParams.vaultURI,
+      reservedAgent.mintParams.vaultHash as `0x${string}`,
+      reservedAgent.mintParams.learningRoot as `0x${string}`,
+      reservedAgent.mintParams.traitsHash as `0x${string}`,
+      reservedAgent.mintParams.rarityTier,
+      [],
+    ] : undefined,
+    value: mintPrice as bigint || parseEther('0.01'),
+    query: { enabled: !!reservedAgent && !!address && !isSuccess },
+  });
+
+  // 解析模拟错误
+  const getSimulateErrorMessage = (): string | null => {
+    if (!simulateError) return null;
+    const msg = simulateError.message || '';
+    if (msg.includes('Already minted') || msg.includes('ERC721')) {
+      return '此智能体已被铸造，请换一个。';
+    }
+    if (msg.includes('Not active')) {
+      return '铸造尚未开放。';
+    }
+    if (msg.includes('Invalid')) {
+      return '参数无效，请刷新页面重试。';
+    }
+    if (msg.includes('insufficient funds')) {
+      return '余额不足。';
+    }
+    return '预检失败，此智能体可能已被铸造。请取消预订后重试。';
+  };
 
   // 用户取消钱包签名时自动重置状态
   useEffect(() => {
@@ -434,9 +473,9 @@ export default function MintPage() {
                 </div>
                 <button
                   onClick={handleMint}
-                  disabled={isPending || isConfirming || !mintActive || isSuccess}
+                  disabled={isPending || isConfirming || !mintActive || isSuccess || isSimulateError}
                   className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
-                    !isPending && !isConfirming && mintActive && !isSuccess
+                    !isPending && !isConfirming && mintActive && !isSuccess && !isSimulateError
                       ? 'btn-primary'
                       : 'bg-gray-700 cursor-not-allowed text-gray-400'
                   }`}
@@ -449,9 +488,26 @@ export default function MintPage() {
                     ? '铸造中...'
                     : !mintActive
                     ? '铸造未开放'
+                    : isSimulateError
+                    ? '无法铸造'
                     : '铸造智能体'}
                 </button>
               </div>
+
+              {/* 预检错误 - 提前发现问题 */}
+              {isSimulateError && getSimulateErrorMessage() && (
+                <div className="p-4 rounded-lg bg-orange-900/30 border border-orange-500">
+                  <p className="text-orange-400 text-sm mb-2">
+                    ⚠️ {getSimulateErrorMessage()}
+                  </p>
+                  <button
+                    onClick={cancelReservation}
+                    className="text-xs text-amber-400 hover:text-amber-300"
+                  >
+                    取消预订，换一个智能体
+                  </button>
+                </div>
+              )}
 
               {/* Transaction Status */}
               {hash && (
