@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 1001,
+  "houseKey": "CLEAR",
+  "houseId": 1,
+  "seed": "0xd4b5fda8d2e56c30fcea452826b08f9a5784662d512e09c9bccdbfabaea9598e",
+  "traits": {
+    "Season": "S0",
+    "House": "CLEAR",
+    "RarityTier": "Epic",
+    "WeatherID": "S0-CLEAR-0012",
+    "FrameType": "Glass_StressCrack",
+    "CoreMaterial": "Dust_Vortex",
+    "LightSignature": "AuroraRibbon",
+    "InstrumentMark": "OccultSigils",
+    "Atmosphere": "Iridescent",
+    "DioramaGeometry": "Cube",
+    "PaletteTemperature": "Cold",
+    "SurfaceAging": "FrostedEdges",
+    "MicroEngraving": "SerialOnly",
+    "LensBloom": "Soft",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_clear.blend",
+  "geometryPreset": "Cube",
+  "cameraPreset": "main",
+  "lightSignature": "AuroraRibbon",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/1001.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0xe916a029b5c3b1cf0f015ee8ba1e0bcc7295734e07eb8a50f12bdf26fcc7d335"
+}

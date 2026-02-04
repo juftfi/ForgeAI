@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 917,
+  "houseKey": "CLEAR",
+  "houseId": 1,
+  "seed": "0x876de74e4958356b099fac25306be20a32eb3c7faea8cba88aae16019048ef69",
+  "traits": {
+    "Season": "S0",
+    "House": "CLEAR",
+    "RarityTier": "Uncommon",
+    "WeatherID": "S0-CLEAR-0055",
+    "FrameType": "BlackChrome_Mirror",
+    "CoreMaterial": "VolumetricCloud",
+    "LightSignature": "Sunbeam",
+    "InstrumentMark": "HardScale",
+    "Atmosphere": "Humid",
+    "DioramaGeometry": "BarometerAssembly",
+    "PaletteTemperature": "Neutral",
+    "SurfaceAging": "Condensed",
+    "MicroEngraving": "Serial+TinyGrid",
+    "LensBloom": "Soft",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_clear.blend",
+  "geometryPreset": "BarometerAssembly",
+  "cameraPreset": "main",
+  "lightSignature": "Sunbeam",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/917.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0xe52dc2d63677ba8870fcb9f63db5ff51202ff1bd6fd5a14468e53508ac6aeac6"
+}

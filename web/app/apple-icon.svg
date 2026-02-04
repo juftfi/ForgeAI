@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#d97706"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="180" height="180" rx="36" fill="#0a0a0a"/>
+  <!-- Hexagon frame -->
+  <polygon
+    points="90,18 158,52 158,128 90,162 22,128 22,52"
+    fill="none"
+    stroke="#4b5563"
+    stroke-width="4"
+  />
+  <!-- DNA helix -->
+  <path
+    d="M67,45 Q90,67 113,45 M67,67 Q90,90 113,67 M67,90 Q90,113 113,90 M67,113 Q90,135 113,113 M67,135 Q90,113 113,135"
+    fill="none"
+    stroke="url(#goldGrad)"
+    stroke-width="8"
+    stroke-linecap="round"
+  />
+</svg>

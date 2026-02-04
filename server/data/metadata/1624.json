@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #1624 — House Clear",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/1624.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "CLEAR"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Epic"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-CLEAR-0010"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "Glass_StressCrack"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "RainStrands"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "FrostScatter"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "HardScale"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Dusty"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "BarometerAssembly"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "Cold"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "MicroScratches"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "SerialOnly"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "None"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

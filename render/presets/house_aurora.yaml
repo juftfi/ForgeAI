@@ -1,0 +1,54 @@
+# House AURORA - Magnetic Rainbow Light
+# Very subtle iridescence, NOT a rainbow toy
+
+house_id: 5
+name: "AURORA"
+theme: "northern_lights"
+
+# Materials
+materials:
+  core:
+    type: "iridescent_glass"
+    roughness: [0.02, 0.04]
+    ior: 1.48
+    # Subtle iridescence, not overwhelming
+    iridescence:
+      enabled: true
+      strength: 0.15
+      shift: 0.3
+
+  # Orbit rings with subtle emission
+  orbit:
+    emission:
+      enabled: true
+      strength: [8, 14]
+      color: "#B9B2FF"  # Pale purple
+
+# Light Signature: AuroraRibbon
+light_signature:
+  name: "AuroraRibbon"
+  lights:
+    - name: "SpectrumCard"
+      type: "EMISSION_PLANE"
+      size: [1.2, 0.4]
+      strength: 20
+      # Gradient colors (will be applied via shader)
+      gradient:
+        enabled: true
+        colors:
+          - "#E8D0FF"  # Pale purple
+          - "#D0FFE8"  # Pale green
+          - "#D0E8FF"  # Pale blue
+      location: [-0.7, -0.6, 0.9]
+      rotation: [35, 0, 20]
+
+# Atmosphere: Clean (avoid muddiness)
+atmosphere:
+  type: "Iridescent"
+  volume:
+    enabled: false  # Keep clean for clarity
+
+# Palette
+palette:
+  temperature: "neutral"
+  tint: "#F0E8FF"

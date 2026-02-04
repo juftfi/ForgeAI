@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 1095,
+  "houseKey": "FROST",
+  "houseId": 4,
+  "seed": "0x19bea520bf1e5f8594b8ed115713f7921d1def67f76f2b89cc869d6b3c3dfa28",
+  "traits": {
+    "Season": "S0",
+    "House": "FROST",
+    "RarityTier": "Common",
+    "WeatherID": "S0-FROST-0204",
+    "FrameType": "Bronze_Matte",
+    "CoreMaterial": "Frost_Crystals",
+    "LightSignature": "Sunbeam",
+    "InstrumentMark": "FineScale",
+    "Atmosphere": "Charged",
+    "DioramaGeometry": "Capsule",
+    "PaletteTemperature": "Warm",
+    "SurfaceAging": "EdgeWear",
+    "MicroEngraving": "Serial+TinyGrid",
+    "LensBloom": "Cinematic",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_frost.blend",
+  "geometryPreset": "Capsule",
+  "cameraPreset": "main",
+  "lightSignature": "Sunbeam",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/1095.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0xe7442459f330554704672c3eda7f2b7fd7ff48371e02739e940155067d0efdbf"
+}

@@ -1,0 +1,75 @@
+# House ECLIPSE - Black Gold Authority
+# Black gold material, deep shadows, extreme rim, understated luxury
+
+house_id: 7
+name: "ECLIPSE"
+theme: "dark_void"
+
+# World override - darker
+world:
+  strength: 0.12
+
+# Lighting overrides
+lighting:
+  fill:
+    strength: 35  # Much darker
+  rim:
+    strength: 150  # Extreme rim for drama
+    color: "#F7D37C"  # Golden rim
+
+# Compositor
+compositor:
+  glare:
+    mix: 0.22  # More bloom
+
+# Materials
+materials:
+  core:
+    type: "void"
+    # Black glossy with edge emission
+    base_color: "#050505"
+    roughness: [0.08, 0.14]
+    metallic: 1.0
+    # Corona/rim glow
+    fresnel_emission:
+      enabled: true
+      color: "#FFB040"
+      strength: 8
+      ior: 2.5
+      power: 3.0
+
+  metal:
+    base_color: "#0A0A0A"
+    roughness: [0.08, 0.14]
+    metallic: 1.0
+
+# Light Signature: EclipseHalo
+light_signature:
+  name: "EclipseHalo"
+  lights:
+    - name: "CoronaDisc"
+      type: "EMISSION_PLANE"
+      size: [0.9, 0.9]
+      strength: 20
+      color: "#FFD080"
+      location: [0.0, 0.6, 0.0]
+      rotation: [0, 0, 0]
+    - name: "RingRim"
+      type: "EMISSION_RING"
+      radius: 0.45
+      tube_radius: 0.015
+      strength: 15
+      color: "#FFC060"
+      location: [0.0, 0.3, 0.0]
+      rotation: [90, 0, 0]
+
+# Atmosphere: Void (no volume, darker world)
+atmosphere:
+  type: "Void"
+  volume:
+    enabled: false
+
+# Palette
+palette:
+  temperature: "warm_accent"
+  tint: "#FFE0B0"

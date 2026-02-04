@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 1280,
+  "houseKey": "MONSOON",
+  "houseId": 2,
+  "seed": "0xb5852899e07a0c523c03eddeabdb99e2f928a486fdfe5174eb92704f6e26d524",
+  "traits": {
+    "Season": "S0",
+    "House": "MONSOON",
+    "RarityTier": "Common",
+    "WeatherID": "S0-MONSOON-0181",
+    "FrameType": "BlackChrome_Mirror",
+    "CoreMaterial": "RainStrands",
+    "LightSignature": "WetGlow",
+    "InstrumentMark": "CompassArc",
+    "Atmosphere": "Clean",
+    "DioramaGeometry": "Capsule",
+    "PaletteTemperature": "Cold",
+    "SurfaceAging": "Pristine",
+    "MicroEngraving": "Serial+Contour",
+    "LensBloom": "Cinematic",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_monsoon.blend",
+  "geometryPreset": "Capsule",
+  "cameraPreset": "main",
+  "lightSignature": "WetGlow",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/1280.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0x8768e7d8d46fbcb445be62d67c5c651f87bbfa55cfc2591155f1c3bdf9b19fe8"
+}

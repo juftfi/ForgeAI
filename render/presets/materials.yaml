@@ -1,0 +1,395 @@
+# Material Presets for HouseForge 3D Renders
+# Trait-driven materials for frame, core, and diorama elements
+
+version: 1
+
+# ============================================
+# FRAME MATERIALS (FrameType trait)
+# ============================================
+frame_types:
+  BrushedSteel:
+    base_color: [0.6, 0.6, 0.62]
+    metallic: 1.0
+    roughness: 0.35
+    anisotropic: 0.6
+    anisotropic_rotation: 0.0
+    normal_strength: 0.3
+    detail_texture: "brushed_metal"
+
+  PolishedBrass:
+    base_color: [0.85, 0.65, 0.3]
+    metallic: 1.0
+    roughness: 0.15
+    anisotropic: 0.2
+    clearcoat: 0.3
+    clearcoat_roughness: 0.1
+
+  AntiqueBronze:
+    base_color: [0.45, 0.35, 0.25]
+    metallic: 1.0
+    roughness: 0.5
+    patina_color: [0.3, 0.5, 0.4]
+    patina_amount: 0.3
+    normal_strength: 0.5
+
+  WhiteGold:
+    base_color: [0.9, 0.88, 0.8]
+    metallic: 1.0
+    roughness: 0.1
+    clearcoat: 0.5
+    clearcoat_roughness: 0.05
+
+  BlackTitanium:
+    base_color: [0.08, 0.08, 0.1]
+    metallic: 1.0
+    roughness: 0.25
+    anisotropic: 0.3
+
+  CopperVerde:
+    base_color: [0.7, 0.45, 0.35]
+    metallic: 1.0
+    roughness: 0.4
+    patina_color: [0.35, 0.6, 0.5]
+    patina_amount: 0.5
+    normal_strength: 0.6
+
+  RoseGold:
+    base_color: [0.9, 0.6, 0.55]
+    metallic: 1.0
+    roughness: 0.2
+    clearcoat: 0.4
+    clearcoat_roughness: 0.1
+
+  PlatinumMatte:
+    base_color: [0.75, 0.75, 0.78]
+    metallic: 1.0
+    roughness: 0.6
+    anisotropic: 0.1
+
+  MirrorChrome:
+    base_color: [0.95, 0.95, 0.97]
+    metallic: 1.0
+    roughness: 0.02
+    clearcoat: 0.8
+    clearcoat_roughness: 0.02
+
+  GunmetalBlue:
+    base_color: [0.25, 0.28, 0.35]
+    metallic: 1.0
+    roughness: 0.3
+    anisotropic: 0.4
+
+# ============================================
+# SURFACE AGING (SurfaceAging trait)
+# ============================================
+surface_aging:
+  Pristine:
+    wear_amount: 0.0
+    scratch_density: 0.0
+    dust_amount: 0.0
+    roughness_variation: 0.02
+
+  SlightWear:
+    wear_amount: 0.15
+    scratch_density: 0.1
+    dust_amount: 0.05
+    roughness_variation: 0.08
+    edge_wear: 0.1
+
+  LightPatina:
+    wear_amount: 0.25
+    scratch_density: 0.15
+    dust_amount: 0.1
+    roughness_variation: 0.12
+    patina_boost: 0.2
+
+  WeatheredGrace:
+    wear_amount: 0.4
+    scratch_density: 0.25
+    dust_amount: 0.15
+    roughness_variation: 0.2
+    edge_wear: 0.3
+    patina_boost: 0.35
+
+  AncientRelic:
+    wear_amount: 0.6
+    scratch_density: 0.4
+    dust_amount: 0.25
+    roughness_variation: 0.35
+    edge_wear: 0.5
+    patina_boost: 0.6
+    cracks: 0.1
+
+# ============================================
+# MICRO ENGRAVING (MicroEngraving trait)
+# ============================================
+micro_engraving:
+  None:
+    enabled: false
+
+  BarometricLines:
+    enabled: true
+    pattern: "concentric_lines"
+    depth: 0.02
+    spacing: 0.5
+    metallic_variation: 0.1
+
+  CompassRose:
+    enabled: true
+    pattern: "compass"
+    depth: 0.03
+    fill_metallic: 0.9
+
+  WeatherGlyphs:
+    enabled: true
+    pattern: "weather_symbols"
+    depth: 0.025
+    randomize_rotation: true
+
+  StormMap:
+    enabled: true
+    pattern: "topographic"
+    depth: 0.015
+    layers: 5
+
+  ConstellationGrid:
+    enabled: true
+    pattern: "star_field"
+    depth: 0.01
+    dot_size: 0.02
+    line_width: 0.005
+
+# ============================================
+# CORE MATERIALS (CoreMaterial trait)
+# ============================================
+core_materials:
+  ClearCrystal:
+    type: "glass"
+    color: [0.98, 0.99, 1.0]
+    transmission: 0.95
+    roughness: 0.02
+    ior: 1.5
+    absorption_color: [0.95, 0.97, 1.0]
+    absorption_distance: 5.0
+
+  CloudGlass:
+    type: "glass"
+    color: [0.95, 0.96, 0.98]
+    transmission: 0.7
+    roughness: 0.15
+    ior: 1.45
+    subsurface: 0.3
+    subsurface_color: [0.9, 0.92, 0.95]
+
+  LiquidMercury:
+    type: "metal"
+    color: [0.85, 0.85, 0.88]
+    metallic: 0.95
+    roughness: 0.05
+    animated_distortion: true
+
+  MoltenAmber:
+    type: "glass"
+    color: [1.0, 0.7, 0.3]
+    transmission: 0.85
+    roughness: 0.1
+    ior: 1.55
+    absorption_color: [1.0, 0.5, 0.1]
+    absorption_distance: 2.0
+    emission: 0.1
+    emission_color: [1.0, 0.6, 0.2]
+
+  VoidObsidian:
+    type: "glass"
+    color: [0.02, 0.02, 0.03]
+    transmission: 0.4
+    roughness: 0.08
+    ior: 1.7
+    absorption_color: [0.0, 0.0, 0.0]
+    absorption_distance: 0.5
+
+  FrozenPlasma:
+    type: "emission"
+    color: [0.6, 0.8, 1.0]
+    emission: 2.0
+    subsurface: 0.5
+    subsurface_color: [0.4, 0.6, 0.9]
+    transmission: 0.3
+
+  StormEssence:
+    type: "volume"
+    color: [0.5, 0.6, 0.8]
+    density: 0.8
+    emission: 0.5
+    emission_color: [0.6, 0.7, 1.0]
+    turbulence: 0.4
+
+  DesertQuartz:
+    type: "glass"
+    color: [1.0, 0.95, 0.85]
+    transmission: 0.8
+    roughness: 0.2
+    ior: 1.54
+    subsurface: 0.2
+    subsurface_color: [1.0, 0.9, 0.7]
+
+  AuroraSilk:
+    type: "iridescent"
+    base_color: [0.8, 0.85, 0.9]
+    iridescence: 0.8
+    iridescence_ior: 1.3
+    roughness: 0.3
+    subsurface: 0.4
+
+  EclipseCore:
+    type: "absorption"
+    color: [0.1, 0.08, 0.12]
+    transmission: 0.2
+    roughness: 0.05
+    ior: 2.0
+    rim_emission: 1.5
+    rim_color: [1.0, 0.6, 0.2]
+
+# ============================================
+# ATMOSPHERE (Atmosphere trait)
+# ============================================
+atmosphere:
+  Clear:
+    fog_density: 0.0
+    particle_density: 0.0
+
+  MistVeil:
+    fog_density: 0.15
+    fog_color: [0.9, 0.92, 0.95]
+    fog_height: 1.0
+
+  RainCurtain:
+    fog_density: 0.1
+    particle_type: "rain"
+    particle_density: 0.5
+    particle_color: [0.8, 0.85, 0.9]
+
+  DustStorm:
+    fog_density: 0.25
+    fog_color: [0.9, 0.8, 0.6]
+    particle_type: "dust"
+    particle_density: 0.4
+
+  SnowDrift:
+    fog_density: 0.08
+    particle_type: "snow"
+    particle_density: 0.3
+    particle_color: [1.0, 1.0, 1.0]
+
+  ThunderCloud:
+    fog_density: 0.2
+    fog_color: [0.4, 0.45, 0.55]
+    volumetric_emission: 0.05
+
+  AuroraWisp:
+    fog_density: 0.05
+    volumetric_emission: 0.3
+    emission_color_gradient: true
+
+  EclipseShadow:
+    fog_density: 0.1
+    fog_color: [0.15, 0.12, 0.18]
+    rim_glow: 0.4
+
+# ============================================
+# PALETTE TEMPERATURE (PaletteTemperature trait)
+# ============================================
+palette_temperature:
+  Warm:
+    color_shift: [1.1, 1.0, 0.9]
+    saturation_boost: 1.05
+
+  Cool:
+    color_shift: [0.9, 0.95, 1.1]
+    saturation_boost: 1.0
+
+  Neutral:
+    color_shift: [1.0, 1.0, 1.0]
+    saturation_boost: 1.0
+
+  HighContrast:
+    color_shift: [1.0, 1.0, 1.0]
+    contrast_boost: 1.3
+    saturation_boost: 1.15
+
+  Desaturated:
+    color_shift: [1.0, 1.0, 1.0]
+    saturation_boost: 0.7
+
+# ============================================
+# DIORAMA GEOMETRY (DioramaGeometry trait)
+# ============================================
+diorama_geometry:
+  Capsule:
+    mesh_type: "capsule"
+    height: 1.5
+    radius: 0.4
+    segments: 64
+
+  Obelisk:
+    mesh_type: "obelisk"
+    height: 2.0
+    base_width: 0.5
+    top_width: 0.2
+
+  Cube:
+    mesh_type: "cube"
+    size: 1.0
+    bevel: 0.02
+
+  Sphere:
+    mesh_type: "uv_sphere"
+    radius: 0.6
+    segments: 64
+    rings: 32
+
+  Prism:
+    mesh_type: "prism"
+    height: 1.2
+    sides: 6
+    radius: 0.5
+
+  BarometerAssembly:
+    mesh_type: "complex"
+    base: "cylinder"
+    dial: "circle"
+    needle: true
+    glass_dome: true
+
+# ============================================
+# LENS BLOOM (LensBloom trait)
+# ============================================
+lens_bloom:
+  None:
+    enabled: false
+
+  Subtle:
+    enabled: true
+    threshold: 0.9
+    intensity: 0.15
+    radius: 3
+
+  Moderate:
+    enabled: true
+    threshold: 0.8
+    intensity: 0.3
+    radius: 5
+
+  Intense:
+    enabled: true
+    threshold: 0.7
+    intensity: 0.5
+    radius: 8
+
+  Cinematic:
+    enabled: true
+    threshold: 0.75
+    intensity: 0.4
+    radius: 6
+    anamorphic: 0.5
+    streaks: 4

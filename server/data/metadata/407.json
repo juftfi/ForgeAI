@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #407 — House Clear",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/407.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "CLEAR"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Rare"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-CLEAR-0024"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "TitaniumBlack_Brushed"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "VolumetricCloud"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "FrostScatter"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "WindRose"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Dusty"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "BarometerAssembly"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "Cold"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "FrostedEdges"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "Serial+TinyGrid"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "Cinematic"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

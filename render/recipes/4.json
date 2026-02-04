@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 4,
+  "houseKey": "SAND",
+  "houseId": 6,
+  "seed": "0x1d00e22a2bf0179881240087048a244ec3cf960359fb786aaf8728618ee8e38c",
+  "traits": {
+    "Season": "S0",
+    "House": "SAND",
+    "RarityTier": "Common",
+    "WeatherID": "S0-SAND-0318",
+    "FrameType": "Brass_Brushed",
+    "CoreMaterial": "RainStrands",
+    "LightSignature": "IonBloom",
+    "InstrumentMark": "WaveTicks",
+    "Atmosphere": "Clean",
+    "DioramaGeometry": "Sphere",
+    "PaletteTemperature": "Cold",
+    "SurfaceAging": "FrostedEdges",
+    "MicroEngraving": "SerialOnly",
+    "LensBloom": "Soft",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_sand.blend",
+  "geometryPreset": "Sphere",
+  "cameraPreset": "main",
+  "lightSignature": "IonBloom",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/4.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0x5982f965e2582d967d662deb3f157dc6fea9a2eaab7c30434a79ca8d3f2231d0"
+}

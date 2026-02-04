@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 775,
+  "houseKey": "AURORA",
+  "houseId": 5,
+  "seed": "0x1db078ba3d3b316dcc16fd7ec4179b9ea6b960e4a1d903a41387d527e3ab6f85",
+  "traits": {
+    "Season": "S0",
+    "House": "AURORA",
+    "RarityTier": "Rare",
+    "WeatherID": "S0-AURORA-0017",
+    "FrameType": "Glass_PrismCut",
+    "CoreMaterial": "Plasma_Ion",
+    "LightSignature": "IonBloom",
+    "InstrumentMark": "ArchiveGrid",
+    "Atmosphere": "Dusty",
+    "DioramaGeometry": "Sphere",
+    "PaletteTemperature": "Neutral",
+    "SurfaceAging": "Condensed",
+    "MicroEngraving": "Serial+Contour",
+    "LensBloom": "None",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_aurora.blend",
+  "geometryPreset": "Sphere",
+  "cameraPreset": "main",
+  "lightSignature": "IonBloom",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/775.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0x671207ddb7ef87e4133f1a9b204b5c936c9d93bd005c73d26276c7698e663e20"
+}

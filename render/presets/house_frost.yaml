@@ -1,0 +1,59 @@
+# House FROST - Cold Ice Crystal
+# Cold, more scatter, frosted glass edges
+
+house_id: 4
+name: "FROST"
+theme: "frozen_crystal"
+
+# Materials
+materials:
+  core:
+    type: "frosted_glass"
+    roughness: [0.06, 0.12]  # More frosted
+    ior: 1.31  # Ice
+    subsurface:
+      enabled: true
+      color: "#D6F2FF"
+      strength: 0.08
+    # Edge frost mask: higher roughness at edges via Fresnel
+    edge_frost:
+      enabled: true
+      roughness_boost: 0.15
+
+# Compositor
+compositor:
+  glare:
+    mix: 0.12  # Light bloom
+
+# Light Signature: PolarGlow
+light_signature:
+  name: "PolarGlow"
+  lights:
+    - name: "PolarFill"
+      type: "EMISSION_PLANE"
+      size: [2.0, 1.2]
+      strength: 35
+      color: "#D6F2FF"  # Cold blue-white
+      location: [0.8, 0.5, 0.6]
+      rotation: [30, 0, -25]
+    - name: "FrostScatter"
+      type: "AREA"
+      size: [0.8, 0.8]
+      strength: 20
+      color: "#E8FAFF"
+      location: [0.0, -0.3, 1.2]
+      rotation: [75, 0, 0]
+
+# Atmosphere: Icy mist
+atmosphere:
+  type: "Icy"
+  volume:
+    enabled: true
+    density: 0.018
+    anisotropy: 0.2
+    color: "#E0F4FF"
+
+# Palette
+palette:
+  temperature: "cold"
+  tint: "#E0F8FF"

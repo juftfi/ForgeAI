@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #711 — House Sand",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/711.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "SAND"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Common"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-SAND-0137"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "BlackChrome_Mirror"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "Plasma_Ion"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "DustHalo"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "CompassArc"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Clean"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "Capsule"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "Cold"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "MicroScratches"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "Serial+CircuitMicro"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "Cinematic"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

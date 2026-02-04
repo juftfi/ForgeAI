@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #1722 — House Eclipse",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/1722.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "ECLIPSE"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Epic"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-ECLIPSE-0005"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "BlackChrome_Mirror"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "CondensationDroplets"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "LightningFork"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "OrbitTicks"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Dusty"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "Capsule"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "BlackGold"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "MicroScratches"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "Serial+SigilMicro"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "None"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

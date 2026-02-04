@@ -1,0 +1,323 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* KinForge - Black Gold DNA Theme */
+  --black-950: #000000;
+  --black-900: #0a0a0a;
+  --black-800: #121212;
+  --black-700: #1a1a1a;
+  --black-600: #262626;
+
+  /* Gold Accent Palette */
+  --gold-50: #fffbeb;
+  --gold-100: #fef3c7;
+  --gold-200: #fde68a;
+  --gold-300: #fcd34d;
+  --gold-400: #fbbf24;
+  --gold-500: #f59e0b;
+  --gold-600: #d97706;
+  --gold-700: #b45309;
+  --gold-800: #92400e;
+  --gold-900: #78350f;
+
+  /* Secondary - Grey/Silver */
+  --silver-400: #9ca3af;
+  --silver-500: #6b7280;
+  --silver-600: #4b5563;
+
+  /* Kin House Colors - DNA Theme */
+  --kin-alpha: #FFD700;    /* 金色 - Alpha */
+  --kin-beta: #C0C0C0;     /* 银色 - Beta */
+  --kin-gamma: #E5B80B;    /* 琥珀 - Gamma */
+  --kin-delta: #CD7F32;    /* 青铜 - Delta */
+  --kin-epsilon: #B8860B;  /* 暗金 - Epsilon */
+  --kin-zeta: #DAA520;     /* 金菊 - Zeta */
+  --kin-omega: #8B4513;    /* 鞍褐 - Omega */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(180deg, var(--black-950) 0%, var(--black-800) 50%, var(--black-900) 100%);
+  background-attachment: fixed;
+  color: #e5e7eb;
+  min-height: 100vh;
+}
+
+/* DNA Helix Background Pattern */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(251, 191, 36, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(217, 119, 6, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Glassmorphism Card - Gold Accent */
+.glass-card {
+  @apply relative overflow-hidden rounded-2xl;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(251, 191, 36, 0.1);
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.3), transparent);
+}
+
+/* Card Styles */
+.card {
+  @apply rounded-xl overflow-hidden transition-all duration-300;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.card:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(251, 191, 36, 0.15);
+}
+
+/* Button Styles - Gold Theme */
+.btn-primary {
+  @apply relative font-semibold px-6 py-3 rounded-xl transition-all duration-300;
+  background: linear-gradient(to right, #d97706, #f59e0b);
+  color: #000000;
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(to right, #f59e0b, #fbbf24);
+  box-shadow: 0 6px 30px rgba(251, 191, 36, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  @apply font-medium px-6 py-3 rounded-xl transition-all duration-300;
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn-secondary:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+/* Kin Family Gradients */
+.kin-gradient-alpha {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+}
+
+.kin-gradient-beta {
+  background: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 50%, #D4D4D4 100%);
+}
+
+.kin-gradient-gamma {
+  background: linear-gradient(135deg, #E5B80B 0%, #DAA520 50%, #F4C430 100%);
+}
+
+.kin-gradient-delta {
+  background: linear-gradient(135deg, #CD7F32 0%, #B87333 50%, #D4924D 100%);
+}
+
+.kin-gradient-epsilon {
+  background: linear-gradient(135deg, #B8860B 0%, #996515 50%, #C9A227 100%);
+}
+
+.kin-gradient-zeta {
+  background: linear-gradient(135deg, #DAA520 0%, #C49102 50%, #E6BE3A 100%);
+}
+
+.kin-gradient-omega {
+  background: linear-gradient(135deg, #8B4513 0%, #654321 50%, #A0522D 100%);
+}
+
+/* Rarity Colors - Gold Theme */
+.rarity-common { color: #9ca3af; }
+.rarity-uncommon { color: #fcd34d; }
+.rarity-rare { color: #fbbf24; }
+.rarity-epic { color: #f59e0b; }
+.rarity-legendary { color: #d97706; }
+.rarity-mythic {
+  @apply font-bold;
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FF8C00, #FFA500, #FFD700);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 3s linear infinite;
+}
+
+@keyframes gold-shimmer {
+  to { background-position: 200% center; }
+}
+
+/* DNA Helix Animation */
+@keyframes dna-rotate {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+.dna-helix {
+  animation: dna-rotate 10s linear infinite;
+}
+
+/* Badge Styles */
+.trait-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+/* Section Styles */
+.section-title {
+  @apply text-3xl md:text-4xl font-bold mb-4 bg-clip-text;
+  background: linear-gradient(to right, #fcd34d, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-subtitle {
+  @apply text-lg max-w-2xl;
+  color: #9ca3af;
+}
+
+/* Glow Effects - Gold */
+.glow-gold {
+  box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+}
+
+.glow-gold-soft {
+  box-shadow: 0 0 60px rgba(251, 191, 36, 0.2);
+}
+
+/* Link styles for docs */
+.prose a {
+  @apply transition-colors;
+  color: #fbbf24;
+}
+
+.prose a:hover {
+  color: #fcd34d;
+}
+
+.prose code {
+  @apply px-1.5 py-0.5 rounded text-sm;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.prose pre {
+  @apply rounded-xl;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply text-white font-semibold;
+}
+
+.prose blockquote {
+  @apply pl-4 italic;
+  border-left: 4px solid #f59e0b;
+  color: #9ca3af;
+}
+
+/* Scrollbar - Gold Theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--black-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold-600), var(--gold-700));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--gold-500), var(--gold-600));
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 40px rgba(251, 191, 36, 0.5);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* DNA Strand Animation */
+@keyframes strand-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 100; }
+}
+
+.dna-strand {
+  stroke-dasharray: 10 5;
+  animation: strand-flow 2s linear infinite;
+}
+
+/* Hexagon Frame */
+.hexagon {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+/* Gold Text Gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Tailwind Extension for bg-black */
+.bg-kin-black { background-color: #0a0a0a; }
+.bg-kin-gold { background-color: #fbbf24; }
+.border-kin-gold { border-color: rgba(251, 191, 36, 0.3); }

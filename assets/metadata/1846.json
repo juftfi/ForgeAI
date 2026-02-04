@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #1846 — House Frost",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/1846.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "FROST"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Uncommon"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-FROST-0063"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "TitaniumBlack_Brushed"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "Eclipse_Sphere"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "GoldenHaze"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "FineScale"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Iridescent"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "Capsule"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "Warm"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "MicroScratches"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "Serial+TinyGrid"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "Soft"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

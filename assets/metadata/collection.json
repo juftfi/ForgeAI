@@ -1,0 +1,8 @@
+{
+  "name": "HouseForge Genesis",
+  "description": "The Genesis collection of HouseForge Non-Fungible Agents. 2100 unique agents across 7 Weather Houses.",
+  "image": "ipfs://PLACEHOLDER/collection.png",
+  "external_link": "https://houseforge.io",
+  "seller_fee_basis_points": 500,
+  "fee_recipient": "0x0000000000000000000000000000000000000000"
+}

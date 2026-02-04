@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 954,
+  "houseKey": "ECLIPSE",
+  "houseId": 7,
+  "seed": "0x251a23dccbc8af7911edbf605b2505a0030c424d8383350d218bdd1650dc80a2",
+  "traits": {
+    "Season": "S0",
+    "House": "ECLIPSE",
+    "RarityTier": "Uncommon",
+    "WeatherID": "S0-ECLIPSE-0054",
+    "FrameType": "Glass_PrismCut",
+    "CoreMaterial": "CondensationDroplets",
+    "LightSignature": "WetGlow",
+    "InstrumentMark": "FineScale",
+    "Atmosphere": "Icy",
+    "DioramaGeometry": "Cube",
+    "PaletteTemperature": "Warm",
+    "SurfaceAging": "Pristine",
+    "MicroEngraving": "SerialOnly",
+    "LensBloom": "Soft",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_eclipse.blend",
+  "geometryPreset": "Cube",
+  "cameraPreset": "main",
+  "lightSignature": "WetGlow",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/954.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0xba845ad3ab24620289520bb11d2c7932ee8a4637ad5480a32789ed6b8284a30c"
+}

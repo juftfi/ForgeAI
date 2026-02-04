@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 691,
+  "houseKey": "AURORA",
+  "houseId": 5,
+  "seed": "0xf88ef84a9d2870e1814b1849ffb13d23fdd72cbe90353ada6efb06681233b6eb",
+  "traits": {
+    "Season": "S0",
+    "House": "AURORA",
+    "RarityTier": "Uncommon",
+    "WeatherID": "S0-AURORA-0099",
+    "FrameType": "Glass_StressCrack",
+    "CoreMaterial": "Snow_Particles",
+    "LightSignature": "SpectrumVeil",
+    "InstrumentMark": "ArchiveGrid",
+    "Atmosphere": "Dusty",
+    "DioramaGeometry": "Cube",
+    "PaletteTemperature": "Iridescent",
+    "SurfaceAging": "MicroScratches",
+    "MicroEngraving": "Serial+Contour",
+    "LensBloom": "Cinematic",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_aurora.blend",
+  "geometryPreset": "Cube",
+  "cameraPreset": "main",
+  "lightSignature": "SpectrumVeil",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/691.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0xabc16fb631510e3f6e205f990e3b0108808266601e48a8f2a29798b2f5990062"
+}

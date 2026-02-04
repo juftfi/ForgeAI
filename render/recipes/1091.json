@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 1091,
+  "houseKey": "THUNDER",
+  "houseId": 3,
+  "seed": "0x84bdd9f0e62ddbc9ff635b1eb0d6dccf771a2d66c792bec032526e55fb3f2602",
+  "traits": {
+    "Season": "S0",
+    "House": "THUNDER",
+    "RarityTier": "Common",
+    "WeatherID": "S0-THUNDER-0316",
+    "FrameType": "Glass_StressCrack",
+    "CoreMaterial": "Plasma_Ion",
+    "LightSignature": "Sunbeam",
+    "InstrumentMark": "FineScale",
+    "Atmosphere": "Charged",
+    "DioramaGeometry": "Cube",
+    "PaletteTemperature": "Cold",
+    "SurfaceAging": "Pristine",
+    "MicroEngraving": "SerialOnly",
+    "LensBloom": "Soft",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_thunder.blend",
+  "geometryPreset": "Cube",
+  "cameraPreset": "main",
+  "lightSignature": "Sunbeam",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/1091.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0xf9f8ef248410613c8212fc2df320f8c4ae14f1e08dec2062cb061c7ffb96765e"
+}

@@ -1,0 +1,474 @@
+# HouseForge Trait Mapping
+# Maps trait values to material/lighting parameters
+
+version: "1.0"
+
+# =============================================================
+#                    FRAME TYPE → METAL PARAMETERS
+# =============================================================
+frame_type:
+  TitaniumBlack_Brushed:
+    base_color: "#0D0F14"
+    metallic: 1.0
+    roughness: 0.14
+    anisotropic: 0.85
+    anisotropic_rotation: 0.0
+
+  BlackChrome_Mirror:
+    base_color: "#1A1A1E"
+    metallic: 1.0
+    roughness: 0.05
+    anisotropic: 0.25
+    anisotropic_rotation: 0.0
+
+  Brass_Brushed:
+    base_color: "#B68A3A"
+    metallic: 1.0
+    roughness: 0.18
+    anisotropic: 0.75
+    anisotropic_rotation: 0.5
+
+  Bronze_Matte:
+    base_color: "#7A5A3A"
+    metallic: 1.0
+    roughness: 0.28
+    anisotropic: 0.4
+    anisotropic_rotation: 0.0
+
+  Resin_Clear:
+    type: "plastic"
+    base_color: "#F8F8F0"
+    metallic: 0.0
+    roughness: 0.06
+    ior: 1.49
+    transmission: 0.85
+
+  Glass_PrismCut:
+    type: "glass"
+    base_color: "#FFFFFF"
+    metallic: 0.0
+    roughness: 0.02
+    ior: 1.52
+    transmission: 0.95
+    # Dispersion simulation via edge color shift
+    dispersion:
+      enabled: true
+      strength: 0.03
+
+  Glass_StressCrack:
+    type: "glass"
+    base_color: "#F0F5FF"
+    metallic: 0.0
+    roughness: 0.04
+    ior: 1.50
+    transmission: 0.90
+    # Procedural crack normal
+    crack_normal:
+      enabled: true
+      strength: 0.15
+      scale: 8.0
+
+  IceCrystal_Rim:
+    type: "glass"
+    base_color: "#E8F4FF"
+    metallic: 0.0
+    roughness: 0.10
+    ior: 1.31
+    transmission: 0.88
+    subsurface:
+      enabled: true
+      color: "#D6F2FF"
+      strength: 0.06
+
+# =============================================================
+#                    CORE MATERIAL → CORE PARAMETERS
+# =============================================================
+core_material:
+  VolumetricCloud:
+    type: "volume_glass"
+    glass:
+      roughness: 0.03
+      ior: 1.45
+      transmission: 0.85
+    volume:
+      enabled: true
+      density: 0.04
+      color: "#E8F0FF"
+
+  CondensationDroplets:
+    type: "glass"
+    roughness: 0.015
+    ior: 1.33
+    transmission: 0.92
+    # Droplet normal map
+    droplet_normal:
+      enabled: true
+      scale: 15.0
+      strength: 0.12
+
+  RainStrands:
+    type: "glass"
+    roughness: 0.02
+    ior: 1.33
+    transmission: 0.90
+    # Rain strand curves (optional geometry)
+    rain_curves:
+      enabled: true
+      count: 12
+      length: 0.15
+
+  Plasma_Ion:
+    type: "emissive"
+    base_color: "#8B7CFF"
+    emission:
+      enabled: true
+      color: "#A090FF"
+      strength: [4, 12]  # Range
+    volume:
+      enabled: true
+      density: 0.01
+      emission_strength: 2
+
+  Crystal_PrismCore:
+    type: "glass"
+    roughness: 0.01
+    ior: 1.52
+    transmission: 0.95
+    dispersion:
+      enabled: true
+      strength: 0.02
+
+  Frost_Crystals:
+    type: "frosted_glass"
+    roughness: 0.08
+    ior: 1.31
+    transmission: 0.80
+    subsurface:
+      enabled: true
+      color: "#D0F0FF"
+      strength: 0.08
+
+  Snow_Particles:
+    type: "glass"
+    roughness: 0.06
+    ior: 1.31
+    transmission: 0.85
+    # Snow particle scatter
+    particles:
+      enabled: true
+      count: 50
+      size: 0.008
+      emission_strength: 0.5
+
+  Dust_Vortex:
+    type: "volume_glass"
+    glass:
+      roughness: 0.05
+      ior: 1.45
+      transmission: 0.75
+    volume:
+      enabled: true
+      density: 0.03
+      anisotropy: 0.6
+      color: "#FFF0D0"
+
+  Eclipse_Sphere:
+    type: "void"
+    base_color: "#020202"
+    metallic: 0.0
+    roughness: 0.02
+    # Fresnel rim emission
+    fresnel_emission:
+      enabled: true
+      color: "#FFB040"
+      strength: 10
+      ior: 2.5
+
+  Aurora_Ribbons:
+    type: "emissive"
+    base_color: "#90FFA0"
+    emission:
+      enabled: true
+      # Gradient emission
+      gradient:
+        enabled: true
+        color1: "#B9B2FF"
+        color2: "#90FFB0"
+      strength: [6, 18]
+    # Ribbon geometry
+    ribbons:
+      enabled: true
+      count: 5
+      width: 0.02
+
+# =============================================================
+#                    LIGHT SIGNATURE → EXTRA LIGHTS
+# =============================================================
+light_signature:
+  Sunbeam:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [1.0, 0.15]
+        strength: 35
+        color: "#FFFAF0"
+        location: [0.0, -0.9, 0.95]
+        rotation: [25, 0, 0]
+
+  PrismaticRay:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [1.4, 0.12]
+        strength: 20
+        color: "#FFFFFF"
+        location: [0.0, -1.0, 0.9]
+        rotation: [20, 0, 0]
+        # Subtle color shift
+        color_shift: 0.02
+
+  NeonRain:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [1.6, 0.06]
+        strength: 45
+        color: "#7EE7FF"
+        location: [-0.5, -0.9, 0.8]
+        rotation: [25, 0, 12]
+      - type: "EMISSION_PLANE"
+        size: [1.6, 0.06]
+        strength: 35
+        color: "#A39BFF"
+        location: [0.4, -0.85, 0.75]
+        rotation: [22, 0, -10]
+
+  WetGlow:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [1.8, 1.0]
+        strength: 25
+        color: "#C0E8FF"
+        location: [0.6, 0.4, 0.5]
+        rotation: [35, 0, -20]
+
+  LightningFork:
+    lights:
+      - type: "AREA"
+        size: [0.12, 0.12]
+        strength: 220
+        color: "#C4BDFF"
+        location: [-0.2, -0.9, 0.95]
+        rotation: [45, 0, 10]
+
+  IonBloom:
+    lights:
+      - type: "POINT"
+        radius: 0.08
+        strength: 80
+        color: "#9B8FFF"
+        location: [0.0, 0.0, 0.1]
+
+  PolarGlow:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [2.0, 1.2]
+        strength: 35
+        color: "#D6F2FF"
+        location: [0.8, 0.5, 0.6]
+        rotation: [30, 0, -25]
+
+  FrostScatter:
+    lights:
+      - type: "AREA"
+        size: [0.8, 0.8]
+        strength: 20
+        color: "#E8FAFF"
+        location: [0.0, -0.3, 1.2]
+        rotation: [75, 0, 0]
+
+  AuroraRibbon:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [1.2, 0.4]
+        strength: 20
+        gradient_colors: ["#E8D0FF", "#D0FFE8", "#D0E8FF"]
+        location: [-0.7, -0.6, 0.9]
+        rotation: [35, 0, 20]
+
+  SpectrumVeil:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [1.6, 0.6]
+        strength: 15
+        gradient_colors: ["#FFE0E0", "#E0FFE0", "#E0E0FF"]
+        location: [0.5, -0.7, 0.85]
+        rotation: [30, 0, -15]
+
+  GoldenHaze:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [1.4, 0.8]
+        strength: 40
+        color: "#FFECD0"
+        location: [0.6, -0.5, 0.5]
+        rotation: [25, 0, -15]
+
+  DustHalo:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [0.8, 0.8]
+        strength: 18
+        color: "#FFE8C0"
+        location: [0.0, 0.8, 0.3]
+        rotation: [15, 0, 180]
+
+  EclipseHalo:
+    lights:
+      - type: "EMISSION_PLANE"
+        size: [0.9, 0.9]
+        strength: 20
+        color: "#FFD080"
+        location: [0.0, 0.6, 0.0]
+        rotation: [0, 0, 0]
+
+  RingRim:
+    lights:
+      - type: "EMISSION_RING"
+        radius: 0.45
+        tube_radius: 0.015
+        strength: 12
+        color: "#FFC060"
+        location: [0.0, 0.3, 0.0]
+        rotation: [90, 0, 0]
+
+# =============================================================
+#                    ATMOSPHERE → VOLUME PARAMETERS
+# =============================================================
+atmosphere:
+  Clean:
+    volume:
+      enabled: false
+
+  Humid:
+    volume:
+      enabled: true
+      density: 0.03
+      anisotropy: 0.3
+      color: "#E8F4FF"
+
+  Charged:
+    volume:
+      enabled: true
+      density: 0.015
+      anisotropy: 0.2
+      color: "#E0DCFF"
+
+  Icy:
+    volume:
+      enabled: true
+      density: 0.018
+      anisotropy: 0.2
+      color: "#E0F4FF"
+
+  Iridescent:
+    volume:
+      enabled: false  # Keep clean to avoid muddiness
+
+  Dusty:
+    volume:
+      enabled: true
+      density: 0.03
+      anisotropy: 0.55
+      color: "#FFF4E8"
+
+  Void:
+    volume:
+      enabled: false
+    world_strength_override: 0.12
+
+# =============================================================
+#                    PALETTE TEMPERATURE
+# =============================================================
+palette_temperature:
+  Cold:
+    color_balance:
+      lift: [0.98, 1.0, 1.02]
+      gamma: [0.99, 1.0, 1.01]
+      gain: [0.98, 1.0, 1.02]
+
+  Neutral:
+    color_balance:
+      lift: [1.0, 1.0, 1.0]
+      gamma: [1.0, 1.0, 1.0]
+      gain: [1.0, 1.0, 1.0]
+
+  Warm:
+    color_balance:
+      lift: [1.02, 1.0, 0.98]
+      gamma: [1.01, 1.0, 0.99]
+      gain: [1.02, 1.0, 0.98]
+
+# =============================================================
+#                    DIORAMA GEOMETRY
+# =============================================================
+diorama_geometry:
+  Capsule:
+    type: "cylinder_capped"
+    radius: 0.4
+    height: 1.0
+
+  Obelisk:
+    type: "tapered_box"
+    base_size: [0.4, 0.4]
+    top_size: [0.15, 0.15]
+    height: 1.8
+
+  Cube:
+    type: "beveled_cube"
+    size: 0.8
+    bevel: 0.02
+
+  Sphere:
+    type: "uv_sphere"
+    radius: 0.5
+    segments: 64
+
+  Prism:
+    type: "hexagonal_prism"
+    radius: 0.45
+    height: 1.0
+
+  BarometerAssembly:
+    type: "cylinder"
+    radius: 0.35
+    height: 0.8
+
+# =============================================================
+#                    RARITY MODIFIERS
+# =============================================================
+rarity:
+  Common:
+    emission_multiplier: 1.0
+    particle_count_multiplier: 1.0
+
+  Uncommon:
+    emission_multiplier: 1.15
+    particle_count_multiplier: 1.2
+
+  Rare:
+    emission_multiplier: 1.35
+    particle_count_multiplier: 1.5
+
+  Epic:
+    emission_multiplier: 1.6
+    particle_count_multiplier: 2.0
+
+  Legendary:
+    emission_multiplier: 2.0
+    particle_count_multiplier: 2.5
+
+  Mythic:
+    emission_multiplier: 3.0
+    particle_count_multiplier: 3.0
+    # Special effects for mythics
+    special_effects:
+      aura: true
+      enhanced_bloom: true

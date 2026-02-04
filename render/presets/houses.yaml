@@ -1,0 +1,308 @@
+# House-Specific Render Configurations
+# Defines the visual identity for each of the 7 Weather Houses
+
+version: 1
+
+houses:
+  # ============================================
+  # HOUSE CLEAR - Minimalist Clarity
+  # ============================================
+  CLEAR:
+    id: 1
+    template: "house_clear.blend"
+    description: "Minimalist clarity - white, silver, pale blue palette"
+
+    # Environment
+    environment:
+      hdri: null  # Studio lighting only
+      background_color: [0.02, 0.02, 0.025]
+      ambient_strength: 0.1
+
+    # Default light signature
+    default_light_signature: "Sunbeam"
+    light_signatures_allowed:
+      - Sunbeam
+      - PrismaticRay
+
+    # Material overrides
+    material_tints:
+      frame_tint: [1.0, 1.0, 1.02]  # Slight blue
+      core_tint: [0.98, 0.99, 1.0]
+
+    # Atmosphere defaults
+    default_atmosphere: "Clear"
+    fog_color: [0.95, 0.97, 1.0]
+
+    # Compositor overrides
+    compositor:
+      color_balance:
+        lift: [1.0, 1.0, 1.02]
+        gamma: [1.0, 1.0, 1.0]
+        gain: [1.0, 1.0, 1.01]
+      bloom_threshold: 0.85
+
+  # ============================================
+  # HOUSE MONSOON - Adaptive Flow
+  # ============================================
+  MONSOON:
+    id: 2
+    template: "house_monsoon.blend"
+    description: "Adaptive flow - teal, deep blue, silver palette"
+
+    environment:
+      hdri: null
+      background_color: [0.01, 0.015, 0.025]
+      ambient_strength: 0.15
+
+    default_light_signature: "NeonRain"
+    light_signatures_allowed:
+      - NeonRain
+      - WetGlow
+
+    material_tints:
+      frame_tint: [0.95, 0.98, 1.0]
+      core_tint: [0.85, 0.95, 1.0]
+
+    default_atmosphere: "RainCurtain"
+    fog_color: [0.7, 0.8, 0.9]
+
+    # Rain particle system
+    particles:
+      rain:
+        enabled: true
+        count: 500
+        velocity: [0, 0, -2]
+        size: 0.01
+        length: 0.3
+
+    compositor:
+      color_balance:
+        lift: [0.95, 0.98, 1.0]
+        gamma: [0.98, 1.0, 1.02]
+        gain: [0.95, 0.98, 1.0]
+      bloom_threshold: 0.75
+
+  # ============================================
+  # HOUSE THUNDER - Bold Energy
+  # ============================================
+  THUNDER:
+    id: 3
+    template: "house_thunder.blend"
+    description: "Bold energy - electric blue, black, gold palette"
+
+    environment:
+      hdri: null
+      background_color: [0.005, 0.008, 0.015]
+      ambient_strength: 0.05
+
+    default_light_signature: "LightningFork"
+    light_signatures_allowed:
+      - LightningFork
+      - IonBloom
+
+    material_tints:
+      frame_tint: [1.0, 0.98, 0.95]  # Slight gold
+      core_tint: [0.7, 0.85, 1.0]
+
+    default_atmosphere: "ThunderCloud"
+    fog_color: [0.3, 0.35, 0.45]
+
+    # Lightning flicker effect
+    effects:
+      lightning_flicker:
+        enabled: true
+        frequency: 0.3
+        intensity_range: [0.5, 2.0]
+
+    compositor:
+      color_balance:
+        lift: [0.95, 0.97, 1.0]
+        gamma: [1.0, 1.0, 1.0]
+        gain: [1.0, 0.98, 1.05]
+      bloom_threshold: 0.7
+      contrast_boost: 1.2
+
+  # ============================================
+  # HOUSE FROST - Precise Calm
+  # ============================================
+  FROST:
+    id: 4
+    template: "house_frost.blend"
+    description: "Precise calm - ice blue, white, silver palette"
+
+    environment:
+      hdri: null
+      background_color: [0.015, 0.018, 0.025]
+      ambient_strength: 0.12
+
+    default_light_signature: "PolarGlow"
+    light_signatures_allowed:
+      - PolarGlow
+      - FrostScatter
+
+    material_tints:
+      frame_tint: [0.95, 0.98, 1.0]
+      core_tint: [0.9, 0.95, 1.0]
+
+    default_atmosphere: "SnowDrift"
+    fog_color: [0.9, 0.95, 1.0]
+
+    particles:
+      snow:
+        enabled: true
+        count: 200
+        velocity: [0.1, 0, -0.3]
+        size: 0.02
+        turbulence: 0.5
+
+    # Frost crystalline effect on surfaces
+    effects:
+      frost_crystals:
+        enabled: true
+        coverage: 0.15
+        scale: 0.5
+
+    compositor:
+      color_balance:
+        lift: [0.98, 1.0, 1.02]
+        gamma: [0.98, 0.99, 1.0]
+        gain: [0.97, 0.99, 1.02]
+      bloom_threshold: 0.8
+
+  # ============================================
+  # HOUSE AURORA - Vibrant Creativity
+  # ============================================
+  AURORA:
+    id: 5
+    template: "house_aurora.blend"
+    description: "Vibrant creativity - gradient rainbow, purple palette"
+
+    environment:
+      hdri: null
+      background_color: [0.01, 0.008, 0.02]
+      ambient_strength: 0.08
+
+    default_light_signature: "AuroraRibbon"
+    light_signatures_allowed:
+      - AuroraRibbon
+      - SpectrumVeil
+
+    material_tints:
+      frame_tint: [1.0, 0.98, 1.02]
+      core_tint: [0.9, 0.85, 1.0]
+
+    default_atmosphere: "AuroraWisp"
+    fog_color: [0.5, 0.4, 0.7]
+
+    # Aurora wave effect
+    effects:
+      aurora_waves:
+        enabled: true
+        colors:
+          - [0.3, 1.0, 0.5]   # Green
+          - [0.5, 0.3, 1.0]   # Purple
+          - [0.3, 0.8, 1.0]   # Cyan
+        wave_speed: 0.5
+
+    compositor:
+      color_balance:
+        lift: [1.0, 0.98, 1.02]
+        gamma: [1.0, 0.99, 1.01]
+        gain: [1.0, 0.97, 1.03]
+      bloom_threshold: 0.7
+      saturation_boost: 1.1
+
+  # ============================================
+  # HOUSE SAND - Grounded Wisdom
+  # ============================================
+  SAND:
+    id: 6
+    template: "house_sand.blend"
+    description: "Grounded wisdom - warm tan, gold, orange palette"
+
+    environment:
+      hdri: null
+      background_color: [0.02, 0.015, 0.01]
+      ambient_strength: 0.1
+
+    default_light_signature: "GoldenHaze"
+    light_signatures_allowed:
+      - GoldenHaze
+      - DustHalo
+
+    material_tints:
+      frame_tint: [1.05, 1.0, 0.92]
+      core_tint: [1.0, 0.95, 0.85]
+
+    default_atmosphere: "DustStorm"
+    fog_color: [0.9, 0.8, 0.6]
+
+    particles:
+      dust:
+        enabled: true
+        count: 300
+        velocity: [0.3, 0, 0.1]
+        size: 0.015
+        turbulence: 0.8
+
+    compositor:
+      color_balance:
+        lift: [1.02, 1.0, 0.95]
+        gamma: [1.01, 1.0, 0.98]
+        gain: [1.05, 1.0, 0.9]
+      bloom_threshold: 0.75
+      warmth: 1.15
+
+  # ============================================
+  # HOUSE ECLIPSE - Mysterious Depth
+  # ============================================
+  ECLIPSE:
+    id: 7
+    template: "house_eclipse.blend"
+    description: "Mysterious depth - deep purple, black, gold palette"
+
+    environment:
+      hdri: null
+      background_color: [0.005, 0.003, 0.008]
+      ambient_strength: 0.03
+
+    default_light_signature: "EclipseHalo"
+    light_signatures_allowed:
+      - EclipseHalo
+      - RingRim
+
+    material_tints:
+      frame_tint: [1.0, 0.95, 0.9]  # Gold tint
+      core_tint: [0.3, 0.25, 0.4]
+
+    default_atmosphere: "EclipseShadow"
+    fog_color: [0.1, 0.08, 0.15]
+
+    # Eclipse corona effect
+    effects:
+      corona:
+        enabled: true
+        color: [1.0, 0.7, 0.3]
+        intensity: 2.0
+        falloff: 3.0
+
+    compositor:
+      color_balance:
+        lift: [1.0, 0.97, 0.95]
+        gamma: [1.0, 0.98, 0.97]
+        gain: [1.02, 0.95, 0.9]
+      bloom_threshold: 0.6
+      contrast_boost: 1.3
+      vignette_intensity: 0.25
+
+# ============================================
+# HOUSE ID MAPPING
+# ============================================
+house_by_id:
+  1: CLEAR
+  2: MONSOON
+  3: THUNDER
+  4: FROST
+  5: AURORA
+  6: SAND
+  7: ECLIPSE

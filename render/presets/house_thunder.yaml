@@ -1,0 +1,60 @@
+# House THUNDER - High Contrast Lightning
+# Hard contrast, strong edge lighting, lightning-like hard highlights
+
+house_id: 3
+name: "THUNDER"
+theme: "electric_storm"
+
+# Lighting overrides for harder contrast
+lighting:
+  key:
+    strength: 155  # Increased
+  fill:
+    strength: 40   # Decreased for more contrast
+  rim:
+    strength: 120  # Strong edge cut
+
+# Materials
+materials:
+  core:
+    type: "emissive_glass"
+    roughness: [0.02, 0.04]
+    emission_strength: [4, 12]
+    emission_color: "#8B7CFF"
+
+# Compositor
+compositor:
+  glare:
+    mix: 0.22  # More bloom for lightning effect
+
+# Light Signature: LightningFork
+light_signature:
+  name: "LightningFork"
+  lights:
+    - name: "LightningPoint"
+      type: "AREA"
+      size: [0.12, 0.12]
+      strength: 220
+      color: "#C4BDFF"  # Pale purple-white
+      location: [-0.2, -0.9, 0.95]
+      rotation: [45, 0, 10]
+    - name: "IonBloom"
+      type: "POINT"
+      size: 0.08
+      strength: 80
+      color: "#9B8FFF"
+      location: [0.0, 0.0, 0.1]  # Near core
+
+# Atmosphere: Charged haze
+atmosphere:
+  type: "Charged"
+  volume:
+    enabled: true
+    density: 0.015
+    anisotropy: 0.2
+    color: "#E0DCFF"
+
+# Palette
+palette:
+  temperature: "cool"
+  tint: "#E8E4FF"

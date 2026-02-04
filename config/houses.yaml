@@ -1,0 +1,113 @@
+version: 1
+houses:
+  - id: 1
+    key: CLEAR
+    name: "House Clear"
+    theme: "high pressure clarity"
+    persona_seed:
+      calm: 0.85
+      curious: 0.35
+      bold: 0.25
+      social: 0.30
+      disciplined: 0.90
+    visual_anchors:
+      palette_temperature: ["neutral", "cool-neutral"]
+      default_light_signature: ["Sunbeam", "PrismaticRay"]
+      default_instrument_mark: ["IsobarLines", "FineScale"]
+      style_notes: "minimal, premium, clean refraction, crisp rays"
+
+  - id: 2
+    key: MONSOON
+    name: "House Monsoon"
+    theme: "neon rain tide"
+    persona_seed:
+      calm: 0.40
+      curious: 0.55
+      bold: 0.45
+      social: 0.80
+      disciplined: 0.50
+    visual_anchors:
+      palette_temperature: ["cool", "neon-cool"]
+      default_light_signature: ["NeonRain", "WetGlow"]
+      default_instrument_mark: ["CompassArc", "WaveTicks"]
+      style_notes: "dense rain strands, condensation, neon reflections"
+
+  - id: 3
+    key: THUNDER
+    name: "House Thunder"
+    theme: "storm vigilance"
+    persona_seed:
+      calm: 0.35
+      curious: 0.40
+      bold: 0.85
+      social: 0.35
+      disciplined: 0.70
+    visual_anchors:
+      palette_temperature: ["cool", "high-contrast"]
+      default_light_signature: ["LightningFork", "IonBloom"]
+      default_instrument_mark: ["WarningChevrons", "HardScale"]
+      style_notes: "dramatic contrast, crack-like stress patterns, powerful highlights"
+
+  - id: 4
+    key: FROST
+    name: "House Frost"
+    theme: "silent stability"
+    persona_seed:
+      calm: 0.90
+      curious: 0.30
+      bold: 0.35
+      social: 0.20
+      disciplined: 0.95
+    visual_anchors:
+      palette_temperature: ["cold", "icy"]
+      default_light_signature: ["PolarGlow", "FrostScatter"]
+      default_instrument_mark: ["ArchiveGrid", "ThermoTicks"]
+      style_notes: "frosted edges, subsurface scattering, crystalline micro-texture"
+
+  - id: 5
+    key: AURORA
+    name: "House Aurora"
+    theme: "magnetic drift"
+    persona_seed:
+      calm: 0.55
+      curious: 0.95
+      bold: 0.55
+      social: 0.45
+      disciplined: 0.55
+    visual_anchors:
+      palette_temperature: ["iridescent", "cool-rainbow"]
+      default_light_signature: ["AuroraRibbon", "SpectrumVeil"]
+      default_instrument_mark: ["FieldLines", "OrbitTicks"]
+      style_notes: "aurora ribbons like magnetic lines, prism dispersion, dreamy realism"
+
+  - id: 6
+    key: SAND
+    name: "House Sand"
+    theme: "gold noise adaptation"
+    persona_seed:
+      calm: 0.45
+      curious: 0.55
+      bold: 0.50
+      social: 0.35
+      disciplined: 0.45
+    visual_anchors:
+      palette_temperature: ["warm", "dust-warm"]
+      default_light_signature: ["GoldenHaze", "DustHalo"]
+      default_instrument_mark: ["WindRose", "ErosionScale"]
+      style_notes: "suspended dust vortex, matte frosted glass, warm volumetrics"
+
+  - id: 7
+    key: ECLIPSE
+    name: "House Eclipse"
+    theme: "black sun authority"
+    persona_seed:
+      calm: 0.70
+      curious: 0.50
+      bold: 0.70
+      social: 0.30
+      disciplined: 0.80
+    visual_anchors:
+      palette_temperature: ["dark", "black-gold"]
+      default_light_signature: ["EclipseHalo", "RingRim"]
+      default_instrument_mark: ["CrownScale", "OccultSigils"]
+      style_notes: "minimal luxury, deep shadows, intense rim light, black-gold materials"

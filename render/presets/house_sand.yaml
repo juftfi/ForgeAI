@@ -1,0 +1,60 @@
+# House SAND - Warm Golden Dust
+# Warm gold against cool background = sophisticated contrast
+
+house_id: 6
+name: "SAND"
+theme: "desert_ancient"
+
+# Lighting overrides
+lighting:
+  fill:
+    color: "#FFD7A3"  # Warm golden fill
+    strength: 65
+
+# Materials
+materials:
+  core:
+    type: "emissive_glass"
+    roughness: [0.04, 0.08]
+    ior: 1.50
+    emission_color: "#FFE4C4"
+    emission_strength: [2, 5]
+
+  metal:
+    # Brushed gold/brass look
+    roughness: [0.18, 0.26]
+    anisotropic: 0.6
+    color: "#C9A961"
+
+# Light Signature: GoldenHaze
+light_signature:
+  name: "GoldenHaze"
+  lights:
+    - name: "GoldenFill"
+      type: "EMISSION_PLANE"
+      size: [1.4, 0.8]
+      strength: 40
+      color: "#FFECD0"
+      location: [0.6, -0.5, 0.5]
+      rotation: [25, 0, -15]
+    - name: "DustHalo"
+      type: "EMISSION_PLANE"
+      size: [0.8, 0.8]
+      strength: 18
+      color: "#FFE8C0"
+      location: [0.0, 0.8, 0.3]
+      rotation: [15, 0, 180]
+
+# Atmosphere: Dusty haze
+atmosphere:
+  type: "Dusty"
+  volume:
+    enabled: true
+    density: 0.03
+    anisotropy: 0.55
+    color: "#FFF4E8"
+
+# Palette
+palette:
+  temperature: "warm"
+  tint: "#FFE8D0"

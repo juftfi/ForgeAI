@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #718 — House Monsoon",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/718.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "MONSOON"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Common"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-MONSOON-0166"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "Bronze_Matte"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "VolumetricCloud"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "WetGlow"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "FineScale"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Humid"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "Cube"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "Cold"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "Pristine"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "Serial+TinyGrid"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "Cinematic"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

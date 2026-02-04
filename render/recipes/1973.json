@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "tokenId": 1973,
+  "houseKey": "THUNDER",
+  "houseId": 3,
+  "seed": "0xde81d1b6ddc1d80b4bc1c3d950b77818140c4abb10525217f899409479086803",
+  "traits": {
+    "Season": "S0",
+    "House": "THUNDER",
+    "RarityTier": "Rare",
+    "WeatherID": "S0-THUNDER-0022",
+    "FrameType": "BlackChrome_Mirror",
+    "CoreMaterial": "Aurora_Ribbons",
+    "LightSignature": "Sunbeam",
+    "InstrumentMark": "ArchiveGrid",
+    "Atmosphere": "Dusty",
+    "DioramaGeometry": "Sphere",
+    "PaletteTemperature": "Cold",
+    "SurfaceAging": "EdgeWear",
+    "MicroEngraving": "SerialOnly",
+    "LensBloom": "Soft",
+    "Generation": "0"
+  },
+  "templateBlend": "render/scenes/house_thunder.blend",
+  "geometryPreset": "Sphere",
+  "cameraPreset": "main",
+  "lightSignature": "Sunbeam",
+  "output": {
+    "width": 1024,
+    "height": 1024,
+    "format": "WEBP",
+    "quality": 90,
+    "path": "render/output/1973.webp"
+  },
+  "renderSettings": {
+    "engine": "CYCLES",
+    "samples": 96,
+    "denoise": true,
+    "adaptiveSampling": true,
+    "maxBounces": 6,
+    "transparentBackground": false
+  },
+  "recipeHash": "0x49d071f8f7fce324485d2289a3ca5c739ded06d68fa4c4fcf2a621deb4ae2db0"
+}

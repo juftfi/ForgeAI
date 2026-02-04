@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #1436 — House Thunder",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/1436.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "THUNDER"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Rare"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-THUNDER-0045"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "BlackChrome_Mirror"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "Crystal_PrismCore"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "PolarGlow"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "WaveTicks"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Clean"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "Sphere"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "Warm"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "FrostedEdges"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "SerialOnly"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "Soft"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

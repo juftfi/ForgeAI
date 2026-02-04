@@ -1,0 +1,30 @@
+version: 1
+economics:
+  treasury_address: "SET_IN_ENV_OR_DEPLOY"
+
+  genesis:
+    allowlist_price_bnb: 0.005
+    public_price_bnb: 0.01
+    per_wallet_limit: 3
+
+  fusion_fees_bnb:
+    base: 0.003
+    rare_surcharge: 0.002
+    mythic_attempt_surcharge: 0.003
+
+  vault:
+    free_snapshots_per_agent: 10
+    pro_snapshots_per_agent: 200
+    pro_pass_price_bnb: 0.02
+
+  # Allowlist configuration
+  allowlist:
+    enabled: true
+    merkle_root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+    max_per_wallet: 2
+
+  # Phase timing (block numbers or timestamps)
+  phases:
+    allowlist_start: 0
+    public_start: 0
+    mint_end: 0

@@ -1,0 +1,27 @@
+version: 1
+genesis:
+  season: "S0"
+  total_supply: 2100
+
+  house_supply:
+    CLEAR: 320
+    MONSOON: 320
+    THUNDER: 320
+    FROST: 320
+    AURORA: 320
+    SAND: 320
+    ECLIPSE: 180
+
+  rarity_distribution:
+    Common: 0.62
+    Uncommon: 0.23
+    Rare: 0.10
+    Epic: 0.045
+    Mythic: 0.005
+
+  weather_id_format: "{season}-{houseKey}-{serial4}"
+  serial_padding: 4
+
+  # Master seed for genesis generation (deterministic)
+  # Change this to regenerate all metadata differently
+  master_seed: "0x48f8b2e3c7a1d6f9e4b5c8a2d7e0f3b6c9a1d4e7f0b3c6a9d2e5f8b1c4a7d0e3"

@@ -1,0 +1,196 @@
+# Render Settings Presets for HouseForge
+# Optimized for Blender Cycles with Octane/Redshift-like quality
+
+version: 1
+
+# ============================================
+# QUALITY PRESETS
+# ============================================
+presets:
+  # Fast preview for development
+  preview:
+    engine: "CYCLES"
+    device: "CPU"  # Change to GPU if available
+    samples: 32
+    adaptive_sampling: true
+    adaptive_threshold: 0.1
+    denoise: true
+    denoiser: "OPENIMAGEDENOISE"
+    max_bounces:
+      total: 4
+      diffuse: 2
+      glossy: 2
+      transmission: 4
+      volume: 0
+    resolution:
+      x: 512
+      y: 512
+      percentage: 100
+    output:
+      format: "PNG"
+      color_depth: "8"
+      compression: 50
+
+  # MVP quality - good balance of speed and quality
+  mvp:
+    engine: "CYCLES"
+    device: "GPU"  # Fallback to CPU if not available
+    samples: 96
+    adaptive_sampling: true
+    adaptive_threshold: 0.05
+    denoise: true
+    denoiser: "OPENIMAGEDENOISE"
+    denoise_passes: ["DIFFUSE", "GLOSSY", "TRANSMISSION"]
+    max_bounces:
+      total: 6
+      diffuse: 3
+      glossy: 4
+      transmission: 8
+      volume: 2
+    resolution:
+      x: 1024
+      y: 1024
+      percentage: 100
+    output:
+      format: "WEBP"
+      quality: 90
+    color_management:
+      view_transform: "Filmic"
+      look: "Medium High Contrast"
+      exposure: 0.0
+      gamma: 1.0
+
+  # High quality for hero/mythic renders
+  hero:
+    engine: "CYCLES"
+    device: "GPU"
+    samples: 256
+    adaptive_sampling: true
+    adaptive_threshold: 0.01
+    denoise: true
+    denoiser: "OPENIMAGEDENOISE"
+    denoise_passes: ["DIFFUSE", "GLOSSY", "TRANSMISSION"]
+    max_bounces:
+      total: 12
+      diffuse: 4
+      glossy: 8
+      transmission: 12
+      volume: 4
+    resolution:
+      x: 2048
+      y: 2048
+      percentage: 100
+    output:
+      format: "PNG"
+      color_depth: "16"
+      compression: 15
+    color_management:
+      view_transform: "Filmic"
+      look: "Medium High Contrast"
+      exposure: 0.0
+      gamma: 1.0
+
+  # Maximum quality for promotional material
+  promo:
+    engine: "CYCLES"
+    device: "GPU"
+    samples: 512
+    adaptive_sampling: true
+    adaptive_threshold: 0.005
+    denoise: true
+    denoiser: "OPENIMAGEDENOISE"
+    max_bounces:
+      total: 16
+      diffuse: 6
+      glossy: 12
+      transmission: 16
+      volume: 6
+    resolution:
+      x: 4096
+      y: 4096
+      percentage: 100
+    output:
+      format: "PNG"
+      color_depth: "16"
+      compression: 0
+    color_management:
+      view_transform: "Filmic"
+      look: "High Contrast"
+      exposure: 0.0
+      gamma: 1.0
+
+# ============================================
+# DEFAULT SETTINGS
+# ============================================
+default_preset: "mvp"
+
+# Global settings applied to all presets
+global:
+  # Film settings
+  film:
+    transparent_background: false
+    filter_type: "BLACKMAN_HARRIS"
+    filter_width: 1.5
+
+  # Light paths
+  light_paths:
+    caustics_reflective: true
+    caustics_refractive: false
+    clamping_direct: 10.0
+    clamping_indirect: 10.0
+
+  # Performance
+  performance:
+    use_persistent_data: true
+    tile_size: 256  # Optimal for GPU
+
+  # Simplify (for faster renders if needed)
+  simplify:
+    enabled: false
+    max_subdivision: 2
+    child_particles: 1.0
+
+# ============================================
+# COMPOSITOR SETTINGS
+# ============================================
+compositor:
+  enabled: true
+  nodes:
+    # Glare/Bloom
+    glare:
+      enabled: true
+      type: "FOG_GLOW"
+      quality: "HIGH"
+      mix: 0.0  # Additive
+      threshold: 0.8
+      size: 7
+
+    # Color correction
+    color_balance:
+      enabled: true
+      lift: [1.0, 1.0, 1.0]
+      gamma: [1.0, 1.0, 1.0]
+      gain: [1.0, 1.0, 1.0]
+
+    # Vignette
+    vignette:
+      enabled: true
+      intensity: 0.15
+      softness: 0.5
+
+    # Film grain (subtle)
+    grain:
+      enabled: true
+      intensity: 0.02
+      size: 1.0
+
+    # Lens distortion
+    lens_distortion:
+      enabled: false
+      distortion: 0.0
+      dispersion: 0.0
+
+    # Sharpening
+    sharpen:
+      enabled: true
+      amount: 0.1

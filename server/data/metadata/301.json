@@ -1,0 +1,67 @@
+{
+  "name": "HouseForge Agent #301 — House Aurora",
+  "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
+  "image": "ipfs://PLACEHOLDER/301.png",
+  "attributes": [
+    {
+      "trait_type": "Season",
+      "value": "S0"
+    },
+    {
+      "trait_type": "House",
+      "value": "AURORA"
+    },
+    {
+      "trait_type": "RarityTier",
+      "value": "Common"
+    },
+    {
+      "trait_type": "WeatherID",
+      "value": "S0-AURORA-0206"
+    },
+    {
+      "trait_type": "FrameType",
+      "value": "Resin_Clear"
+    },
+    {
+      "trait_type": "CoreMaterial",
+      "value": "VolumetricCloud"
+    },
+    {
+      "trait_type": "LightSignature",
+      "value": "PrismaticRay"
+    },
+    {
+      "trait_type": "InstrumentMark",
+      "value": "WindRose"
+    },
+    {
+      "trait_type": "Atmosphere",
+      "value": "Dusty"
+    },
+    {
+      "trait_type": "DioramaGeometry",
+      "value": "Sphere"
+    },
+    {
+      "trait_type": "PaletteTemperature",
+      "value": "NeonCool"
+    },
+    {
+      "trait_type": "SurfaceAging",
+      "value": "EdgeWear"
+    },
+    {
+      "trait_type": "MicroEngraving",
+      "value": "Serial+CircuitMicro"
+    },
+    {
+      "trait_type": "LensBloom",
+      "value": "Soft"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "0"
+    }
+  ]
+}

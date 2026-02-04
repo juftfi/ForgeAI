@@ -1,0 +1,29 @@
+{
+  "name": "houseforge",
+  "version": "1.0.0",
+  "description": "HouseForge - Non-Fungible Agents with 7 Weather Houses on BNB Chain",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "gen:metadata": "pnpm --filter server run gen:metadata",
+    "demo": "pnpm --filter server run demo",
+    "web:dev": "pnpm --filter @houseforge/web run dev",
+    "web:build": "pnpm --filter @houseforge/web run build",
+    "web:lint": "pnpm --filter @houseforge/web run lint",
+    "server:dev": "pnpm --filter @houseforge/server run dev"
+  },
+  "keywords": [
+    "nft",
+    "bnb-chain",
+    "bsc",
+    "agents",
+    "erc721"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

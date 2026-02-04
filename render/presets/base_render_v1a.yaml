@@ -1,0 +1,171 @@
+# HouseForge Render Preset v1.0-A
+# Deep Blue-Black Studio Photography Base
+# All tokens share this foundation for series consistency
+
+version: "1.0-A"
+name: "DeepBlueStudio"
+
+# =============================================================
+#                    WORLD SETTINGS
+# =============================================================
+world:
+  # Gradient background (spherical)
+  gradient:
+    type: "SPHERICAL"
+    colors:
+      - position: 0.00
+        hex: "#02040A"  # Near black
+      - position: 0.55
+        hex: "#050A18"  # Deep blue-black
+      - position: 1.00
+        hex: "#0A1230"  # Dark blue
+  strength: 0.18
+
+# =============================================================
+#                    COLOR MANAGEMENT
+# =============================================================
+color_management:
+  view_transform: "Filmic"
+  look: "Medium High Contrast"
+  exposure: 0.6
+  gamma: 1.0
+
+# =============================================================
+#                    CYCLES SETTINGS
+# =============================================================
+cycles:
+  device: "GPU"
+
+  # Quality presets
+  quality_presets:
+    FAST:
+      samples: 64
+      noise_threshold: 0.025
+      volume_bounces: 1
+    STANDARD:
+      samples: 96
+      noise_threshold: 0.015
+      volume_bounces: 2
+    HERO:
+      samples: 256
+      noise_threshold: 0.008
+      volume_bounces: 3
+
+  # Default quality
+  default_quality: "STANDARD"
+
+  # Adaptive sampling
+  adaptive_sampling: true
+
+  # Denoising
+  denoise: true
+  denoiser: "OPENIMAGEDENOISE"
+
+  # Light paths
+  light_paths:
+    max_bounces: 6
+    diffuse_bounces: 2
+    glossy_bounces: 3
+    transmission_bounces: 6
+    volume_bounces: 2
+    transparent_max_bounces: 8
+
+  # Advanced
+  clamp_indirect: 3.0
+  filter_glossy: 0.1
+  caustics_reflective: false
+  caustics_refractive: false
+
+# =============================================================
+#                    CAMERA SETTINGS
+# =============================================================
+camera:
+  focal_length: 65  # mm
+  sensor_width: 36  # mm
+
+  # Position (装置中心为原点)
+  location: [0.0, -1.25, 0.55]
+  rotation: [78, 0, 0]  # degrees
+
+  # Depth of Field
+  dof:
+    enabled: true
+    focus_target: "Core"  # Focus on core object
+    f_stop: 5.6
+
+  # Composition
+  composition:
+    subject_offset_y: -0.05  # 5% below center
+    top_padding: 0.12  # 12% top whitespace
+
+# =============================================================
+#                    STUDIO LIGHTING
+# =============================================================
+lighting:
+  # Use emission planes (softboxes) for realistic studio look
+  use_emission_planes: true
+
+  # KEY Light (Main softbox)
+  key:
+    type: "EMISSION_PLANE"
+    size: [1.2, 0.6]  # meters
+    strength: 140
+    color: "#FFFFFF"  # 6500K white
+    location: [-0.9, -0.8, 0.85]
+    rotation: [35, 0, 25]  # degrees
+
+  # FILL Light (Secondary softbox)
+  fill:
+    type: "EMISSION_PLANE"
+    size: [1.5, 0.8]
+    strength: 55
+    color: "#FFFFFF"
+    location: [1.0, -0.6, 0.45]
+    rotation: [20, 0, -20]
+
+  # RIM Light (Edge separation)
+  rim:
+    type: "EMISSION_PLANE"
+    size: [1.2, 0.2]
+    strength: 95
+    color: "#FFFFFF"
+    location: [0.9, 1.2, 0.75]
+    rotation: [10, 0, 160]
+
+  # TOP ACCENT (Optional overhead)
+  top_accent:
+    type: "EMISSION_PLANE"
+    size: [0.6, 0.6]
+    strength: 20
+    color: "#FFFFFF"
+    location: [0.0, -0.2, 1.4]
+    rotation: [90, 0, 0]
+    enabled: true
+
+# =============================================================
+#                    COMPOSITOR
+# =============================================================
+compositor:
+  # Glare/Bloom
+  glare:
+    type: "FOG_GLOW"
+    threshold: 1.0
+    size: 6
+    mix: 0.18  # Default, houses can override
+    quality: "HIGH"
+
+  # Color correction
+  curves:
+    enabled: true
+    # Subtle S-curve: compress shadows, protect highlights
+    black_point: 0.02
+    white_point: 0.98
+
+# =============================================================
+#                    OUTPUT SETTINGS
+# =============================================================
+output:
+  resolution: [1024, 1024]
+  file_format: "WEBP"
+  quality: 90
+  film_transparent: false

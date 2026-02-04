@@ -1,0 +1,53 @@
+# Camera Presets for HouseForge 3D Renders
+# All renders use consistent camera language for unified aesthetic
+
+version: 1
+
+presets:
+  # Main product shot - 3/4 view, slightly elevated
+  main:
+    name: "CAM_MAIN"
+    type: "PERSP"
+    focal_length: 85  # Portrait lens for compression and elegance
+    sensor_width: 36
+    location: [2.5, -2.5, 1.8]
+    rotation_euler: [1.1, 0, 0.785]  # ~63° pitch, 45° yaw
+    dof:
+      enabled: true
+      focus_distance: 3.5
+      aperture: 2.8
+    clip_start: 0.1
+    clip_end: 100
+
+  # Front view - direct product shot
+  front:
+    name: "CAM_FRONT"
+    type: "PERSP"
+    focal_length: 100
+    sensor_width: 36
+    location: [0, -4, 1.2]
+    rotation_euler: [1.4, 0, 0]
+    dof:
+      enabled: true
+      focus_distance: 4.0
+      aperture: 4.0
+    clip_start: 0.1
+    clip_end: 100
+
+  # Hero shot - dramatic angle for mythics
+  hero:
+    name: "CAM_HERO"
+    type: "PERSP"
+    focal_length: 50
+    sensor_width: 36
+    location: [3.0, -3.0, 2.5]
+    rotation_euler: [1.0, 0, 0.785]
+    dof:
+      enabled: true
+      focus_distance: 4.2
+      aperture: 1.8
+    clip_start: 0.1
+    clip_end: 100
+
+# Default preset for genesis renders
+default: main

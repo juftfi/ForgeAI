@@ -1,0 +1,46 @@
+# House CLEAR - Crystal Refraction
+# Clean, transparent, sharp highlights, subtle prismatic dispersion
+
+house_id: 1
+name: "CLEAR"
+theme: "crystal_refraction"
+
+# World override
+world:
+  strength: 0.20  # Slightly brighter for richer reflections
+
+# Glass/Crystal material
+materials:
+  core:
+    type: "glass"
+    roughness: [0.025, 0.045]  # Range for variation
+    ior: 1.52
+    dispersion: 0.02  # Subtle prismatic effect
+
+# Compositor override
+compositor:
+  glare:
+    mix: 0.12  # Very light bloom
+
+# Light Signature: PrismaticRay
+light_signature:
+  name: "PrismaticRay"
+  lights:
+    - name: "PrismaticStrip"
+      type: "EMISSION_PLANE"
+      size: [1.4, 0.12]
+      strength: 35
+      color: "#FFFFFF"
+      location: [0.0, -1.0, 0.9]
+      rotation: [20, 0, 0]
+
+# Atmosphere
+atmosphere:
+  type: "Clean"
+  volume:
+    enabled: false
+
+# Palette temperature
+palette:
+  temperature: "neutral"
+  tint: "#FFFFFF"

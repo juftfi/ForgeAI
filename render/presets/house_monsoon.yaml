@@ -1,0 +1,53 @@
+# House MONSOON - Neon Rain Fog
+# Humid, neon reflections, light fog volume, cooler metals
+
+house_id: 2
+name: "MONSOON"
+theme: "neon_rain"
+
+# Rim light color override
+lighting:
+  rim:
+    color: "#BEEBFF"  # Cool blue-cyan tint
+
+# Materials
+materials:
+  core:
+    type: "glass"
+    roughness: [0.015, 0.035]
+    ior: 1.33  # Water-like
+  metal:
+    color_shift: [-0.05, 0.0, 0.05]  # Cooler metal
+
+# Light Signature: NeonRain
+light_signature:
+  name: "NeonRain"
+  lights:
+    - name: "NeonStrip1"
+      type: "EMISSION_PLANE"
+      size: [1.6, 0.06]
+      strength: 45
+      color: "#7EE7FF"  # Cyan neon
+      location: [-0.6, -0.9, 0.8]
+      rotation: [25, 0, 15]
+    - name: "NeonStrip2"
+      type: "EMISSION_PLANE"
+      size: [1.6, 0.06]
+      strength: 35
+      color: "#A39BFF"  # Purple neon
+      location: [0.5, -0.85, 0.75]
+      rotation: [22, 0, -12]
+
+# Atmosphere: Humid fog
+atmosphere:
+  type: "Humid"
+  volume:
+    enabled: true
+    density: 0.035
+    anisotropy: 0.35
+    color: "#E8F4FF"
+
+# Palette
+palette:
+  temperature: "cool"
+  tint: "#D0E8FF"
