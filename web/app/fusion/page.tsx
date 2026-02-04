@@ -342,8 +342,8 @@ function FusionPageContent() {
   }, [cancelSuccess, address, parentA, parentB, refetchActiveCommit]);
 
   // Check if tokens are sealed
-  const isParentASealed = lineageA?.sealed === true;
-  const isParentBSealed = lineageB?.sealed === true;
+  const isParentASealed = lineageA?.isSealed === true;
+  const isParentBSealed = lineageB?.isSealed === true;
 
   // 一键开始融合：自动生成salt并提交
   const handleStartFusion = async () => {
@@ -592,7 +592,7 @@ function FusionPageContent() {
                 <div className="text-xs text-gray-500">
                   家族: {HOUSE_NAMES[lineageA.houseId] || '未知'} |
                   世代: {lineageA.generation.toString()}
-                  {lineageA.sealed && (
+                  {lineageA.isSealed && (
                     <span className="text-red-400 ml-2">⚠️ 已封印</span>
                   )}
                 </div>
@@ -618,7 +618,7 @@ function FusionPageContent() {
                 <div className="text-xs text-gray-500">
                   家族: {HOUSE_NAMES[lineageB.houseId] || '未知'} |
                   世代: {lineageB.generation.toString()}
-                  {lineageB.sealed && (
+                  {lineageB.isSealed && (
                     <span className="text-red-400 ml-2">⚠️ 已封印</span>
                   )}
                 </div>

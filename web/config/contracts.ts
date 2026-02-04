@@ -193,7 +193,7 @@ export const HOUSE_FORGE_AGENT_ABI = [
           { name: 'parent2', type: 'uint256' },
           { name: 'generation', type: 'uint256' },
           { name: 'houseId', type: 'uint8' },
-          { name: 'sealed', type: 'bool' },
+          { name: 'isSealed', type: 'bool' },
         ],
       },
     ],
