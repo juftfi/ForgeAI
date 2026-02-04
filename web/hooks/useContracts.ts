@@ -10,11 +10,11 @@ import {
   FusionMode,
 } from '@/config/contracts';
 
-// Get contract address for current chain
+// Get contract address for current chain (BSC Mainnet only)
 export function useContractAddress(contract: keyof typeof CONTRACTS): Address {
   const chainId = useChainId();
   const addresses = CONTRACTS[contract];
-  return addresses[chainId as keyof typeof addresses] || addresses[97];
+  return addresses[chainId as keyof typeof addresses] || addresses[56];
 }
 
 // ==================== HouseForgeAgent Hooks ====================
