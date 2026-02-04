@@ -25,14 +25,16 @@ interface TreeNode {
   parentA?: TreeNode;
   parentB?: TreeNode;
   sealed: boolean;
+  burned: boolean;
 }
 
 interface LineageData {
-  parent1: bigint;
-  parent2: bigint;
-  generation: bigint;
+  parent1: number;
+  parent2: number;
+  generation: number;
   houseId: number;
   sealed: boolean;
+  isBurned?: boolean;
 }
 
 function TreePageContent() {
@@ -80,14 +82,15 @@ function TreePageContent() {
         house: HOUSE_NAMES[lineage.houseId] || '未知',
         generation: Number(lineage.generation),
         sealed: lineage.sealed,
+        burned: lineage.isBurned || false,
       };
 
       // Load parents recursively
-      if (lineage.parent1 > BigInt(0)) {
-        node.parentA = await loadLineageRecursive(Number(lineage.parent1), depth + 1, maxDepth) || undefined;
+      if (lineage.parent1 > 0) {
+        node.parentA = await loadLineageRecursive(lineage.parent1, depth + 1, maxDepth) || undefined;
       }
-      if (lineage.parent2 > BigInt(0)) {
-        node.parentB = await loadLineageRecursive(Number(lineage.parent2), depth + 1, maxDepth) || undefined;
+      if (lineage.parent2 > 0) {
+        node.parentB = await loadLineageRecursive(lineage.parent2, depth + 1, maxDepth) || undefined;
       }
 
       return node;
@@ -163,12 +166,12 @@ function TreePageContent() {
         <div
           className={`relative glass-card p-4 min-w-[140px] transition-all hover:border-amber-500/50 ${
             isRoot ? 'ring-2 ring-amber-500 shadow-lg shadow-amber-500/20' : ''
-          } ${node.sealed ? 'opacity-60' : ''}`}
+          } ${node.sealed || node.burned ? 'opacity-60' : ''}`}
         >
           {/* House color indicator */}
           <div
             className="absolute top-0 left-0 right-0 h-1 rounded-t-xl"
-            style={{ backgroundColor: getNodeColor(node.houseId) }}
+            style={{ backgroundColor: node.burned ? '#6b7280' : getNodeColor(node.houseId) }}
           />
 
           {/* Expand/Collapse button */}
@@ -181,23 +184,38 @@ function TreePageContent() {
             </button>
           )}
 
-          <Link href={`/agent/${node.tokenId}`} className="block text-center">
-            <div
-              className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2"
-              style={{
-                background: `linear-gradient(135deg, ${getNodeColor(node.houseId)}, ${getNodeColor(node.houseId)}44)`,
-              }}
-            >
-              <span className="text-lg font-bold text-white">#{node.tokenId}</span>
+          {node.burned ? (
+            <div className="block text-center">
+              <div
+                className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 bg-gray-700"
+              >
+                <span className="text-lg font-bold text-gray-400">#{node.tokenId}</span>
+              </div>
+              <div className="font-medium text-gray-400">{node.house}</div>
+              <div className="text-xs text-gray-500">
+                第 {node.generation} 代
+              </div>
+              <div className="text-xs text-red-400 mt-1">已销毁</div>
             </div>
-            <div className="font-medium text-white">{node.house}</div>
-            <div className="text-xs text-gray-400">
-              第 {node.generation} 代
-            </div>
-            {node.sealed && (
-              <div className="text-xs text-yellow-500 mt-1">已封印</div>
-            )}
-          </Link>
+          ) : (
+            <Link href={`/agent/${node.tokenId}`} className="block text-center">
+              <div
+                className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2"
+                style={{
+                  background: `linear-gradient(135deg, ${getNodeColor(node.houseId)}, ${getNodeColor(node.houseId)}44)`,
+                }}
+              >
+                <span className="text-lg font-bold text-white">#{node.tokenId}</span>
+              </div>
+              <div className="font-medium text-white">{node.house}</div>
+              <div className="text-xs text-gray-400">
+                第 {node.generation} 代
+              </div>
+              {node.sealed && (
+                <div className="text-xs text-yellow-500 mt-1">已封印</div>
+              )}
+            </Link>
+          )}
         </div>
       </div>
     );

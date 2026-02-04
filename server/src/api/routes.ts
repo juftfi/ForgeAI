@@ -381,7 +381,7 @@ const AGENT_ABI_LINEAGE = [
 
 /**
  * GET /lineage/:tokenId
- * Get lineage data for a token from the blockchain
+ * Get lineage data for a token from the blockchain (with caching for burned tokens)
  */
 router.get('/lineage/:tokenId', async (req: Request, res: Response) => {
   try {
@@ -390,17 +390,8 @@ router.get('/lineage/:tokenId', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid token ID' });
     }
 
-    const { ethers } = await import('ethers');
-
-    // BSC Mainnet RPC and contract address
-    const rpcUrl = process.env.RPC_URL || 'https://bsc-dataseed1.binance.org';
-    const agentAddress = process.env.HOUSEFORGE_AGENT_ADDRESS || '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B';
-
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const contract = new ethers.Contract(agentAddress, AGENT_ABI_LINEAGE, provider);
-
-    // Get lineage from contract
-    const lineage = await contract.getLineage(tokenId);
+    const vaultService = getVaultService();
+    const db = vaultService.getDatabase();
 
     // House ID to name mapping
     const HOUSE_ID_TO_NAME: Record<number, string> = {
@@ -408,27 +399,85 @@ router.get('/lineage/:tokenId', async (req: Request, res: Response) => {
       5: 'AURORA', 6: 'SAND', 7: 'ECLIPSE'
     };
 
-    // Convert all values to ensure no BigInt serialization issues
-    const houseId = Number(lineage.houseId);
+    // Check cache first
+    const cached = db.prepare('SELECT * FROM lineage_cache WHERE token_id = ?').get(tokenId) as any;
 
-    res.json({
-      tokenId,
-      parent1: Number(lineage.parent1),
-      parent2: Number(lineage.parent2),
-      generation: Number(lineage.generation),
-      houseId: houseId,
-      houseName: HOUSE_ID_TO_NAME[houseId] || 'UNKNOWN',
-      sealed: Boolean(lineage.isSealed),  // Frontend expects 'sealed'
-      isSealed: Boolean(lineage.isSealed), // Keep for compatibility
-    });
-  } catch (error: any) {
-    console.error('Lineage get error:', error);
+    // Try to fetch from blockchain
+    let lineageData: any = null;
 
-    // Check if it's a "token doesn't exist" error
-    if (error?.message?.includes('revert') || error?.code === 'CALL_EXCEPTION') {
-      return res.status(404).json({ error: 'Token not found or has no lineage data' });
+    try {
+      const { ethers } = await import('ethers');
+      const rpcUrl = process.env.RPC_URL || 'https://bsc-dataseed1.binance.org';
+      const agentAddress = process.env.HOUSEFORGE_AGENT_ADDRESS || '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B';
+
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      const contract = new ethers.Contract(agentAddress, AGENT_ABI_LINEAGE, provider);
+
+      const lineage = await contract.getLineage(tokenId);
+      const houseId = Number(lineage.houseId);
+
+      lineageData = {
+        tokenId,
+        parent1: Number(lineage.parent1),
+        parent2: Number(lineage.parent2),
+        generation: Number(lineage.generation),
+        houseId: houseId,
+        houseName: HOUSE_ID_TO_NAME[houseId] || 'UNKNOWN',
+        sealed: Boolean(lineage.isSealed),
+        isSealed: Boolean(lineage.isSealed),
+        isBurned: false,
+      };
+
+      // Update cache
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT OR REPLACE INTO lineage_cache
+        (token_id, parent1, parent2, generation, house_id, house_name, is_sealed, is_burned, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+      `).run(
+        tokenId,
+        lineageData.parent1,
+        lineageData.parent2,
+        lineageData.generation,
+        lineageData.houseId,
+        lineageData.houseName,
+        lineageData.sealed ? 1 : 0,
+        cached?.created_at || now,
+        now
+      );
+    } catch (chainError: any) {
+      // Chain call failed - token might be burned
+      console.log(`Chain call failed for token ${tokenId}:`, chainError?.message?.substring(0, 100));
+
+      if (cached) {
+        // Return cached data, mark as burned if not already
+        if (!cached.is_burned) {
+          db.prepare('UPDATE lineage_cache SET is_burned = 1, updated_at = ? WHERE token_id = ?')
+            .run(new Date().toISOString(), tokenId);
+        }
+
+        lineageData = {
+          tokenId: cached.token_id,
+          parent1: cached.parent1,
+          parent2: cached.parent2,
+          generation: cached.generation,
+          houseId: cached.house_id,
+          houseName: cached.house_name,
+          sealed: Boolean(cached.is_sealed),
+          isSealed: Boolean(cached.is_sealed),
+          isBurned: true,
+        };
+      }
     }
 
+    if (lineageData) {
+      return res.json(lineageData);
+    }
+
+    // No data from chain and no cache
+    return res.status(404).json({ error: 'Token not found or has no lineage data' });
+  } catch (error: any) {
+    console.error('Lineage get error:', error);
     res.status(500).json({ error: 'Failed to get lineage data', details: error?.message });
   }
 });

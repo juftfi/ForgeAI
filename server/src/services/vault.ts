@@ -142,6 +142,20 @@ export class VaultService {
       );
 
       CREATE INDEX IF NOT EXISTS idx_snapshots_token ON learning_snapshots(token_id);
+
+      -- Lineage cache table (persists even after burn)
+      CREATE TABLE IF NOT EXISTS lineage_cache (
+        token_id INTEGER PRIMARY KEY,
+        parent1 INTEGER NOT NULL DEFAULT 0,
+        parent2 INTEGER NOT NULL DEFAULT 0,
+        generation INTEGER NOT NULL DEFAULT 0,
+        house_id INTEGER NOT NULL,
+        house_name TEXT NOT NULL,
+        is_sealed INTEGER NOT NULL DEFAULT 0,
+        is_burned INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `);
   }
 
