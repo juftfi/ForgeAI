@@ -247,18 +247,49 @@ export function useRevealFusion() {
     parentA: bigint,
     parentB: bigint,
     salt: `0x${string}`,
-    mode: FusionMode,
-    offspringData: `0x${string}`
+    vaultURI: string,
+    vaultHash: `0x${string}`,
+    learningRoot: `0x${string}`,
+    offspringPersona: string,
+    offspringExperience: string,
+    offspringHouseId: number,
+    offspringTraitsHash: `0x${string}`,
+    offspringRarityTier: number,
+    fusionFee: bigint
   ) => {
     writeContract({
       address,
       abi: FUSION_CORE_ABI,
       functionName: 'revealFusion',
-      args: [parentA, parentB, salt, mode, offspringData],
+      args: [
+        parentA,
+        parentB,
+        salt,
+        vaultURI,
+        vaultHash,
+        learningRoot,
+        offspringPersona,
+        offspringExperience,
+        offspringHouseId,
+        offspringTraitsHash,
+        offspringRarityTier,
+      ],
+      value: fusionFee,
     });
   };
 
   return { reveal, hash, isPending, isConfirming, isSuccess, error };
+}
+
+export function useFusionFee(parentA: bigint | undefined, parentB: bigint | undefined) {
+  const address = useContractAddress('FusionCore');
+  return useReadContract({
+    address,
+    abi: FUSION_CORE_ABI,
+    functionName: 'getFusionFee',
+    args: parentA !== undefined && parentB !== undefined ? [parentA, parentB] : undefined,
+    query: { enabled: parentA !== undefined && parentB !== undefined },
+  });
 }
 
 export function useCancelFusion() {

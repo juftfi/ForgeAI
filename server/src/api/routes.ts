@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { getVaultService } from '../services/vault.js';
 import { generateGenesisMetadata, toOpenSeaMetadata } from '../services/traitEngine.js';
 import { loadGenesis } from '../utils/yaml.js';
-import { AbiCoder } from 'ethers';
 import path from 'path';
 import fs from 'fs';
 
@@ -335,19 +334,11 @@ router.post('/fusion/prepare-reveal', async (req: Request, res: Response) => {
     const offspringHouseId = HOUSE_KEY_TO_ID[offspringMetadata.traits.House] || 1;
     const traitsHash = computeTraitsHash(offspringMetadata.traits);
 
-    // Encode offspring data for contract call
-    // mintOffspring expects: (to, parent1, parent2, houseId, persona, vaultURI, vaultHash)
-    // offspringData encodes: (houseId, persona, vaultURI, vaultHash)
-    const abiCoder = new AbiCoder();
-    const offspringData = abiCoder.encode(
-      ['uint8', 'string', 'string', 'bytes32'],
-      [
-        offspringHouseId,
-        JSON.stringify(offspringMetadata.persona),
-        vault.vaultURI,
-        vault.vaultHash
-      ]
-    );
+    // Map rarity to tier number
+    const RARITY_TO_TIER: Record<string, number> = {
+      Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Mythic: 4
+    };
+    const offspringRarityTier = RARITY_TO_TIER[offspringMetadata.traits.RarityTier] || 0;
 
     res.json({
       offspring: toOpenSeaMetadata(offspringMetadata),
@@ -358,10 +349,12 @@ router.post('/fusion/prepare-reveal', async (req: Request, res: Response) => {
         learningRoot: vault.learningRoot,
       },
       offspringHouseId,
+      offspringPersona: JSON.stringify(offspringMetadata.persona),
+      offspringExperience: `Offspring of #${parentAId} and #${parentBId}`,
+      offspringRarityTier,
       traitsHash,
       isMythic: offspringMetadata.isMythic,
       mythicKey: offspringMetadata.mythicKey,
-      offspringData: offspringData as `0x${string}`,
     });
   } catch (error: any) {
     console.error('Prepare reveal error:', error);

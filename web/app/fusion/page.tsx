@@ -8,6 +8,7 @@ import {
   useCommitFusion,
   useRevealFusion,
   useCancelFusion,
+  useFusionFee,
   useAgentOwner,
   useAgentLineage,
   useFusionApproval,
@@ -44,10 +45,12 @@ interface FusionResult {
     learningRoot: string;
   };
   offspringHouseId: number;
+  offspringPersona: string;
+  offspringExperience: string;
+  offspringRarityTier: number;
   traitsHash: string;
   isMythic: boolean;
   mythicKey?: string;
-  offspringData: `0x${string}`;
 }
 
 type FusionStep = 'select' | 'review' | 'committed' | 'waiting' | 'revealed';
@@ -130,6 +133,12 @@ function FusionPageContent() {
   const { data: ownerB } = useAgentOwner(parentB ? BigInt(parentB) : undefined);
   const { data: lineageA } = useAgentLineage(parentA ? BigInt(parentA) : undefined);
   const { data: lineageB } = useAgentLineage(parentB ? BigInt(parentB) : undefined);
+
+  // Fusion fee
+  const { data: fusionFeeData } = useFusionFee(
+    parentA ? BigInt(parentA) : undefined,
+    parentB ? BigInt(parentB) : undefined
+  );
 
   // Check for existing active commit
   const { data: hasActiveCommit, refetch: refetchActiveCommit } = useHasActiveCommit(
@@ -265,14 +274,31 @@ function FusionPageContent() {
       });
 
       if (!res.ok) {
-        throw new Error('准备揭示数据失败');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || '准备揭示数据失败');
       }
 
       const data: FusionResult = await res.json();
       setResult(data);
 
-      // Call contract reveal
-      reveal(BigInt(parentA), BigInt(parentB), salt, mode, data.offspringData);
+      // Get fusion fee (totalFee is the first element)
+      const fusionFee = fusionFeeData ? (fusionFeeData as [bigint, bigint, bigint, bigint])[0] : BigInt(0);
+
+      // Call contract reveal with all parameters
+      reveal(
+        BigInt(parentA),
+        BigInt(parentB),
+        salt,
+        data.vault.vaultURI,
+        data.vault.vaultHash as `0x${string}`,
+        data.vault.learningRoot as `0x${string}`,
+        data.offspringPersona,
+        data.offspringExperience,
+        data.offspringHouseId,
+        data.traitsHash as `0x${string}`,
+        data.offspringRarityTier,
+        fusionFee
+      );
     } catch (err: any) {
       setError(err.message || '揭示融合失败');
     }
@@ -293,6 +319,10 @@ function FusionPageContent() {
   };
 
   const canReveal = commitBlock && blockNumber && blockNumber > commitBlock;
+  // Cancel only available after commit expires (256 blocks)
+  const MAX_COMMIT_AGE = BigInt(256);
+  const canCancel = commitBlock && blockNumber && blockNumber > commitBlock + MAX_COMMIT_AGE;
+  const blocksUntilCancel = commitBlock && blockNumber ? Number(commitBlock + MAX_COMMIT_AGE - blockNumber) : 0;
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
@@ -567,6 +597,14 @@ function FusionPageContent() {
               </div>
             </div>
             <div className="flex justify-between">
+              <span className="text-gray-400">融合费用</span>
+              <span className="text-amber-400">
+                {fusionFeeData
+                  ? `${(Number((fusionFeeData as [bigint, bigint, bigint, bigint])[0]) / 1e18).toFixed(4)} BNB`
+                  : '计算中...'}
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-gray-400">状态</span>
               <span className={canReveal ? 'text-green-400' : 'text-yellow-400'}>
                 {canReveal ? '准备揭示' : '等待中...'}
@@ -594,10 +632,11 @@ function FusionPageContent() {
           <div className="flex gap-4">
             <button
               onClick={handleCancel}
-              disabled={cancelPending}
-              className="flex-1 py-3 bg-red-600/20 border border-red-600 rounded-lg font-medium hover:bg-red-600/30 transition-colors text-white"
+              disabled={cancelPending || !canCancel}
+              className="flex-1 py-3 bg-red-600/20 border border-red-600 rounded-lg font-medium hover:bg-red-600/30 transition-colors text-white disabled:opacity-50"
+              title={canCancel ? '取消融合' : `还需等待 ${blocksUntilCancel} 个区块才能取消`}
             >
-              {cancelPending ? '取消中...' : '取消融合'}
+              {cancelPending ? '取消中...' : canCancel ? '取消融合' : `取消 (${blocksUntilCancel} 区块后)`}
             </button>
             <button
               onClick={handleReveal}
@@ -607,6 +646,11 @@ function FusionPageContent() {
               {revealPending ? '揭示中...' : '揭示融合'}
             </button>
           </div>
+          {!canCancel && canReveal && (
+            <p className="text-xs text-gray-500 text-center">
+              提示：只有当提交过期（256区块后）才能取消。建议先揭示融合。
+            </p>
+          )}
         </div>
       )}
 
