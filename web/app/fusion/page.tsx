@@ -55,15 +55,7 @@ interface FusionResult {
   mythicKey?: string;
 }
 
-type FusionStep = 'select' | 'review' | 'committed' | 'waiting' | 'revealed';
-
-const STEP_LABELS: Record<FusionStep, string> = {
-  'select': '选择',
-  'review': '确认',
-  'committed': '已提交',
-  'waiting': '等待',
-  'revealed': '已揭示',
-};
+type FusionStep = 'select' | 'waiting' | 'revealed';
 
 function FusionPageContent() {
   const searchParams = useSearchParams();
@@ -102,9 +94,9 @@ function FusionPageContent() {
     }
   }, [address, parentA, parentB, salt]);
 
-  // Poll block number every 3 seconds when in commit/waiting state
+  // Poll block number every 3 seconds when in waiting state
   useEffect(() => {
-    if (step === 'committed' || step === 'waiting') {
+    if (step === 'waiting') {
       const interval = setInterval(() => {
         refetchBlock();
       }, 3000);
@@ -199,7 +191,7 @@ function FusionPageContent() {
     parentB ? BigInt(parentB) : undefined,
     simulatedHash,
     mode,
-    step === 'review' && !!salt && !!address && !!simulatedHash
+    step === 'select' && !!salt && !!address && !!simulatedHash
   );
 
   // Update simulated hash when salt changes
@@ -311,7 +303,8 @@ function FusionPageContent() {
   const isParentASealed = lineageA?.sealed === true;
   const isParentBSealed = lineageB?.sealed === true;
 
-  const handleProceedToReview = () => {
+  // 一键开始融合：自动生成salt并提交
+  const handleStartFusion = async () => {
     if (!parentA || !parentB) {
       setError('请选择两个亲本');
       return;
@@ -328,11 +321,42 @@ function FusionPageContent() {
       setError(`无法融合：${isParentASealed ? '亲本 A' : ''}${isParentASealed && isParentBSealed ? ' 和 ' : ''}${isParentBSealed ? '亲本 B' : ''} 已被封印`);
       return;
     }
-    if (!salt) {
-      handleGenerateSalt();
+    if (!isApproved) {
+      setError('请先授权 FusionCore 合约');
+      return;
     }
+    if (!address) return;
+
     setError('');
-    setStep('review');
+
+    // 自动生成salt（如果没有的话）
+    let currentSalt = salt;
+    if (!currentSalt) {
+      currentSalt = generateSalt();
+      saveSalt(currentSalt);
+    }
+
+    // 直接提交commit
+    try {
+      const commitHashValue = generateCommitHash(
+        BigInt(parentA),
+        BigInt(parentB),
+        currentSalt,
+        address,
+        mode
+      );
+
+      console.log('=== AUTO COMMIT ===');
+      console.log('parentA:', parentA);
+      console.log('parentB:', parentB);
+      console.log('salt:', currentSalt);
+      console.log('commitHash:', commitHashValue);
+      console.log('=== END ===');
+
+      commit(BigInt(parentA), BigInt(parentB), commitHashValue, mode);
+    } catch (err: any) {
+      setError(err.message || '提交融合失败');
+    }
   };
 
   const handleCommit = async () => {
@@ -481,23 +505,30 @@ function FusionPageContent() {
       </div>
 
       {/* Step Indicator */}
-      <div className="flex justify-center items-center gap-2">
-        {(['select', 'review', 'committed', 'waiting', 'revealed'] as FusionStep[]).map((s, i) => (
-          <div key={s} className="flex items-center">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                step === s
-                  ? 'bg-amber-600 text-white'
-                  : getStepIndex(step) > i
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-700 text-gray-400'
-              }`}
-            >
-              {getStepIndex(step) > i ? '✓' : i + 1}
-            </div>
-            {i < 4 && (
+      <div className="flex justify-center items-center gap-4">
+        {[
+          { key: 'select', label: '选择' },
+          { key: 'waiting', label: '等待' },
+          { key: 'revealed', label: '完成' },
+        ].map((s, i) => (
+          <div key={s.key} className="flex items-center">
+            <div className="flex flex-col items-center">
               <div
-                className={`w-8 h-0.5 mx-1 ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                  step === s.key
+                    ? 'bg-amber-600 text-white'
+                    : getStepIndex(step) > i
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-700 text-gray-400'
+                }`}
+              >
+                {getStepIndex(step) > i ? '✓' : i + 1}
+              </div>
+              <span className="text-xs text-gray-400 mt-1">{s.label}</span>
+            </div>
+            {i < 2 && (
+              <div
+                className={`w-12 h-0.5 mx-2 ${
                   getStepIndex(step) > i ? 'bg-green-600' : 'bg-gray-700'
                 }`}
               />
@@ -612,85 +643,8 @@ function FusionPageContent() {
             </div>
           </div>
 
-          <button
-            onClick={handleProceedToReview}
-            disabled={!isConnected || !parentA || !parentB || !parentAValid || !parentBValid || isParentASealed || isParentBSealed}
-            className="w-full py-4 btn-primary text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isParentASealed || isParentBSealed ? '无法融合 - 代币已封印' : '继续确认'}
-          </button>
-        </div>
-      )}
-
-      {/* Step 2: Review & Commit */}
-      {step === 'review' && (
-        <div className="glass-card p-6 space-y-6">
-          <h2 className="text-xl font-bold text-amber-400">确认融合</h2>
-
-          <div className="bg-black/60 rounded-lg p-4 space-y-3 border border-amber-500/20">
-            <div className="flex justify-between">
-              <span className="text-gray-400">亲本 A</span>
-              <Link href={`/agent/${parentA}`} className="text-amber-400 hover:text-amber-300">
-                智能体 #{parentA}
-              </Link>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">亲本 B</span>
-              <Link href={`/agent/${parentB}`} className="text-amber-400 hover:text-amber-300">
-                智能体 #{parentB}
-              </Link>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">模式</span>
-              <span className="text-white">{mode === FusionMode.SEAL ? '封印亲本' : '销毁亲本'}</span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-gray-300">秘密盐值</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={salt}
-                onChange={e => setSalt(e.target.value as `0x${string}`)}
-                placeholder="0x..."
-                className="flex-1 bg-black/60 border border-amber-500/20 rounded-lg px-4 py-2 font-mono text-xs text-white"
-              />
-              <button
-                onClick={handleGenerateSalt}
-                className="px-4 py-2 btn-secondary"
-              >
-                生成
-              </button>
-            </div>
-            <p className="text-xs text-yellow-400">
-              ⚠️ 请保存此盐值！揭示融合时需要使用它。
-            </p>
-          </div>
-
-          {/* Contract Paused Warning */}
-          {isPaused && (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <p className="text-red-400 text-sm">
-                ⛔ 融合合约当前已暂停，无法进行融合操作
-              </p>
-            </div>
-          )}
-
-          {/* Simulation Error Warning */}
-          {isSimulateError && simulateError && (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <p className="text-red-400 text-sm mb-2">
-                ⚠️ 交易预检失败 - 此交易可能会回滚：
-              </p>
-              <p className="text-red-300 text-xs font-mono break-all">
-                {(simulateError as any)?.shortMessage || (simulateError as any)?.message || '未知错误'}
-              </p>
-            </div>
-          )}
-
           {/* Approval Check */}
-          {!isApproved && (
+          {!isApproved && isConnected && (
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
               <p className="text-yellow-300 text-sm mb-3">
                 ⚠️ 需要先授权 FusionCore 合约操作你的 NFT
@@ -705,22 +659,19 @@ function FusionPageContent() {
             </div>
           )}
 
-          <div className="flex gap-4">
-            <button
-              onClick={() => setStep('select')}
-              className="flex-1 py-3 btn-secondary"
-            >
-              返回
-            </button>
-            <button
-              onClick={handleCommit}
-              disabled={!salt || commitPending || !isApproved || isPaused || isSimulateError}
-              className="flex-1 py-3 btn-primary disabled:opacity-50"
-              title={isPaused ? '合约已暂停' : isSimulateError ? '交易预检失败' : ''}
-            >
-              {commitPending ? '确认中...' : isPaused ? '合约已暂停' : '提交融合'}
-            </button>
-          </div>
+          <button
+            onClick={handleStartFusion}
+            disabled={!isConnected || !parentA || !parentB || !parentAValid || !parentBValid || isParentASealed || isParentBSealed || !isApproved || commitPending}
+            className="w-full py-4 btn-primary text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isParentASealed || isParentBSealed
+              ? '无法融合 - 代币已封印'
+              : !isApproved
+                ? '请先授权'
+                : commitPending
+                  ? '提交中...'
+                  : '🚀 开始融合'}
+          </button>
 
           {commitHash && (
             <div className="text-center text-sm">
@@ -737,8 +688,8 @@ function FusionPageContent() {
         </div>
       )}
 
-      {/* Step 3-4: Waiting */}
-      {(step === 'committed' || step === 'waiting') && (
+      {/* Step 2: Waiting */}
+      {step === 'waiting' && (
         <div className="glass-card p-6 space-y-6">
           <div className="text-center">
             <div className="text-6xl mb-4">⏳</div>
@@ -784,59 +735,75 @@ function FusionPageContent() {
             </div>
           </div>
 
-          {/* Salt input for reveal */}
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">盐值 (Salt)</label>
-            <input
-              type="text"
-              value={salt}
-              onChange={(e) => setSalt(e.target.value as `0x${string}`)}
-              placeholder="0x..."
-              className="w-full bg-black/60 border border-amber-500/20 rounded-lg px-4 py-2 font-mono text-xs text-white"
-            />
-            {!salt && (
-              <p className="text-xs text-red-400">
-                ⚠️ 请输入提交融合时生成的盐值，否则无法揭示！
-              </p>
-            )}
-          </div>
+          {/* Salt 状态显示 */}
+          {salt ? (
+            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <p className="text-green-400 text-sm">✓ 盐值已自动保存</p>
+              <p className="text-xs text-gray-500 font-mono mt-1 break-all">{salt}</p>
+            </div>
+          ) : (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-400 text-sm">⚠️ 盐值丢失！无法揭示此融合。</p>
+              <button
+                onClick={() => {
+                  setStep('select');
+                  setCommitBlock(null);
+                }}
+                className="mt-2 text-xs text-amber-400 hover:text-amber-300"
+              >
+                返回重新开始
+              </button>
+            </div>
+          )}
 
-          {/* Debug: Refresh and verify commit */}
-          <div className="p-3 bg-gray-800/50 rounded-lg">
+          {/* 调试信息 */}
+          <div className="p-3 bg-gray-800/50 rounded-lg text-xs text-gray-500">
             <button
               onClick={() => {
                 refetchActiveCommit();
                 refetchCommitDetails();
-                setTimeout(verifyCommitHash, 1000);
               }}
-              className="text-xs text-amber-400 hover:text-amber-300"
+              className="text-amber-400 hover:text-amber-300"
             >
-              🔍 刷新并验证提交数据
+              🔍 刷新状态
             </button>
-            <div className="text-xs text-gray-500 mt-1">
-              已提交: {hasActiveCommit ? '是' : '否'} |
-              提交区块: {(existingCommit as any)?.commitBlock?.toString() || '无'}
-            </div>
+            <span className="ml-3">
+              链上提交: {hasActiveCommit ? '是' : '否'}
+            </span>
           </div>
 
           <div className="flex gap-4">
-            <button
-              onClick={handleCancel}
-              disabled={cancelPending || !canCancel}
-              className="flex-1 py-3 bg-red-600/20 border border-red-600 rounded-lg font-medium hover:bg-red-600/30 transition-colors text-white disabled:opacity-50"
-              title={canCancel ? '取消融合' : `还需等待 ${blocksUntilCancel} 个区块才能取消`}
-            >
-              {cancelPending ? '取消中...' : canCancel ? '取消融合' : `取消 (${blocksUntilCancel} 区块后)`}
-            </button>
+            {/* 如果没有活跃commit，显示返回按钮 */}
+            {!hasActiveCommit ? (
+              <button
+                onClick={() => {
+                  setStep('select');
+                  setCommitBlock(null);
+                  setSalt('');
+                }}
+                className="flex-1 py-3 btn-secondary"
+              >
+                返回选择
+              </button>
+            ) : (
+              <button
+                onClick={handleCancel}
+                disabled={cancelPending || !canCancel}
+                className="flex-1 py-3 bg-red-600/20 border border-red-600 rounded-lg font-medium hover:bg-red-600/30 transition-colors text-white disabled:opacity-50"
+                title={canCancel ? '取消融合' : `还需等待 ${blocksUntilCancel} 个区块才能取消`}
+              >
+                {cancelPending ? '取消中...' : canCancel ? '取消融合' : `取消 (${blocksUntilCancel} 区块后)`}
+              </button>
+            )}
             <button
               onClick={handleReveal}
-              disabled={!canReveal || revealPending || !salt}
+              disabled={!canReveal || revealPending || !salt || !hasActiveCommit}
               className="flex-1 py-3 btn-primary disabled:opacity-50"
             >
               {revealPending ? '揭示中...' : '揭示融合'}
             </button>
           </div>
-          {!canCancel && canReveal && (
+          {hasActiveCommit && !canCancel && canReveal && (
             <p className="text-xs text-gray-500 text-center">
               提示：只有当提交过期（256区块后）才能取消。建议先揭示融合。
             </p>
@@ -926,7 +893,7 @@ function FusionPageContent() {
 }
 
 function getStepIndex(step: FusionStep): number {
-  const steps: FusionStep[] = ['select', 'review', 'committed', 'waiting', 'revealed'];
+  const steps: FusionStep[] = ['select', 'waiting', 'revealed'];
   return steps.indexOf(step);
 }
 
