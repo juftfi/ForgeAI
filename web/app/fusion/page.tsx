@@ -110,7 +110,7 @@ function FusionPageContent() {
   // Contract hooks
   const { commit, isPending: commitPending, isSuccess: commitSuccess, hash: commitHash } = useCommitFusion();
   const { reveal, isPending: revealPending, isSuccess: revealSuccess, hash: revealHash } = useRevealFusion();
-  const { cancel, isPending: cancelPending } = useCancelFusion();
+  const { cancel, isPending: cancelPending, isSuccess: cancelSuccess } = useCancelFusion();
 
   // Approval hooks
   const chainId = useChainId();
@@ -181,6 +181,23 @@ function FusionPageContent() {
       setStep('revealed');
     }
   }, [revealSuccess]);
+
+  // Handle cancel success
+  useEffect(() => {
+    if (cancelSuccess) {
+      // Clear localStorage salt
+      if (address && parentA && parentB) {
+        localStorage.removeItem(getSaltKey(parentA, parentB, address));
+      }
+      // Reset state
+      setSalt('');
+      setCommitBlock(null);
+      setStep('select');
+      setError('');
+      // Refetch active commit status
+      refetchActiveCommit();
+    }
+  }, [cancelSuccess, address, parentA, parentB, refetchActiveCommit]);
 
   const handleGenerateSalt = () => {
     saveSalt(generateSalt());
