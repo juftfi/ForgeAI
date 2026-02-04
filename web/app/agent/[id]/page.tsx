@@ -60,6 +60,48 @@ interface TokenMetadata {
   attributes: { trait_type: string; value: string }[];
 }
 
+// Format bytes32 value for display
+function formatBytes32(value: unknown): string {
+  if (!value) return '(未设置)';
+
+  // If it's a string that looks like a hex
+  if (typeof value === 'string') {
+    if (value === '0x' || value === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+      return '(未设置)';
+    }
+    return value;
+  }
+
+  // If it's a BigInt or number (sometimes viem returns as bigint)
+  if (typeof value === 'bigint' || typeof value === 'number') {
+    const hex = value.toString(16).padStart(64, '0');
+    if (hex === '0'.repeat(64)) return '(未设置)';
+    return `0x${hex}`;
+  }
+
+  return String(value);
+}
+
+// Format learning version for display
+function formatLearningVersion(value: unknown): string {
+  if (!value) return '0';
+
+  if (typeof value === 'bigint') {
+    // If it's a reasonable number (< 1 million), show it
+    if (value < BigInt(1000000)) {
+      return value.toString();
+    }
+    // Otherwise it might be garbage data, show as version 0
+    return '0';
+  }
+
+  if (typeof value === 'number') {
+    return value.toString();
+  }
+
+  return String(value);
+}
+
 interface VaultData {
   id: string;
   tokenId: number;
@@ -305,19 +347,27 @@ export default function AgentDetailPage() {
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="text-gray-500">保险库 URI: </span>
-                  <span className="font-mono text-xs break-all text-white">{onChainMetadata.vaultURI}</span>
+                  <span className="font-mono text-xs break-all text-white">
+                    {onChainMetadata.vaultURI || '(未设置)'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-500">保险库哈希: </span>
-                  <span className="font-mono text-xs break-all text-white">{onChainMetadata.vaultHash}</span>
+                  <span className="font-mono text-xs break-all text-white">
+                    {formatBytes32(onChainMetadata.vaultHash)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-500">学习根: </span>
-                  <span className="font-mono text-xs break-all text-white">{onChainMetadata.learningRoot}</span>
+                  <span className="font-mono text-xs break-all text-white">
+                    {formatBytes32(onChainMetadata.learningRoot)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-500">学习版本: </span>
-                  <span className="text-white">{onChainMetadata.learningVersion.toString()}</span>
+                  <span className="text-white">
+                    {formatLearningVersion(onChainMetadata.learningVersion)}
+                  </span>
                 </div>
               </div>
             </div>
