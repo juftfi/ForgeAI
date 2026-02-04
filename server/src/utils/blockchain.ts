@@ -23,8 +23,8 @@ function getRpcUrl(): string {
   return BSC_RPC_URLS[0];
 }
 
-// HouseForgeAgent contract address
-const AGENT_CONTRACT = process.env.HOUSEFORGE_AGENT_ADDRESS || '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B';
+// HouseForgeAgent contract address (V3 - new economics)
+const AGENT_CONTRACT = process.env.HOUSEFORGE_AGENT_ADDRESS || '0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f';
 
 // Minimal ABI for ownership check
 const OWNER_OF_ABI = [

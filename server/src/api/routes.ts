@@ -412,7 +412,7 @@ router.get('/lineage/:tokenId', async (req: Request, res: Response) => {
       const rpcUrl = (envRpc && !envRpc.includes('testnet') && !envRpc.includes('blast'))
         ? envRpc
         : 'https://bsc-dataseed.binance.org/';
-      const agentAddress = process.env.HOUSEFORGE_AGENT_ADDRESS || '0xeAcf52Cb95e511EDe5107f9F33fEE0B7B77F9E2B';
+      const agentAddress = process.env.HOUSEFORGE_AGENT_ADDRESS || '0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f';
 
       console.log(`[Lineage] Fetching token ${tokenId} from ${rpcUrl}`);
       const provider = new ethers.JsonRpcProvider(rpcUrl);
