@@ -65,16 +65,6 @@ function FusionPageContent() {
   const { address, isConnected } = useAccount();
   const { data: blockNumber, refetch: refetchBlock } = useBlockNumber();
 
-  // Poll block number every 3 seconds when in commit/waiting state
-  useEffect(() => {
-    if (step === 'committed' || step === 'waiting') {
-      const interval = setInterval(() => {
-        refetchBlock();
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [step, refetchBlock]);
-
   const [parentA, setParentA] = useState(searchParams.get('parentA') || '');
   const [parentB, setParentB] = useState(searchParams.get('parentB') || '');
   const [salt, setSalt] = useState<`0x${string}` | ''>('');
@@ -85,6 +75,16 @@ function FusionPageContent() {
   const [error, setError] = useState('');
   const [parentAValid, setParentAValid] = useState(false);
   const [parentBValid, setParentBValid] = useState(false);
+
+  // Poll block number every 3 seconds when in commit/waiting state
+  useEffect(() => {
+    if (step === 'committed' || step === 'waiting') {
+      const interval = setInterval(() => {
+        refetchBlock();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [step, refetchBlock]);
 
   // Contract hooks
   const { commit, isPending: commitPending, isSuccess: commitSuccess, hash: commitHash } = useCommitFusion();
