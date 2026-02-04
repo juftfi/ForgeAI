@@ -50,6 +50,8 @@ export default function GalleryPage() {
   const [houseFilter, setHouseFilter] = useState('全部');
   const [rarityFilter, setRarityFilter] = useState('全部');
   const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
+  const [totalPages, setTotalPages] = useState(88); // 2100 / 24 = 87.5 -> 88
   const pageSize = 24;
 
   useEffect(() => {
@@ -78,6 +80,11 @@ export default function GalleryPage() {
     }
 
     loadTokens();
+  }, [page]);
+
+  // Sync page input with page state
+  useEffect(() => {
+    setPageInput(String(page));
   }, [page]);
 
   const filteredTokens = tokens.filter(token => {
@@ -166,23 +173,58 @@ export default function GalleryPage() {
           )}
 
           {/* Pagination */}
-          <div className="flex justify-center gap-2 mt-8">
+          <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => { setPage(1); setPageInput('1'); }}
+              disabled={page === 1}
+              className="btn-secondary disabled:opacity-50"
+            >
+              首页
+            </button>
+            <button
+              onClick={() => { setPage(p => Math.max(1, p - 1)); setPageInput(String(Math.max(1, page - 1))); }}
               disabled={page === 1}
               className="btn-secondary disabled:opacity-50"
             >
               上一页
             </button>
-            <span className="px-4 py-2 bg-black/60 border border-amber-500/20 rounded-lg text-white">
-              第 {page} 页
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">第</span>
+              <input
+                type="number"
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const newPage = Math.max(1, Math.min(totalPages, parseInt(pageInput) || 1));
+                    setPage(newPage);
+                    setPageInput(String(newPage));
+                  }
+                }}
+                onBlur={() => {
+                  const newPage = Math.max(1, Math.min(totalPages, parseInt(pageInput) || 1));
+                  setPage(newPage);
+                  setPageInput(String(newPage));
+                }}
+                className="w-16 px-2 py-1 bg-black/60 border border-amber-500/20 rounded text-white text-center"
+                min="1"
+                max={totalPages}
+              />
+              <span className="text-gray-400">/ {totalPages} 页</span>
+            </div>
             <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={tokens.length < pageSize}
+              onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setPageInput(String(Math.min(totalPages, page + 1))); }}
+              disabled={page >= totalPages || tokens.length < pageSize}
               className="btn-secondary disabled:opacity-50"
             >
               下一页
+            </button>
+            <button
+              onClick={() => { setPage(totalPages); setPageInput(String(totalPages)); }}
+              disabled={page >= totalPages}
+              className="btn-secondary disabled:opacity-50"
+            >
+              末页
             </button>
           </div>
         </>
