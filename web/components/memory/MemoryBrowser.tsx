@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 
 type MemoryType = 'fact' | 'preference' | 'experience' | 'relationship';
 
@@ -30,6 +31,7 @@ const MEMORY_TYPES: Record<MemoryType, { label: string; icon: string; color: str
 };
 
 export default function MemoryBrowser({ tokenId }: MemoryBrowserProps) {
+  const { address, isConnected } = useAccount();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,19 +40,27 @@ export default function MemoryBrowser({ tokenId }: MemoryBrowserProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
-  // Fetch memories
+  // Fetch memories (requires wallet connection for ownership verification)
   const fetchMemories = async (type?: MemoryType) => {
+    if (!isConnected || !address) {
+      setError('请先连接钱包查看记忆');
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const url = type
+      const baseUrl = type
         ? `${API_BASE}/agent/${tokenId}/memories?type=${type}&limit=50`
         : `${API_BASE}/agent/${tokenId}/memories?limit=50`;
+      const url = `${baseUrl}&userAddress=${address}`;
 
       const res = await fetch(url);
       if (!res.ok) {
-        throw new Error('获取记忆失败');
+        const data = await res.json();
+        throw new Error(data.error || '获取记忆失败');
       }
       const data = await res.json();
       setMemories(data.memories);
@@ -69,15 +79,21 @@ export default function MemoryBrowser({ tokenId }: MemoryBrowserProps) {
       return;
     }
 
+    if (!isConnected || !address) {
+      setError('请先连接钱包');
+      return;
+    }
+
     setIsSearching(true);
     setError(null);
 
     try {
       const res = await fetch(
-        `${API_BASE}/agent/${tokenId}/memories/search?q=${encodeURIComponent(searchQuery)}&limit=20`
+        `${API_BASE}/agent/${tokenId}/memories/search?q=${encodeURIComponent(searchQuery)}&limit=20&userAddress=${address}`
       );
       if (!res.ok) {
-        throw new Error('搜索失败');
+        const data = await res.json();
+        throw new Error(data.error || '搜索失败');
       }
       const data = await res.json();
       setMemories(data.memories);
@@ -88,12 +104,12 @@ export default function MemoryBrowser({ tokenId }: MemoryBrowserProps) {
     }
   };
 
-  // Fetch on mount and type change
+  // Fetch on mount, type change, and wallet connection
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    if (!searchQuery.trim() && isConnected && address) {
       fetchMemories(activeType === 'all' ? undefined : activeType);
     }
-  }, [tokenId, activeType]);
+  }, [tokenId, activeType, isConnected, address]);
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {

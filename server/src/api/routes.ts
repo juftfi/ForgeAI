@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { getVaultService } from '../services/vault.js';
-import { generateGenesisMetadata, toOpenSeaMetadata } from '../services/traitEngine.js';
+// traitEngine is dynamically imported where needed
 import { loadGenesis } from '../utils/yaml.js';
 import { getChatService } from '../services/chat.js';
 import { getMemoryService } from '../services/memory.js';
@@ -1067,11 +1067,11 @@ router.post('/chat/session', async (req: Request, res: Response) => {
 
 /**
  * POST /chat/message
- * Send a message and get AI response
+ * Send a message and get AI response (owner only)
  */
 router.post('/chat/message', async (req: Request, res: Response) => {
   try {
-    const { sessionId, content } = req.body;
+    const { sessionId, content, userAddress } = req.body;
 
     if (!sessionId || typeof sessionId !== 'string') {
       return res.status(400).json({ error: 'sessionId is required' });
@@ -1084,6 +1084,23 @@ router.post('/chat/message', async (req: Request, res: Response) => {
     }
 
     const chatService = getChatService();
+    const session = chatService.getSession(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Verify ownership
+    const walletAddress = userAddress || req.headers['x-user-address'] as string;
+    if (!walletAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址' });
+    }
+
+    const isOwner = await verifyTokenOwnership(session.tokenId, walletAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者' });
+    }
+
     const response = await chatService.sendMessage(sessionId, content);
 
     res.json(response);
@@ -1104,9 +1121,9 @@ router.post('/chat/message', async (req: Request, res: Response) => {
 
 /**
  * GET /chat/session/:sessionId
- * Get session details and history
+ * Get session details and history (owner only)
  */
-router.get('/chat/session/:sessionId', (req: Request, res: Response) => {
+router.get('/chat/session/:sessionId', async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
     const limit = parseInt(req.query.limit as string, 10) || 50;
@@ -1116,6 +1133,17 @@ router.get('/chat/session/:sessionId', (req: Request, res: Response) => {
 
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(session.tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法查看聊天记录' });
     }
 
     const history = chatService.getHistory(sessionId, limit);
@@ -1132,13 +1160,24 @@ router.get('/chat/session/:sessionId', (req: Request, res: Response) => {
 
 /**
  * GET /chat/sessions/:tokenId
- * Get all sessions for a token
+ * Get all sessions for a token (owner only)
  */
-router.get('/chat/sessions/:tokenId', (req: Request, res: Response) => {
+router.get('/chat/sessions/:tokenId', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId)) {
       return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法查看会话列表' });
     }
 
     const limit = parseInt(req.query.limit as string, 10) || 20;
@@ -1155,13 +1194,30 @@ router.get('/chat/sessions/:tokenId', (req: Request, res: Response) => {
 
 /**
  * POST /chat/session/:sessionId/end
- * End a session and extract memories
+ * End a session and extract memories (owner only)
  */
 router.post('/chat/session/:sessionId/end', async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
 
     const chatService = getChatService();
+    const session = chatService.getSession(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Verify ownership
+    const userAddress = req.body.userAddress || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址' });
+    }
+
+    const isOwner = await verifyTokenOwnership(session.tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者' });
+    }
+
     const summary = await chatService.endSession(sessionId);
 
     res.json(summary);
@@ -1182,13 +1238,24 @@ router.post('/chat/session/:sessionId/end', async (req: Request, res: Response) 
 
 /**
  * GET /agent/:tokenId/memories
- * Get agent memories
+ * Get agent memories (owner only)
  */
-router.get('/agent/:tokenId/memories', (req: Request, res: Response) => {
+router.get('/agent/:tokenId/memories', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId)) {
       return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法查看记忆' });
     }
 
     const limit = parseInt(req.query.limit as string, 10) || 50;
@@ -1217,13 +1284,24 @@ router.get('/agent/:tokenId/memories', (req: Request, res: Response) => {
 
 /**
  * GET /agent/:tokenId/memories/search
- * Search agent memories
+ * Search agent memories (owner only)
  */
-router.get('/agent/:tokenId/memories/search', (req: Request, res: Response) => {
+router.get('/agent/:tokenId/memories/search', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId)) {
       return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法搜索记忆' });
     }
 
     const query = req.query.q as string;
@@ -1254,13 +1332,24 @@ router.get('/agent/:tokenId/memories/search', (req: Request, res: Response) => {
 
 /**
  * GET /agent/:tokenId/learning
- * Get agent learning history
+ * Get agent learning history (owner only)
  */
-router.get('/agent/:tokenId/learning', (req: Request, res: Response) => {
+router.get('/agent/:tokenId/learning', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId)) {
       return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法查看学习历史' });
     }
 
     const learningService = getLearningService();
@@ -1275,15 +1364,26 @@ router.get('/agent/:tokenId/learning', (req: Request, res: Response) => {
 
 /**
  * GET /agent/:tokenId/learning/:version
- * Get specific learning snapshot
+ * Get specific learning snapshot (owner only)
  */
-router.get('/agent/:tokenId/learning/:version', (req: Request, res: Response) => {
+router.get('/agent/:tokenId/learning/:version', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     const version = parseInt(req.params.version, 10);
 
     if (isNaN(tokenId) || isNaN(version)) {
       return res.status(400).json({ error: 'Invalid token ID or version' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法查看学习快照' });
     }
 
     const learningService = getLearningService();
@@ -1302,13 +1402,24 @@ router.get('/agent/:tokenId/learning/:version', (req: Request, res: Response) =>
 
 /**
  * POST /agent/:tokenId/learning/snapshot
- * Create a new learning snapshot
+ * Create a new learning snapshot (owner only)
  */
-router.post('/agent/:tokenId/learning/snapshot', (req: Request, res: Response) => {
+router.post('/agent/:tokenId/learning/snapshot', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId)) {
       return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.body.userAddress || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法创建学习快照' });
     }
 
     const learningService = getLearningService();
@@ -1323,13 +1434,24 @@ router.post('/agent/:tokenId/learning/snapshot', (req: Request, res: Response) =
 
 /**
  * POST /agent/:tokenId/learning/sync
- * Sync learning root to blockchain
+ * Sync learning root to blockchain (owner only)
  */
 router.post('/agent/:tokenId/learning/sync', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId)) {
       return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.body.userAddress || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法同步学习数据' });
     }
 
     const { version, privateKey } = req.body;
@@ -1373,7 +1495,7 @@ router.post('/agent/:tokenId/learning/sync', async (req: Request, res: Response)
 
 /**
  * GET /agent/:tokenId/profile
- * Get agent profile (including persona)
+ * Get agent profile (including persona) - owner only for full profile
  */
 router.get('/agent/:tokenId/profile', async (req: Request, res: Response) => {
   try {
@@ -1385,7 +1507,33 @@ router.get('/agent/:tokenId/profile', async (req: Request, res: Response) => {
     const chatService = getChatService();
     const profile = await chatService.getAgentProfile(tokenId);
 
-    res.json(profile);
+    // Check if owner is requesting
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+
+    if (userAddress) {
+      const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+      if (isOwner) {
+        // Full profile for owner
+        return res.json(profile);
+      }
+    }
+
+    // Public profile (limited info - no memories, no detailed persona)
+    res.json({
+      tokenId: profile.tokenId,
+      houseName: profile.houseName,
+      houseId: profile.houseId,
+      generation: profile.generation,
+      // Hide sensitive data for non-owners
+      personaVector: {
+        calm: profile.personaVector?.calm,
+        curious: profile.personaVector?.curious,
+        bold: profile.personaVector?.bold,
+        social: profile.personaVector?.social,
+        disciplined: profile.personaVector?.disciplined,
+      },
+      isPublicView: true,
+    });
   } catch (error: any) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Failed to get profile', details: error?.message });

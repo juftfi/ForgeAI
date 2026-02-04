@@ -97,7 +97,7 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
       const res = await fetch(`${API_BASE}/chat/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: session.id, content: userMessage.content }),
+        body: JSON.stringify({ sessionId: session.id, content: userMessage.content, userAddress: address }),
       });
 
       if (!res.ok) {
@@ -124,6 +124,8 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
     try {
       await fetch(`${API_BASE}/chat/session/${session.id}/end`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userAddress: address }),
       });
       setSession(null);
       setMessages([]);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 
 interface PersonaVector {
   calm: number;
@@ -46,21 +47,29 @@ const PERSONA_LABELS: Record<keyof PersonaVector, { name: string; positive: stri
 };
 
 export default function LearningPanel({ tokenId }: LearningPanelProps) {
+  const { address, isConnected } = useAccount();
   const [history, setHistory] = useState<LearningHistory | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Fetch learning history
+  // Fetch learning history (requires wallet connection for ownership verification)
   useEffect(() => {
     const fetchHistory = async () => {
+      if (!isConnected || !address) {
+        setError('请先连接钱包查看学习历史');
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
       try {
-        const res = await fetch(`${API_BASE}/agent/${tokenId}/learning`);
+        const res = await fetch(`${API_BASE}/agent/${tokenId}/learning?userAddress=${address}`);
         if (!res.ok) {
-          throw new Error('获取学习历史失败');
+          const data = await res.json();
+          throw new Error(data.error || '获取学习历史失败');
         }
         const data = await res.json();
         setHistory(data);
@@ -72,16 +81,23 @@ export default function LearningPanel({ tokenId }: LearningPanelProps) {
     };
 
     fetchHistory();
-  }, [tokenId]);
+  }, [tokenId, isConnected, address]);
 
   // Create new snapshot
   const createSnapshot = async () => {
+    if (!isConnected || !address) {
+      setError('请先连接钱包');
+      return;
+    }
+
     setIsSyncing(true);
     setError(null);
 
     try {
       const res = await fetch(`${API_BASE}/agent/${tokenId}/learning/snapshot`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userAddress: address }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -89,7 +105,7 @@ export default function LearningPanel({ tokenId }: LearningPanelProps) {
       }
 
       // Refresh history
-      const historyRes = await fetch(`${API_BASE}/agent/${tokenId}/learning`);
+      const historyRes = await fetch(`${API_BASE}/agent/${tokenId}/learning?userAddress=${address}`);
       const data = await historyRes.json();
       setHistory(data);
     } catch (err: any) {
