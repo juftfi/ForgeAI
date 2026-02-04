@@ -8,7 +8,7 @@ import { HOUSES, HOUSE_FORGE_AGENT_ABI } from '@/config/contracts';
 import { useReadContracts } from 'wagmi';
 
 // 特性名称中英文映射
-export const TRAIT_NAMES_CN: Record<string, string> = {
+const TRAIT_NAMES_CN: Record<string, string> = {
   // 基本信息
   'Season': '季节',
   'House': '家族',
