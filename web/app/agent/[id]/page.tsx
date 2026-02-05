@@ -14,6 +14,7 @@ import {
 } from '@/hooks/useContracts';
 import { HOUSES, AgentState } from '@/config/contracts';
 import AgentChat from '@/components/chat/AgentChat';
+import ChatStats from '@/components/chat/ChatStats';
 import LearningPanel from '@/components/learning/LearningPanel';
 import MemoryBrowser from '@/components/memory/MemoryBrowser';
 
@@ -418,11 +419,14 @@ export default function AgentDetailPage() {
 
           {/* Chat Tab */}
           {activeTab === 'chat' && (
-            <AgentChat
-              tokenId={Number(id)}
-              agentName={metadata.name.replace('HouseForge', 'KinForge')}
-              houseName={house}
-            />
+            <div className="space-y-6">
+              <AgentChat
+                tokenId={Number(id)}
+                agentName={metadata.name.replace('HouseForge', 'KinForge')}
+                houseName={house}
+              />
+              <ChatStats tokenId={Number(id)} />
+            </div>
           )}
 
           {/* Learning Tab */}

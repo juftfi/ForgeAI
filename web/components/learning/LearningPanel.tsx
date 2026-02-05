@@ -38,12 +38,31 @@ interface LearningPanelProps {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // Persona trait labels
-const PERSONA_LABELS: Record<keyof PersonaVector, { name: string; positive: string; negative: string }> = {
-  calm: { name: '冷静', positive: '沉着', negative: '活跃' },
-  curious: { name: '好奇', positive: '探索', negative: '保守' },
-  bold: { name: '大胆', positive: '果敢', negative: '谨慎' },
-  social: { name: '社交', positive: '外向', negative: '内敛' },
-  disciplined: { name: '自律', positive: '有序', negative: '随性' },
+const PERSONA_LABELS: Record<keyof PersonaVector, { name: string; positive: string; negative: string; emoji: string }> = {
+  calm: { name: '冷静', positive: '沉着', negative: '活跃', emoji: '🧘' },
+  curious: { name: '好奇', positive: '探索', negative: '保守', emoji: '🔍' },
+  bold: { name: '大胆', positive: '果敢', negative: '谨慎', emoji: '⚡' },
+  social: { name: '社交', positive: '外向', negative: '内敛', emoji: '👥' },
+  disciplined: { name: '自律', positive: '有序', negative: '随性', emoji: '📐' },
+};
+
+// 性格变化方向描述
+const getPersonaChangeDescription = (current: PersonaVector, previous?: PersonaVector): string[] => {
+  if (!previous) return [];
+  const changes: string[] = [];
+  const threshold = 0.05;
+
+  const keys = Object.keys(PERSONA_LABELS) as (keyof PersonaVector)[];
+  for (const key of keys) {
+    const diff = current[key] - previous[key];
+    const label = PERSONA_LABELS[key];
+    if (diff > threshold) {
+      changes.push(`${label.emoji} ${label.positive}↑`);
+    } else if (diff < -threshold) {
+      changes.push(`${label.emoji} ${label.negative}↑`);
+    }
+  }
+  return changes;
 };
 
 export default function LearningPanel({ tokenId }: LearningPanelProps) {
@@ -115,6 +134,18 @@ export default function LearningPanel({ tokenId }: LearningPanelProps) {
     }
   };
 
+  // 获取初始性格（第一个快照之前或默认值）
+  const initialPersona: PersonaVector = {
+    calm: 0,
+    curious: 0,
+    bold: 0,
+    social: 0,
+    disciplined: 0,
+  };
+
+  // 计算性格变化描述
+  const personaChanges = history ? getPersonaChangeDescription(history.currentPersona, initialPersona) : [];
+
   // Render persona radar chart (simplified bar visualization)
   const renderPersonaChart = (persona: PersonaVector) => {
     return (
@@ -122,20 +153,36 @@ export default function LearningPanel({ tokenId }: LearningPanelProps) {
         {(Object.keys(PERSONA_LABELS) as (keyof PersonaVector)[]).map((key) => {
           const value = persona[key];
           const label = PERSONA_LABELS[key];
-          const percentage = ((value + 1) / 2) * 100; // Convert -1~1 to 0~100
+          const isPositive = value > 0;
+          const absValue = Math.abs(value);
 
           return (
             <div key={key} className="space-y-1">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">{label.name}</span>
-                <span className="text-gray-300">
+                <span className="text-gray-400 flex items-center gap-1">
+                  <span>{label.emoji}</span>
+                  <span>{label.name}</span>
+                </span>
+                <span className={`${absValue > 0.3 ? 'text-amber-400' : 'text-gray-300'}`}>
                   {value > 0.3 ? label.positive : value < -0.3 ? label.negative : '平衡'}
+                  {absValue > 0.1 && (
+                    <span className="ml-1 text-xs text-gray-500">
+                      ({isPositive ? '+' : ''}{(value * 100).toFixed(0)}%)
+                    </span>
+                  )}
                 </span>
               </div>
-              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-3 bg-gray-700 rounded-full overflow-hidden relative">
+                {/* 中心线标记 */}
+                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-500 z-10" />
+                {/* 进度条 */}
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
-                  style={{ width: `${percentage}%` }}
+                  className={`h-full transition-all duration-500 ${
+                    isPositive
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 ml-[50%]'
+                      : 'bg-gradient-to-l from-orange-500 to-red-500 mr-[50%] float-right'
+                  }`}
+                  style={{ width: `${absValue * 50}%` }}
                 />
               </div>
             </div>
@@ -189,8 +236,22 @@ export default function LearningPanel({ tokenId }: LearningPanelProps) {
 
       {/* Current Persona */}
       <div>
-        <h3 className="text-sm font-medium text-gray-300 mb-3">当前性格向量</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-gray-300">当前性格向量</h3>
+          {personaChanges.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {personaChanges.map((change, i) => (
+                <span key={i} className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded">
+                  {change}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         {renderPersonaChart(history.currentPersona)}
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          性格会随着对话互动而逐渐进化
+        </p>
       </div>
 
       {/* Snapshots Timeline */}

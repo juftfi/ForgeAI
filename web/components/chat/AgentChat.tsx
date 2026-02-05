@@ -3,11 +3,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 
+// 情绪类型
+type EmotionType = 'happy' | 'sad' | 'angry' | 'anxious' | 'curious' | 'grateful' | 'confused' | 'neutral';
+
+interface EmotionState {
+  primary: EmotionType;
+  intensity: number;
+  confidence: number;
+}
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'agent';
   content: string;
   createdAt: string;
+  emotion?: EmotionState;
 }
 
 interface ChatSession {
@@ -34,7 +44,20 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentEmotion, setCurrentEmotion] = useState<EmotionState | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 情绪显示配置
+  const emotionConfig: Record<EmotionType, { emoji: string; label: string; color: string }> = {
+    happy: { emoji: '😊', label: '开心', color: 'text-yellow-400' },
+    sad: { emoji: '😢', label: '难过', color: 'text-blue-400' },
+    angry: { emoji: '😠', label: '愤怒', color: 'text-red-400' },
+    anxious: { emoji: '😰', label: '焦虑', color: 'text-orange-400' },
+    curious: { emoji: '🤔', label: '好奇', color: 'text-purple-400' },
+    grateful: { emoji: '🙏', label: '感激', color: 'text-pink-400' },
+    confused: { emoji: '😵', label: '困惑', color: 'text-gray-400' },
+    neutral: { emoji: '😐', label: '平静', color: 'text-gray-300' },
+  };
 
   // Scroll to bottom when new messages arrive
   const scrollToBottom = useCallback(() => {
@@ -105,8 +128,13 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
         throw new Error(data.error || '发送消息失败');
       }
 
-      const { message: agentMessage } = await res.json();
+      const { message: agentMessage, detectedEmotion } = await res.json();
       setMessages(prev => [...prev, agentMessage]);
+
+      // 更新检测到的情绪状态
+      if (detectedEmotion) {
+        setCurrentEmotion(detectedEmotion);
+      }
     } catch (err: any) {
       setError(err.message);
       // Remove the optimistic message on error
@@ -206,6 +234,16 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
           {houseName && (
             <span className="text-xs bg-black/20 px-2 py-0.5 rounded text-white/80">
               {houseName}
+            </span>
+          )}
+          {/* 情绪状态显示 */}
+          {currentEmotion && currentEmotion.primary !== 'neutral' && currentEmotion.confidence > 0.4 && (
+            <span
+              className="text-xs bg-black/30 px-2 py-0.5 rounded flex items-center gap-1"
+              title={`检测到情绪: ${emotionConfig[currentEmotion.primary].label} (强度: ${Math.round(currentEmotion.intensity * 100)}%)`}
+            >
+              <span>{emotionConfig[currentEmotion.primary].emoji}</span>
+              <span className="text-white/80">{emotionConfig[currentEmotion.primary].label}</span>
             </span>
           )}
         </div>

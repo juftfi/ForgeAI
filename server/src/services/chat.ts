@@ -13,10 +13,11 @@ import {
   AgentProfile,
   AIMessage,
   PersonaVector,
-  DEFAULT_PERSONA,
-  HOUSE_PERSONALITIES,
+  EmotionState,
+  EmotionType,
+  EMOTION_RESPONSE_GUIDES,
 } from '../types/chat.js';
-import { getVaultService, VaultData } from './vault.js';
+import { getVaultService } from './vault.js';
 import { AIClient, getAIClient } from './ai.js';
 import { PromptEngine, getPromptEngine } from './prompt.js';
 import { MemoryService, getMemoryService } from './memory.js';
@@ -127,8 +128,11 @@ export class ChatService {
     // Get agent profile
     const profile = await this.getAgentProfile(session.tokenId);
 
-    // Store user message
-    const userMessage = this.storeMessage(sessionId, 'user', content);
+    // 检测用户情绪
+    const detectedEmotion = this.detectEmotion(content);
+
+    // Store user message with emotion
+    const userMessage = this.storeMessage(sessionId, 'user', content, detectedEmotion);
 
     // Get conversation history
     const history = this.getHistory(sessionId, this.maxContextMessages);
@@ -139,9 +143,10 @@ export class ChatService {
     // Build messages for AI
     const systemPrompt = this.promptEngine.buildSystemPrompt(profile);
     const memoryContext = this.promptEngine.buildContext(memories);
+    const emotionContext = this.getEmotionPromptAddition(detectedEmotion);
 
     const aiMessages: AIMessage[] = [
-      { role: 'system', content: systemPrompt + (memoryContext ? '\n\n' + memoryContext : '') },
+      { role: 'system', content: systemPrompt + (memoryContext ? '\n\n' + memoryContext : '') + emotionContext },
     ];
 
     // Add conversation history
@@ -170,7 +175,127 @@ export class ChatService {
     return {
       message: agentMessage,
       sessionId,
+      detectedEmotion,
     };
+  }
+
+  /**
+   * Detect emotion from user message content
+   * 基于关键词和模式匹配检测用户情绪
+   */
+  private detectEmotion(content: string): EmotionState {
+    const patterns: Record<EmotionType, { keywords: RegExp; weight: number }[]> = {
+      happy: [
+        { keywords: /开心|高兴|太好了|哈哈|嘿嘿|好棒|太棒|喜欢|爱|快乐|兴奋|好开心|耶|赞|厉害|牛|绝了/, weight: 0.8 },
+        { keywords: /😊|😄|🎉|❤️|👍|🥰|😁/, weight: 0.7 },
+        { keywords: /！{2,}|!{2,}/, weight: 0.3 },
+      ],
+      sad: [
+        { keywords: /难过|伤心|悲伤|哭|不开心|失落|沮丧|郁闷|唉|呜呜|好难|受伤/, weight: 0.8 },
+        { keywords: /😢|😭|😔|💔|🥺/, weight: 0.7 },
+        { keywords: /\.{3,}|。{2,}/, weight: 0.2 },
+      ],
+      angry: [
+        { keywords: /生气|愤怒|气死|烦死|讨厌|去死|滚|妈的|靠|艹|垃圾|废物/, weight: 0.9 },
+        { keywords: /😠|😡|🤬|💢/, weight: 0.7 },
+        { keywords: /！{3,}|!{3,}/, weight: 0.4 },
+      ],
+      anxious: [
+        { keywords: /焦虑|担心|紧张|害怕|恐惧|不安|慌|怎么办|完了|糟糕|急|来不及/, weight: 0.8 },
+        { keywords: /😰|😨|😱|🥶/, weight: 0.7 },
+        { keywords: /\?{2,}|？{2,}/, weight: 0.3 },
+      ],
+      curious: [
+        { keywords: /为什么|怎么|什么|如何|是不是|好奇|想知道|想问|请问|能不能|可以吗/, weight: 0.7 },
+        { keywords: /🤔|❓|🧐/, weight: 0.6 },
+        { keywords: /\?|？/, weight: 0.3 },
+      ],
+      grateful: [
+        { keywords: /谢谢|感谢|多谢|感激|太感谢|谢啦|thank|thanks/, weight: 0.9 },
+        { keywords: /🙏|💕|🥹/, weight: 0.7 },
+      ],
+      confused: [
+        { keywords: /不懂|不明白|看不懂|搞不懂|迷惑|困惑|晕|懵|啥意思|什么意思|没听懂/, weight: 0.8 },
+        { keywords: /😵|🤷|😐/, weight: 0.6 },
+        { keywords: /\?\?|？？/, weight: 0.4 },
+      ],
+      neutral: [],
+    };
+
+    const scores: Record<EmotionType, number> = {
+      happy: 0,
+      sad: 0,
+      angry: 0,
+      anxious: 0,
+      curious: 0,
+      grateful: 0,
+      confused: 0,
+      neutral: 0.2, // 基础分
+    };
+
+    // 计算各情绪得分
+    for (const [emotion, patternList] of Object.entries(patterns) as [EmotionType, { keywords: RegExp; weight: number }[]][]) {
+      for (const pattern of patternList) {
+        const matches = content.match(pattern.keywords);
+        if (matches) {
+          scores[emotion] += pattern.weight * matches.length;
+        }
+      }
+    }
+
+    // 找到最高得分的情绪
+    let maxScore = 0;
+    let primaryEmotion: EmotionType = 'neutral';
+
+    for (const [emotion, score] of Object.entries(scores) as [EmotionType, number][]) {
+      if (score > maxScore) {
+        maxScore = score;
+        primaryEmotion = emotion;
+      }
+    }
+
+    // 计算强度和置信度
+    const intensity = Math.min(1, maxScore / 2); // 归一化到 0-1
+    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+    const confidence = totalScore > 0 ? maxScore / totalScore : 0.5;
+
+    return {
+      primary: primaryEmotion,
+      intensity,
+      confidence,
+    };
+  }
+
+  /**
+   * Get emotion-aware prompt addition
+   * 根据检测到的情绪生成额外的提示词
+   */
+  private getEmotionPromptAddition(emotion: EmotionState): string {
+    if (emotion.confidence < 0.4 || emotion.primary === 'neutral') {
+      return '';
+    }
+
+    const guide = EMOTION_RESPONSE_GUIDES[emotion.primary];
+    const intensityDesc = emotion.intensity > 0.6 ? '强烈' : emotion.intensity > 0.3 ? '明显' : '轻微';
+
+    return `\n\n【情绪感知】用户当前表现出${intensityDesc}的${this.getEmotionChinese(emotion.primary)}情绪。${guide}`;
+  }
+
+  /**
+   * Get Chinese name for emotion type
+   */
+  private getEmotionChinese(emotion: EmotionType): string {
+    const names: Record<EmotionType, string> = {
+      happy: '开心',
+      sad: '难过',
+      angry: '愤怒',
+      anxious: '焦虑',
+      curious: '好奇',
+      grateful: '感激',
+      confused: '困惑',
+      neutral: '平静',
+    };
+    return names[emotion];
   }
 
   /**
@@ -188,16 +313,17 @@ export class ChatService {
   /**
    * Store a chat message
    */
-  private storeMessage(sessionId: string, role: 'user' | 'agent', content: string): ChatMessage {
+  private storeMessage(sessionId: string, role: 'user' | 'agent', content: string, emotion?: EmotionState): ChatMessage {
     const id = uuidv4();
     const now = new Date().toISOString();
     const tokenCount = AIClient.estimateTokens(content);
+    const emotionJson = emotion ? JSON.stringify(emotion) : null;
 
     const stmt = this.db.prepare(`
-      INSERT INTO chat_messages (id, session_id, role, content, created_at, token_count)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO chat_messages (id, session_id, role, content, created_at, token_count, emotion)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(id, sessionId, role, content, now, tokenCount);
+    stmt.run(id, sessionId, role, content, now, tokenCount, emotionJson);
 
     return {
       id,
@@ -206,6 +332,7 @@ export class ChatService {
       content,
       createdAt: now,
       tokenCount,
+      emotion,
     };
   }
 
@@ -228,6 +355,7 @@ export class ChatService {
       content: row.content,
       createdAt: row.created_at,
       tokenCount: row.token_count,
+      emotion: row.emotion ? JSON.parse(row.emotion) : undefined,
     }));
   }
 
@@ -258,18 +386,21 @@ export class ChatService {
     // Calculate persona impact (very small changes per session)
     const personaImpact = this.calculatePersonaImpact(messages);
 
-    // Update session
+    // 增强: 根据情绪分布进一步调整性格影响
+    const enhancedImpact = this.enhancePersonaImpact(personaImpact, messages);
+
+    // Update session with persona impact
     const now = new Date().toISOString();
     const updateStmt = this.db.prepare(`
-      UPDATE chat_sessions SET ended_at = ?, summary = ? WHERE id = ?
+      UPDATE chat_sessions SET ended_at = ?, summary = ?, persona_impact = ? WHERE id = ?
     `);
-    updateStmt.run(now, summary, sessionId);
+    updateStmt.run(now, summary, JSON.stringify(enhancedImpact), sessionId);
 
     return {
       sessionId,
       summary,
       memoriesExtracted: memories.length,
-      personaImpact,
+      personaImpact: enhancedImpact,
     };
   }
 
@@ -360,6 +491,83 @@ export class ChatService {
   }
 
   /**
+   * Enhance persona impact based on emotion distribution
+   * 根据对话中的情绪分布进一步调整性格影响
+   */
+  private enhancePersonaImpact(
+    baseImpact: Partial<PersonaVector>,
+    messages: ChatMessage[]
+  ): Partial<PersonaVector> {
+    const impact = { ...baseImpact };
+    const delta = 0.015; // 更小的增量，避免变化过快
+
+    // 统计情绪分布
+    const emotionCounts: Record<EmotionType, number> = {
+      happy: 0,
+      sad: 0,
+      angry: 0,
+      anxious: 0,
+      curious: 0,
+      grateful: 0,
+      confused: 0,
+      neutral: 0,
+    };
+
+    for (const msg of messages) {
+      if (msg.role === 'user' && msg.emotion?.primary) {
+        emotionCounts[msg.emotion.primary]++;
+      }
+    }
+
+    const totalEmotions = Object.values(emotionCounts).reduce((a, b) => a + b, 0);
+    if (totalEmotions === 0) return impact;
+
+    // 根据情绪分布调整性格
+    // 开心的用户 → Agent 变得更活泼 (social+, calm-)
+    if (emotionCounts.happy > totalEmotions * 0.3) {
+      impact.social = (impact.social || 0) + delta;
+      impact.bold = (impact.bold || 0) + delta * 0.5;
+    }
+
+    // 好奇的用户 → Agent 变得更好奇 (curious+)
+    if (emotionCounts.curious > totalEmotions * 0.3) {
+      impact.curious = (impact.curious || 0) + delta;
+    }
+
+    // 感激的用户 → Agent 变得更温和社交化 (social+, calm+)
+    if (emotionCounts.grateful > totalEmotions * 0.2) {
+      impact.social = (impact.social || 0) + delta;
+      impact.calm = (impact.calm || 0) + delta * 0.5;
+    }
+
+    // 焦虑的用户 → Agent 学会更冷静 (calm+, disciplined+)
+    if (emotionCounts.anxious > totalEmotions * 0.2) {
+      impact.calm = (impact.calm || 0) + delta;
+      impact.disciplined = (impact.disciplined || 0) + delta * 0.5;
+    }
+
+    // 困惑的用户 → Agent 变得更有耐心 (calm+)
+    if (emotionCounts.confused > totalEmotions * 0.2) {
+      impact.calm = (impact.calm || 0) + delta * 0.5;
+    }
+
+    // 愤怒/难过的用户 → Agent 学会共情 (calm+)
+    if ((emotionCounts.angry + emotionCounts.sad) > totalEmotions * 0.3) {
+      impact.calm = (impact.calm || 0) + delta;
+    }
+
+    // 限制每次变化的最大值
+    const maxDelta = 0.05;
+    for (const key of Object.keys(impact) as (keyof PersonaVector)[]) {
+      if (impact[key] !== undefined) {
+        impact[key] = Math.max(-maxDelta, Math.min(maxDelta, impact[key]!));
+      }
+    }
+
+    return impact;
+  }
+
+  /**
    * Get agent profile from vault and chain data
    */
   async getAgentProfile(tokenId: number): Promise<AgentProfile> {
@@ -429,6 +637,113 @@ export class ChatService {
     `);
     return stmt.get(tokenId) as { persona_delta: string } | null;
   }
+
+  /**
+   * Get chat statistics for a token
+   * 获取智能体的对话统计数据
+   */
+  getChatStats(tokenId: number): ChatStats {
+    // 获取会话统计
+    const sessionStmt = this.db.prepare(`
+      SELECT
+        COUNT(*) as totalSessions,
+        SUM(message_count) as totalMessages,
+        MIN(started_at) as firstChatAt,
+        MAX(started_at) as lastChatAt
+      FROM chat_sessions
+      WHERE token_id = ?
+    `);
+    const sessionStats = sessionStmt.get(tokenId) as any || {};
+
+    // 获取情绪分布
+    const emotionStmt = this.db.prepare(`
+      SELECT emotion FROM chat_messages
+      WHERE session_id IN (SELECT id FROM chat_sessions WHERE token_id = ?)
+      AND emotion IS NOT NULL
+      AND role = 'user'
+    `);
+    const emotionRows = emotionStmt.all(tokenId) as any[];
+
+    const emotionDistribution: Record<EmotionType, number> = {
+      happy: 0,
+      sad: 0,
+      angry: 0,
+      anxious: 0,
+      curious: 0,
+      grateful: 0,
+      confused: 0,
+      neutral: 0,
+    };
+
+    for (const row of emotionRows) {
+      try {
+        const emotion = JSON.parse(row.emotion) as EmotionState;
+        if (emotion.primary && emotion.confidence > 0.4) {
+          emotionDistribution[emotion.primary]++;
+        }
+      } catch {
+        // 忽略解析错误
+      }
+    }
+
+    // 获取记忆统计
+    const memoryStmt = this.db.prepare(`
+      SELECT memory_type, COUNT(*) as count
+      FROM agent_memories
+      WHERE token_id = ?
+      GROUP BY memory_type
+    `);
+    const memoryRows = memoryStmt.all(tokenId) as any[];
+
+    const memoryCount: Record<string, number> = {};
+    let totalMemories = 0;
+    for (const row of memoryRows) {
+      memoryCount[row.memory_type] = row.count;
+      totalMemories += row.count;
+    }
+
+    // 计算平均每会话消息数
+    const avgMessagesPerSession = sessionStats.totalSessions > 0
+      ? Math.round((sessionStats.totalMessages || 0) / sessionStats.totalSessions * 10) / 10
+      : 0;
+
+    // 找出主要情绪
+    let dominantEmotion: EmotionType = 'neutral';
+    let maxEmotionCount = 0;
+    for (const [emotion, count] of Object.entries(emotionDistribution)) {
+      if (emotion !== 'neutral' && count > maxEmotionCount) {
+        maxEmotionCount = count;
+        dominantEmotion = emotion as EmotionType;
+      }
+    }
+
+    return {
+      tokenId,
+      totalSessions: sessionStats.totalSessions || 0,
+      totalMessages: sessionStats.totalMessages || 0,
+      avgMessagesPerSession,
+      firstChatAt: sessionStats.firstChatAt,
+      lastChatAt: sessionStats.lastChatAt,
+      emotionDistribution,
+      dominantEmotion: maxEmotionCount > 0 ? dominantEmotion : null,
+      totalMemories,
+      memoryCount,
+    };
+  }
+}
+
+// Chat statistics type
+export interface ChatStats {
+  tokenId: number;
+  totalSessions: number;
+  totalMessages: number;
+  avgMessagesPerSession: number;
+  firstChatAt?: string;
+  lastChatAt?: string;
+  emotionDistribution: Record<EmotionType, number>;
+  dominantEmotion: EmotionType | null;
+  totalMemories: number;
+  memoryCount: Record<string, number>;
 }
 
 // Singleton instance

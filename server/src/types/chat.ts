@@ -20,6 +20,35 @@ export const DEFAULT_PERSONA: PersonaVector = {
   disciplined: 0,
 };
 
+// ============ Emotion Types ============
+export type EmotionType =
+  | 'happy'      // 开心
+  | 'sad'        // 难过
+  | 'angry'      // 愤怒
+  | 'anxious'    // 焦虑
+  | 'curious'    // 好奇
+  | 'grateful'   // 感激
+  | 'confused'   // 困惑
+  | 'neutral';   // 中性
+
+export interface EmotionState {
+  primary: EmotionType;
+  intensity: number;  // 0-1 情绪强度
+  confidence: number; // 0-1 检测置信度
+}
+
+// 情绪响应指南
+export const EMOTION_RESPONSE_GUIDES: Record<EmotionType, string> = {
+  happy: '用户心情愉悦，可以用轻松活泼的语气回应，适当加入幽默元素',
+  sad: '用户可能感到难过，回应时要温柔体贴，表达理解和关心，给予鼓励',
+  angry: '用户可能有些生气，先表示理解，保持冷静和耐心，不要火上浇油',
+  anxious: '用户可能感到焦虑，回应要稳定、安抚，提供清晰的信息来减轻不确定感',
+  curious: '用户充满好奇心，可以详细解答，甚至主动拓展相关话题',
+  grateful: '用户表达了感谢，真诚回应，可以表示这是应该的，继续保持友好',
+  confused: '用户可能感到困惑，需要更清晰、简洁的解释，可以举例说明',
+  neutral: '用户情绪中性，根据自己的性格特点正常回应即可',
+};
+
 // ============ Chat Types ============
 export type MessageRole = 'user' | 'agent' | 'system';
 
@@ -30,6 +59,7 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
   tokenCount?: number;
+  emotion?: EmotionState;  // 用户消息的情绪检测结果
 }
 
 export interface ChatSession {
@@ -45,6 +75,7 @@ export interface ChatSession {
 export interface ChatResponse {
   message: ChatMessage;
   sessionId: string;
+  detectedEmotion?: EmotionState;  // 本轮检测到的用户情绪
 }
 
 export interface SessionSummary {

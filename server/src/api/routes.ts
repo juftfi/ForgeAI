@@ -1247,6 +1247,28 @@ router.post('/chat/session/:sessionId/end', async (req: Request, res: Response) 
   }
 });
 
+/**
+ * GET /chat/stats/:tokenId
+ * Get chat statistics for a token (public - no ownership required)
+ * 获取智能体的对话统计数据（公开接口）
+ */
+router.get('/chat/stats/:tokenId', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const chatService = getChatService();
+    const stats = chatService.getChatStats(tokenId);
+
+    res.json(stats);
+  } catch (error: any) {
+    console.error('Get chat stats error:', error);
+    res.status(500).json({ error: 'Failed to get chat stats', details: error?.message });
+  }
+});
+
 // =============================================================
 //                    MEMORY ROUTES
 // =============================================================

@@ -92,7 +92,8 @@ export class VaultService {
         started_at TEXT NOT NULL,
         ended_at TEXT,
         message_count INTEGER DEFAULT 0,
-        summary TEXT
+        summary TEXT,
+        persona_impact TEXT
       );
 
       CREATE INDEX IF NOT EXISTS idx_sessions_token ON chat_sessions(token_id);
@@ -106,6 +107,7 @@ export class VaultService {
         content TEXT NOT NULL,
         created_at TEXT NOT NULL,
         token_count INTEGER,
+        emotion TEXT,
         FOREIGN KEY (session_id) REFERENCES chat_sessions(id)
       );
 

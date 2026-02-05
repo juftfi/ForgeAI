@@ -41,22 +41,31 @@ export class LearningService {
 
   /**
    * Compute accumulated persona delta from all sessions since last snapshot
+   * 使用存储的 persona_impact 数据进行更准确的计算
    */
   computePersonaDelta(tokenId: number): PersonaVector {
     // Get last snapshot
     const lastSnapshot = this.getLatestSnapshot(tokenId);
-    const lastVersion = lastSnapshot?.version || 0;
+    const lastCreatedAt = lastSnapshot?.createdAt;
 
-    // Get all session summaries since last snapshot
-    // Each session has personaImpact stored in summary
-    const stmt = this.db.prepare(`
-      SELECT summary FROM chat_sessions
+    // 获取上次快照之后的所有已结束会话（包含 persona_impact）
+    let sessionsQuery = `
+      SELECT persona_impact FROM chat_sessions
       WHERE token_id = ? AND ended_at IS NOT NULL
-      ORDER BY ended_at ASC
-    `);
-    const sessions = stmt.all(tokenId) as { summary: string }[];
+    `;
+    const params: (number | string)[] = [tokenId];
 
-    // Calculate accumulated delta
+    if (lastCreatedAt) {
+      sessionsQuery += ` AND ended_at > ?`;
+      params.push(lastCreatedAt);
+    }
+
+    sessionsQuery += ` ORDER BY ended_at ASC`;
+
+    const stmt = this.db.prepare(sessionsQuery);
+    const sessions = stmt.all(...params) as { persona_impact: string | null }[];
+
+    // 从之前的快照开始累积
     const delta: PersonaVector = {
       calm: 0,
       curious: 0,
@@ -65,31 +74,44 @@ export class LearningService {
       disciplined: 0,
     };
 
-    // Simple accumulation with decay
-    // We don't have explicit persona impact stored, so use heuristics
-    const sessionCount = sessions.length;
-    if (sessionCount > 0) {
-      // More conversations = slightly more social
-      delta.social = Math.min(0.1, sessionCount * 0.01);
-      // Consistent engagement = slightly more disciplined
-      delta.disciplined = Math.min(0.05, sessionCount * 0.005);
-    }
-
-    // Apply previous delta if exists
+    // 应用之前快照的累积 delta
     if (lastSnapshot) {
       try {
-        const prevDelta = JSON.parse(lastSnapshot.personaDelta as unknown as string) as PersonaVector;
-        delta.calm += prevDelta.calm || 0;
-        delta.curious += prevDelta.curious || 0;
-        delta.bold += prevDelta.bold || 0;
-        delta.social += prevDelta.social || 0;
-        delta.disciplined += prevDelta.disciplined || 0;
+        const prevDelta = typeof lastSnapshot.personaDelta === 'string'
+          ? JSON.parse(lastSnapshot.personaDelta)
+          : lastSnapshot.personaDelta;
+        delta.calm = prevDelta.calm || 0;
+        delta.curious = prevDelta.curious || 0;
+        delta.bold = prevDelta.bold || 0;
+        delta.social = prevDelta.social || 0;
+        delta.disciplined = prevDelta.disciplined || 0;
       } catch (e) {
         // Ignore parse errors
       }
     }
 
-    // Clamp values
+    // 累加每次会话的性格影响
+    for (const session of sessions) {
+      if (session.persona_impact) {
+        try {
+          const impact = JSON.parse(session.persona_impact) as Partial<PersonaVector>;
+          for (const key of Object.keys(delta) as (keyof PersonaVector)[]) {
+            if (impact[key] !== undefined) {
+              delta[key] += impact[key]!;
+            }
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    }
+
+    // 基础增量：有对话就略微增加社交性
+    if (sessions.length > 0) {
+      delta.social += Math.min(0.02, sessions.length * 0.005);
+    }
+
+    // Clamp values to [-1, 1]
     for (const key of Object.keys(delta) as (keyof PersonaVector)[]) {
       delta[key] = Math.max(-1, Math.min(1, delta[key]));
     }
