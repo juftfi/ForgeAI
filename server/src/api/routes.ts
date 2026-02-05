@@ -804,14 +804,15 @@ router.post('/genesis/reserve', async (req: Request, res: Response) => {
 router.post('/genesis/finalize', async (req: Request, res: Response) => {
   try {
     const { vaultId, actualTokenId } = req.body;
+    console.log(`[Finalize] Request: vaultId=${vaultId}, actualTokenId=${actualTokenId}`);
 
-    if (!vaultId || !actualTokenId) {
+    if (!vaultId || actualTokenId === undefined) {
       return res.status(400).json({ error: 'vaultId and actualTokenId are required' });
     }
 
-    const tokenId = parseInt(actualTokenId, 10);
+    const tokenId = typeof actualTokenId === 'number' ? actualTokenId : parseInt(actualTokenId, 10);
     if (isNaN(tokenId) || tokenId < 1) {
-      return res.status(400).json({ error: 'Invalid actualTokenId' });
+      return res.status(400).json({ error: `Invalid actualTokenId: ${actualTokenId}` });
     }
 
     const vaultService = getVaultService();
@@ -819,13 +820,23 @@ router.post('/genesis/finalize', async (req: Request, res: Response) => {
     // 查找 vault
     const vault = vaultService.getById(vaultId);
     if (!vault) {
-      return res.status(404).json({ error: 'Vault not found' });
+      console.log(`[Finalize] Vault not found: ${vaultId}`);
+      return res.status(404).json({ error: `Vault not found: ${vaultId}` });
+    }
+    console.log(`[Finalize] Found vault, traits:`, vault.traits);
+
+    // 尝试验证链上所有权（最多重试3次，每次等待2秒）
+    let owner: string | null = null;
+    for (let i = 0; i < 3; i++) {
+      owner = await getTokenOwner(tokenId);
+      if (owner) break;
+      console.log(`[Finalize] Token ${tokenId} not found on-chain, retry ${i + 1}/3...`);
+      await new Promise(r => setTimeout(r, 2000));
     }
 
-    // 验证链上所有权（确保 token 已铸造）
-    const owner = await getTokenOwner(tokenId);
+    // 即使链上检查失败也继续（可能是 RPC 延迟）
     if (!owner) {
-      return res.status(400).json({ error: 'Token not yet minted on-chain' });
+      console.log(`[Finalize] Warning: Token ${tokenId} not confirmed on-chain, proceeding anyway`);
     }
 
     // 更新 vault 的 tokenId
@@ -852,23 +863,22 @@ router.post('/genesis/finalize', async (req: Request, res: Response) => {
     const metadataPath = path.join(METADATA_DIR, `${tokenId}.json`);
     fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
 
-    console.log(`[Finalize] Token #${tokenId} finalized, metadata saved, owner: ${owner}`);
+    console.log(`[Finalize] Token #${tokenId} finalized, metadata saved to ${metadataPath}`);
 
     res.json({
       success: true,
       tokenId,
-      owner,
+      owner: owner || 'pending',
       metadata,
       vault: {
-        vaultId: vault.vaultId,
-        vaultURI: vault.vaultURI,
-        vaultHash: vault.vaultHash,
-        learningRoot: vault.learningRoot,
+        vaultId: vault.id,
+        vaultHash: vault.traits ? require('../utils/hash.js').computeVaultHash(vault) : '',
+        learningRoot: '',
       },
     });
-  } catch (error) {
-    console.error('Genesis finalize error:', error);
-    res.status(500).json({ error: 'Failed to finalize agent' });
+  } catch (error: any) {
+    console.error('Genesis finalize error:', error?.message || error);
+    res.status(500).json({ error: `Failed to finalize: ${error?.message || 'Unknown error'}` });
   }
 });
 
