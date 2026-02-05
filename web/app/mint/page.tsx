@@ -47,7 +47,7 @@ interface PreviewAgent {
 }
 
 interface ReservedAgent {
-  tokenId: number;
+  tokenId: number | null; // 方案B: 动态生成时 tokenId 为 null
   metadata: PreviewAgent['metadata'];
   vault: {
     vaultId: string;
@@ -75,6 +75,8 @@ export default function MintPage() {
   const [isReserving, setIsReserving] = useState(false);
   const [reserveError, setReserveError] = useState<string | null>(null);
   const [actualMintedTokenId, setActualMintedTokenId] = useState<number | null>(null);
+  const [isFinalized, setIsFinalized] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const contractAddress = CONTRACTS.HouseForgeAgent[56]; // BSC Mainnet only
@@ -95,9 +97,31 @@ export default function MintPage() {
   const { writeContract, data: hash, isPending, error: writeError, reset: resetWrite } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash });
 
-  // 从交易回执中解析实际铸造的 tokenId
+  // 从交易回执中解析实际铸造的 tokenId 并调用 finalize
   useEffect(() => {
-    if (isSuccess && receipt?.logs) {
+    const finalizeAgent = async (tokenId: number, vaultId: string) => {
+      try {
+        console.log('[Mint] Finalizing token:', tokenId, 'vault:', vaultId);
+        const res = await fetch(`${API_URL}/genesis/finalize`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vaultId, actualTokenId: tokenId }),
+        });
+        if (res.ok) {
+          setIsFinalized(true);
+          console.log('[Mint] Finalize success');
+        } else {
+          const data = await res.json().catch(() => ({}));
+          setFinalizeError(data.error || 'Finalize failed');
+          console.error('[Mint] Finalize error:', data.error);
+        }
+      } catch (err: any) {
+        setFinalizeError(err.message || 'Finalize failed');
+        console.error('[Mint] Finalize error:', err);
+      }
+    };
+
+    if (isSuccess && receipt?.logs && reservedAgent && !actualMintedTokenId) {
       // 查找 Transfer 事件 (topic0 = Transfer(address,address,uint256))
       const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
       const transferLog = receipt.logs.find(log => log.topics[0] === transferTopic);
@@ -106,9 +130,12 @@ export default function MintPage() {
         const tokenId = parseInt(transferLog.topics[3], 16);
         console.log('[Mint] Actual minted tokenId:', tokenId);
         setActualMintedTokenId(tokenId);
+
+        // 调用 finalize API 生成元数据
+        finalizeAgent(tokenId, reservedAgent.vault.vaultId);
       }
     }
-  }, [isSuccess, receipt]);
+  }, [isSuccess, receipt, reservedAgent, actualMintedTokenId, API_URL]);
 
   // 模拟铸造交易，提前检测错误
   const { error: simulateError, isError: isSimulateError } = useSimulateContract({
@@ -222,7 +249,7 @@ export default function MintPage() {
   const handleMint = async () => {
     if (!reservedAgent || !address) return;
 
-    trackMintAttempt(reservedAgent.tokenId, selectedHouse || 'unknown');
+    trackMintAttempt(reservedAgent.tokenId || 0, selectedHouse || 'unknown');
 
     const price = mintPrice || parseEther('0.05');
 
@@ -283,6 +310,10 @@ export default function MintPage() {
                 setSelectedHouse(key);
                 setReservedAgent(null); // 重置已预订的 agent
                 setReserveError(null);
+                setActualMintedTokenId(null);
+                setIsFinalized(false);
+                setFinalizeError(null);
+                resetWrite();
               }}
               className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
                 selectedHouse === key
@@ -308,31 +339,14 @@ export default function MintPage() {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Agent Image */}
             <div className="relative aspect-square rounded-xl overflow-hidden bg-black/80 border border-amber-500/20">
-              {/* 优先加载渲染图片，失败后用占位符 SVG */}
-              <img
-                src={`${API_URL}/images/${reservedAgent.tokenId}.webp`}
-                alt={reservedAgent.metadata.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // 渲染图片加载失败，尝试占位符 SVG
-                  const target = e.target as HTMLImageElement;
-                  target.src = `${API_URL}/placeholder/${reservedAgent.tokenId}.svg`;
-                  target.onerror = () => {
-                    // 占位符也失败，显示颜色圆圈
-                    target.style.display = 'none';
-                    const placeholder = target.nextElementSibling as HTMLElement;
-                    if (placeholder) placeholder.style.display = 'flex';
-                  };
-                }}
-              />
-              {/* 备用占位符 - 所有图片都加载失败时显示 */}
-              <div
-                className="w-full h-full flex items-center justify-center"
-                style={{ display: 'none' }}
-              >
+              {/* 方案B: tokenId 为 null 时显示家族颜色占位符 */}
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-black/80 to-black/40">
                 <div
-                  className="w-32 h-32 rounded-full opacity-60"
-                  style={{ backgroundColor: HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color }}
+                  className="w-40 h-40 rounded-full opacity-70"
+                  style={{
+                    backgroundColor: HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color,
+                    boxShadow: `0 0 60px ${HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color}40`
+                  }}
                 />
               </div>
               {/* Rarity Badge */}
@@ -341,9 +355,9 @@ export default function MintPage() {
                   {getTraitValue('RarityTier')}
                 </div>
               </div>
-              {/* Token ID */}
+              {/* House Badge (方案B: 铸造前无 tokenId) */}
               <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm text-gray-300 border border-gray-500/30">
-                #{reservedAgent.tokenId}
+                {selectedHouse}
               </div>
             </div>
 
@@ -379,7 +393,7 @@ export default function MintPage() {
               {/* Assigned Badge */}
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
                 <p className="text-green-300 text-sm">
-                  <span className="font-semibold">已分配</span> — 系统已为你分配 {HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.name} 家族的智能体 #{reservedAgent.tokenId}。
+                  <span className="font-semibold">已生成特征</span> — 系统已为你生成 {HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.name} 的智能体特征。铸造后将分配 Token ID。
                 </p>
               </div>
             </div>
@@ -511,23 +525,29 @@ export default function MintPage() {
               {isSuccess && (
                 <div className="p-4 rounded-lg bg-green-900/30 border border-green-500">
                   <p className="text-green-400 mb-2">
-                    成功铸造智能体 #{actualMintedTokenId || reservedAgent.tokenId}！
+                    成功铸造智能体 #{actualMintedTokenId || '(解析中...)'}！
                   </p>
-                  {actualMintedTokenId && actualMintedTokenId !== reservedAgent.tokenId && (
-                    <p className="text-yellow-400 text-xs mb-2">
-                      注意：合约分配的实际 Token ID 与预订 ID 不同
-                    </p>
+                  {isFinalized ? (
+                    <p className="text-green-300 text-xs mb-2">✓ 元数据已生成</p>
+                  ) : finalizeError ? (
+                    <p className="text-yellow-400 text-xs mb-2">⚠ 元数据生成失败: {finalizeError}</p>
+                  ) : (
+                    <p className="text-gray-400 text-xs mb-2">正在生成元数据...</p>
                   )}
                   <div className="flex gap-4 mt-3">
-                    <Link href={`/agent/${actualMintedTokenId || reservedAgent.tokenId}`} className="text-amber-400 hover:text-amber-300 text-sm">
-                      查看你的智能体 →
-                    </Link>
+                    {actualMintedTokenId && (
+                      <Link href={`/agent/${actualMintedTokenId}`} className="text-amber-400 hover:text-amber-300 text-sm">
+                        查看你的智能体 →
+                      </Link>
+                    )}
                     <button
                       onClick={() => {
                         setReservedAgent(null);
                         setSelectedHouse(null);
                         setReserveError(null);
                         setActualMintedTokenId(null);
+                        setIsFinalized(false);
+                        setFinalizeError(null);
                         resetWrite();
                       }}
                       className="text-gray-400 hover:text-white text-sm"

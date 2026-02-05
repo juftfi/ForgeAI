@@ -690,16 +690,13 @@ router.get('/genesis/available/:house', (req: Request, res: Response) => {
 
 /**
  * POST /genesis/reserve
- * Reserve a genesis agent for minting
+ * 方案B: 动态生成 - 不绑定特定 tokenId
  *
- * 方案3: 用户只选择 house，系统自动分配匹配的 tokenId
- * - 如果提供 house 参数，自动找一个该 house 的可用 tokenId
- * - 如果提供 tokenId 参数（向后兼容），验证 house 必须匹配
- * - 同时检查链上是否已铸造，避免推荐已铸造的 token
+ * 用户选择 house → 动态生成 traits → 铸造后 finalize 确定实际 tokenId
  */
 router.post('/genesis/reserve', async (req: Request, res: Response) => {
   try {
-    let { tokenId, house } = req.body;
+    const { house } = req.body;
 
     // Map house to ID
     const HOUSE_KEY_TO_ID: Record<string, number> = {
@@ -711,105 +708,72 @@ router.post('/genesis/reserve', async (req: Request, res: Response) => {
       Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Mythic: 4
     };
 
-    const vaultService = getVaultService();
+    if (!house) {
+      return res.status(400).json({ error: 'house is required' });
+    }
 
-    // 方案3: 如果提供 house，自动分配 tokenId
-    if (house && !tokenId) {
-      const houseUpper = house.toUpperCase();
+    const houseUpper = house.toUpperCase();
+    if (!HOUSE_KEY_TO_ID[houseUpper]) {
+      return res.status(400).json({ error: 'Invalid house name' });
+    }
 
-      if (!HOUSE_KEY_TO_ID[houseUpper]) {
-        return res.status(400).json({ error: 'Invalid house name' });
-      }
+    // 动态导入 traitEngine
+    const { generateGenesisTraits } = await import('../services/traitEngine.js');
+    const genesis = loadGenesis().genesis;
 
-      // 找到该 house 的所有可用 tokenId
-      if (!fs.existsSync(METADATA_DIR)) {
-        return res.status(404).json({ error: 'No genesis agents found' });
-      }
-
-      const files = fs.readdirSync(METADATA_DIR)
-        .filter(f => f.endsWith('.json') && f !== 'collection.json')
-        .sort((a, b) => parseInt(a) - parseInt(b)); // 按 tokenId 排序
-
-      // 遍历找到第一个匹配 house 且未被铸造的 tokenId
-      for (const file of files) {
-        const tid = parseInt(file.replace('.json', ''), 10);
-        if (isNaN(tid)) continue;
-
-        const content = fs.readFileSync(path.join(METADATA_DIR, file), 'utf8');
-        const metadata = JSON.parse(content);
-        const houseAttr = metadata.attributes?.find((a: any) => a.trait_type === 'House');
-
-        if (houseAttr?.value === houseUpper) {
-          // 检查是否已被预订（vault 已存在）
-          const existingVault = vaultService.getByTokenId(tid);
-          if (existingVault) continue;
-
-          // 检查链上是否已铸造
-          const owner = await getTokenOwner(tid);
-          if (owner) {
-            console.log(`[Reserve] Token #${tid} already minted on-chain, skipping`);
-            continue;
-          }
-
-          tokenId = tid;
-          break;
-        }
-      }
-
-      if (!tokenId) {
-        return res.status(404).json({ error: `No available agents for house ${houseUpper}` });
+    // 随机选择稀有度（基于分布概率）
+    const rarityRoll = Math.random();
+    let cumulativeProb = 0;
+    let selectedRarity = 'Common';
+    for (const [rarity, prob] of Object.entries(genesis.rarity_distribution)) {
+      cumulativeProb += prob as number;
+      if (rarityRoll < cumulativeProb) {
+        selectedRarity = rarity;
+        break;
       }
     }
 
-    // 验证 tokenId
-    if (!tokenId || typeof tokenId !== 'number') {
-      return res.status(400).json({ error: 'house or tokenId is required' });
-    }
+    // 生成随机种子和序列号
+    const randomSeed = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+    const randomSerial = Math.floor(Math.random() * 9999) + 1;
 
-    // Load metadata
-    const filepath = path.join(METADATA_DIR, `${tokenId}.json`);
-    if (!fs.existsSync(filepath)) {
-      return res.status(404).json({ error: 'Agent not found' });
-    }
+    // 动态生成 traits（tokenId 用 0 作为占位符，finalize 时更新）
+    const traits = generateGenesisTraits(0, houseUpper, selectedRarity, randomSerial, randomSeed);
 
-    const content = fs.readFileSync(filepath, 'utf8');
-    const metadata = JSON.parse(content);
-
-    // Extract traits from attributes
-    const traits: Record<string, string> = {};
-    for (const attr of metadata.attributes || []) {
-      traits[attr.trait_type] = attr.value;
-    }
-
-    // 如果同时提供了 house 和 tokenId，验证必须匹配
-    if (house && traits.House !== house.toUpperCase()) {
-      return res.status(400).json({
-        error: `Token #${tokenId} belongs to house ${traits.House}, not ${house.toUpperCase()}`,
-      });
-    }
-
-    // 检查链上是否已铸造
-    const existingOwner = await getTokenOwner(tokenId);
-    if (existingOwner) {
-      return res.status(400).json({
-        error: `Token #${tokenId} has already been minted`,
-      });
-    }
-
-    // Create vault entry
-    const vault = vaultService.create({
-      tokenId,
-      traits,
-      summary: `Genesis agent #${tokenId} | House: ${traits.House} | Rarity: ${traits.RarityTier}`,
-    });
+    // 添加 Generation trait
+    const fullTraits: Record<string, string> = {
+      ...traits,
+      Generation: '0',
+    };
 
     // Compute traits hash
     const { computeTraitsHash } = require('../utils/hash.js');
-    const traitsHash = computeTraitsHash(traits);
+    const traitsHash = computeTraitsHash(fullTraits);
+
+    // 创建临时 vault（tokenId 用 -1 表示待定）
+    const vaultService = getVaultService();
+    const vault = vaultService.create({
+      tokenId: -1, // 待定，finalize 时更新
+      traits: fullTraits,
+      summary: `Genesis agent (pending) | House: ${houseUpper} | Rarity: ${selectedRarity}`,
+    });
+
+    // 构建预览元数据（不保存文件）
+    const previewMetadata = {
+      name: `KinForge Agent — ${houseUpper}`,
+      description: `在 KinForge 诞生的可交易非同质化智能体。血脉和学习记录可通过 vaultHash/learningRoot 验证；详细信息存储在保险库中。`,
+      image: `ipfs://PENDING`,
+      attributes: Object.entries(fullTraits).map(([trait_type, value]) => ({
+        trait_type,
+        value,
+      })),
+    };
+
+    console.log(`[Reserve] Created pending vault ${vault.vaultId} for house ${houseUpper}, rarity ${selectedRarity}`);
 
     res.json({
-      tokenId,
-      metadata,
+      tokenId: null, // 待定，finalize 后确定
+      metadata: previewMetadata,
       vault: {
         vaultId: vault.vaultId,
         vaultURI: vault.vaultURI,
@@ -817,7 +781,7 @@ router.post('/genesis/reserve', async (req: Request, res: Response) => {
         learningRoot: vault.learningRoot,
       },
       mintParams: {
-        houseId: HOUSE_KEY_TO_ID[traits.House] || 1,
+        houseId: HOUSE_KEY_TO_ID[houseUpper],
         persona: JSON.stringify({ house: traits.House, weatherId: traits.WeatherID }),
         experience: 'Genesis S0',
         vaultURI: vault.vaultURI,
@@ -830,6 +794,81 @@ router.post('/genesis/reserve', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Genesis reserve error:', error);
     res.status(500).json({ error: 'Failed to reserve agent' });
+  }
+});
+
+/**
+ * POST /genesis/finalize
+ * 方案B: 铸造成功后调用，绑定实际 tokenId 并生成元数据
+ */
+router.post('/genesis/finalize', async (req: Request, res: Response) => {
+  try {
+    const { vaultId, actualTokenId } = req.body;
+
+    if (!vaultId || !actualTokenId) {
+      return res.status(400).json({ error: 'vaultId and actualTokenId are required' });
+    }
+
+    const tokenId = parseInt(actualTokenId, 10);
+    if (isNaN(tokenId) || tokenId < 1) {
+      return res.status(400).json({ error: 'Invalid actualTokenId' });
+    }
+
+    const vaultService = getVaultService();
+
+    // 查找 vault
+    const vault = vaultService.getById(vaultId);
+    if (!vault) {
+      return res.status(404).json({ error: 'Vault not found' });
+    }
+
+    // 验证链上所有权（确保 token 已铸造）
+    const owner = await getTokenOwner(tokenId);
+    if (!owner) {
+      return res.status(400).json({ error: 'Token not yet minted on-chain' });
+    }
+
+    // 更新 vault 的 tokenId
+    vaultService.setTokenId(vaultId, tokenId);
+
+    // 生成并保存元数据文件
+    const traits = vault.traits;
+    const metadata = {
+      name: `HouseForge Agent #${tokenId} — House ${traits.House}`,
+      description: `A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.`,
+      image: `ipfs://PLACEHOLDER/${tokenId}.png`,
+      attributes: Object.entries(traits).map(([trait_type, value]) => ({
+        trait_type,
+        value,
+      })),
+    };
+
+    // 确保目录存在
+    if (!fs.existsSync(METADATA_DIR)) {
+      fs.mkdirSync(METADATA_DIR, { recursive: true });
+    }
+
+    // 保存元数据文件
+    const metadataPath = path.join(METADATA_DIR, `${tokenId}.json`);
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+
+    console.log(`[Finalize] Token #${tokenId} finalized, metadata saved, owner: ${owner}`);
+
+    res.json({
+      success: true,
+      tokenId,
+      owner,
+      metadata,
+      vault: {
+        vaultId: vault.vaultId,
+        vaultURI: vault.vaultURI,
+        vaultHash: vault.vaultHash,
+        learningRoot: vault.learningRoot,
+      },
+    });
+  } catch (error) {
+    console.error('Genesis finalize error:', error);
+    res.status(500).json({ error: 'Failed to finalize agent' });
   }
 });
 
