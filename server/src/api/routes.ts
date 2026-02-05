@@ -9,7 +9,7 @@ import { getMoodService, MOOD_CONFIG } from '../services/mood.js';
 import { getRelationshipService, RELATIONSHIP_LEVELS } from '../services/relationship.js';
 import { getTopicService, TOPIC_CONFIG } from '../services/topic.js';
 import { getKeyPool } from '../services/keyPool.js';
-import { verifyTokenOwnership } from '../utils/blockchain.js';
+import { verifyTokenOwnership, getTokenOwner } from '../utils/blockchain.js';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
@@ -695,8 +695,9 @@ router.get('/genesis/available/:house', (req: Request, res: Response) => {
  * 方案3: 用户只选择 house，系统自动分配匹配的 tokenId
  * - 如果提供 house 参数，自动找一个该 house 的可用 tokenId
  * - 如果提供 tokenId 参数（向后兼容），验证 house 必须匹配
+ * - 同时检查链上是否已铸造，避免推荐已铸造的 token
  */
-router.post('/genesis/reserve', (req: Request, res: Response) => {
+router.post('/genesis/reserve', async (req: Request, res: Response) => {
   try {
     let { tokenId, house } = req.body;
 
@@ -729,7 +730,7 @@ router.post('/genesis/reserve', (req: Request, res: Response) => {
         .filter(f => f.endsWith('.json') && f !== 'collection.json')
         .sort((a, b) => parseInt(a) - parseInt(b)); // 按 tokenId 排序
 
-      // 遍历找到第一个匹配 house 且未被预订的 tokenId
+      // 遍历找到第一个匹配 house 且未被铸造的 tokenId
       for (const file of files) {
         const tid = parseInt(file.replace('.json', ''), 10);
         if (isNaN(tid)) continue;
@@ -741,10 +742,17 @@ router.post('/genesis/reserve', (req: Request, res: Response) => {
         if (houseAttr?.value === houseUpper) {
           // 检查是否已被预订（vault 已存在）
           const existingVault = vaultService.getByTokenId(tid);
-          if (!existingVault) {
-            tokenId = tid;
-            break;
+          if (existingVault) continue;
+
+          // 检查链上是否已铸造
+          const owner = await getTokenOwner(tid);
+          if (owner) {
+            console.log(`[Reserve] Token #${tid} already minted on-chain, skipping`);
+            continue;
           }
+
+          tokenId = tid;
+          break;
         }
       }
 
@@ -777,6 +785,14 @@ router.post('/genesis/reserve', (req: Request, res: Response) => {
     if (house && traits.House !== house.toUpperCase()) {
       return res.status(400).json({
         error: `Token #${tokenId} belongs to house ${traits.House}, not ${house.toUpperCase()}`,
+      });
+    }
+
+    // 检查链上是否已铸造
+    const existingOwner = await getTokenOwner(tokenId);
+    if (existingOwner) {
+      return res.status(400).json({
+        error: `Token #${tokenId} has already been minted`,
       });
     }
 
