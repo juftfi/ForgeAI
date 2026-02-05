@@ -358,8 +358,13 @@ export default function MintPage() {
                   </div>
                 )}
                 {/* Rarity Badge */}
-                <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm font-medium text-amber-400 border border-amber-500/30">
-                  {getTraitValue('RarityTier')}
+                <div className="absolute top-4 left-4 flex flex-col gap-1">
+                  <div className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm font-medium text-amber-400 border border-amber-500/30">
+                    {getTraitValue('RarityTier')}
+                  </div>
+                  <div className="px-2 py-0.5 rounded bg-yellow-500/20 backdrop-blur-sm text-[10px] text-yellow-300 border border-yellow-500/30">
+                    仅供参考
+                  </div>
                 </div>
                 {/* Token ID */}
                 <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm text-gray-300 border border-gray-500/30">
@@ -403,6 +408,15 @@ export default function MintPage() {
                     连接钱包并预订以锁定此智能体进行铸造。
                   </p>
                 </div>
+
+                {/* Rarity Disclaimer */}
+                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                  <p className="text-yellow-300 text-sm">
+                    <span className="font-semibold">⚠️ 稀有度说明</span> — 预览显示的稀有度仅供参考。
+                    实际铸造的稀有度由 Token ID 的 traitsHash 决定，每个 ID 的稀有度是预先确定的，不受预览影响。
+                    点击「换一个」可以查看不同的可用智能体。
+                  </p>
+                </div>
               </div>
             </div>
           ) : null}
@@ -426,7 +440,8 @@ export default function MintPage() {
               <div className="flex items-center justify-between p-4 bg-black/60 rounded-lg border border-amber-500/20">
                 <div>
                   <p className="text-gray-400 text-sm">已选智能体</p>
-                  <p className="font-bold text-white">#{previewAgent.tokenId} — {getTraitValue('RarityTier')}</p>
+                  <p className="font-bold text-white">#{previewAgent.tokenId}</p>
+                  <p className="text-yellow-400 text-xs">稀有度将在铸造时确定</p>
                 </div>
                 <button
                   onClick={reserveAgent}
@@ -437,7 +452,7 @@ export default function MintPage() {
                 </button>
               </div>
               <p className="text-gray-500 text-sm text-center">
-                预订会创建保险库条目并准备链上数据。目前不需要交易。
+                预订会创建保险库条目并准备链上数据。稀有度由 Token ID 预先决定，非随机生成。
               </p>
             </div>
           ) : (
