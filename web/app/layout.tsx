@@ -120,7 +120,7 @@ export default function RootLayout({
           {/* Footer */}
           <footer className="border-t border-amber-500/20 bg-black/50 mt-20">
             <div className="max-w-7xl mx-auto px-6 py-12">
-              <div className="grid md:grid-cols-4 gap-8">
+              <div className="grid md:grid-cols-5 gap-8">
                 {/* Brand */}
                 <div>
                   <div className="flex items-center gap-2 mb-4">
@@ -156,6 +156,19 @@ export default function RootLayout({
                     <Link href="/docs" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">开发文档</Link>
                     <Link href="/media" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">媒体资源</Link>
                     <Link href="/status" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">系统状态</Link>
+                  </div>
+                </div>
+
+                {/* 合约 */}
+                <div>
+                  <h4 className="font-semibold mb-4 text-amber-400">智能合约</h4>
+                  <div className="space-y-2">
+                    <a href="https://bscscan.com/address/0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f#code" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-400 hover:text-amber-400 text-sm transition-colors">
+                      <span className="text-green-400 text-xs">✓</span> HouseForgeAgent
+                    </a>
+                    <a href="https://bscscan.com/address/0xa62E109Db724308FEB530A0b00431cf47BBC1f6E#code" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-400 hover:text-amber-400 text-sm transition-colors">
+                      <span className="text-green-400 text-xs">✓</span> FusionCore
+                    </a>
                   </div>
                 </div>
 
