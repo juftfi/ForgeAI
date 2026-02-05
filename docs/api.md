@@ -16,10 +16,13 @@
 4. [对话接口](#对话接口)
 5. [记忆接口](#记忆接口)
 6. [学习接口](#学习接口)
-7. [融合接口](#融合接口)
-8. [Genesis 接口](#genesis-接口)
-9. [血脉接口](#血脉接口)
-10. [图片接口](#图片接口)
+7. [心情接口](#心情接口) *(v0.5.0)*
+8. [关系接口](#关系接口) *(v0.5.0)*
+9. [主题接口](#主题接口) *(v0.5.0)*
+10. [融合接口](#融合接口)
+11. [Genesis 接口](#genesis-接口)
+12. [血脉接口](#血脉接口)
+13. [图片接口](#图片接口)
 
 ---
 
@@ -352,6 +355,54 @@
 }
 ```
 
+### GET /chat/history/:tokenId
+
+> v0.5.0 新增
+
+获取对话历史（支持日期过滤和分页）
+
+**参数**
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| tokenId | number | Token ID |
+| userAddress | string | 用户钱包地址 (必需) |
+| startDate | string | 开始日期 (ISO 格式，可选) |
+| endDate | string | 结束日期 (ISO 格式，可选) |
+| limit | number | 限制数量 (默认 20) |
+| offset | number | 偏移量 (默认 0) |
+| includeMessages | boolean | 是否包含消息内容 (默认 false) |
+
+**响应**
+
+```json
+{
+  "tokenId": 7,
+  "sessions": [
+    {
+      "id": "session-uuid",
+      "tokenId": 7,
+      "userAddress": "0x1234...",
+      "startedAt": "2025-02-05T10:00:00.000Z",
+      "endedAt": "2025-02-05T10:30:00.000Z",
+      "messageCount": 12,
+      "summary": "讨论了科技和区块链话题",
+      "messages": [
+        {
+          "id": "msg-1",
+          "role": "user",
+          "content": "你好！",
+          "createdAt": "2025-02-05T10:00:00.000Z",
+          "emotion": { "primary": "happy", "intensity": 0.7, "confidence": 0.8 }
+        }
+      ]
+    }
+  ],
+  "total": 15,
+  "hasMore": true
+}
+```
+
 ---
 
 ## 记忆接口
@@ -563,6 +614,239 @@
   }
 }
 ```
+
+---
+
+## 心情接口
+
+> v0.5.0 新增
+
+### GET /agent/:tokenId/mood
+
+获取智能体当前心情状态（公开接口）
+
+**参数**
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| tokenId | number | Token ID |
+
+**响应**
+
+```json
+{
+  "tokenId": 7,
+  "currentMood": "content",
+  "moodLabel": "满足",
+  "moodEmoji": "😊",
+  "moodColor": "#34d399",
+  "moodIntensity": 0.6,
+  "moodStability": 0.7,
+  "positiveStreak": 3,
+  "negativeStreak": 0,
+  "totalInteractions": 15,
+  "lastInteractionAt": "2025-02-05T10:30:00.000Z",
+  "recentMoodHistory": [
+    { "mood": "content", "timestamp": "2025-02-05T10:30:00.000Z" },
+    { "mood": "joyful", "timestamp": "2025-02-05T09:15:00.000Z" }
+  ]
+}
+```
+
+**心情类型**
+
+| 类型 | 标签 | 表情 | 回复风格 |
+|------|------|------|---------|
+| joyful | 愉悦 | 😄 | 充满活力和热情 |
+| content | 满足 | 😊 | 温和友好 |
+| neutral | 平静 | 😐 | 正常回复 |
+| melancholy | 忧郁 | 😔 | 稍微沉静 |
+| irritated | 烦躁 | 😤 | 略带急躁 |
+| curious | 好奇 | 🤔 | 多问问题 |
+| energetic | 充沛 | ⚡ | 节奏快、有活力 |
+| tired | 疲惫 | 😴 | 回复简短 |
+
+---
+
+## 关系接口
+
+> v0.5.0 新增
+
+### GET /agent/:tokenId/relationship
+
+获取用户与智能体的关系等级
+
+**参数**
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| tokenId | number | Token ID |
+| userAddress | string | 用户钱包地址 (查询参数) |
+
+**响应**
+
+```json
+{
+  "tokenId": 7,
+  "userAddress": "0x1234...",
+  "level": 3,
+  "levelTitle": "朋友",
+  "levelTitleEn": "Friend",
+  "levelColor": "#34d399",
+  "benefits": ["优先回复", "专属问候"],
+  "experiencePoints": 450,
+  "expProgress": {
+    "current": 150,
+    "required": 300,
+    "percentage": 50
+  },
+  "stats": {
+    "totalSessions": 12,
+    "totalMessages": 87,
+    "positiveInteractions": 23
+  },
+  "firstInteractionAt": "2025-01-15T08:00:00.000Z",
+  "lastInteractionAt": "2025-02-05T10:30:00.000Z",
+  "allLevels": [
+    { "level": 1, "title": "初识", "titleEn": "Stranger", "minExp": 0, "color": "#9ca3af" },
+    { "level": 2, "title": "相识", "titleEn": "Acquaintance", "minExp": 100, "color": "#60a5fa" },
+    { "level": 3, "title": "朋友", "titleEn": "Friend", "minExp": 300, "color": "#34d399" },
+    { "level": 4, "title": "挚友", "titleEn": "Close Friend", "minExp": 600, "color": "#a78bfa" },
+    { "level": 5, "title": "知己", "titleEn": "Confidant", "minExp": 1000, "color": "#f472b6" },
+    { "level": 6, "title": "羁绊", "titleEn": "Bonded", "minExp": 1800, "color": "#fbbf24" },
+    { "level": 7, "title": "灵魂伴侣", "titleEn": "Soulmate", "minExp": 3000, "color": "#ef4444" }
+  ]
+}
+```
+
+### GET /agent/:tokenId/relationships
+
+获取智能体的所有关系（排行榜）
+
+**参数**
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| tokenId | number | Token ID |
+| limit | number | 限制数量 (默认 10) |
+
+**响应**
+
+```json
+{
+  "tokenId": 7,
+  "relationships": [
+    {
+      "userAddress": "0x1234...",
+      "level": 5,
+      "levelTitle": "知己",
+      "levelColor": "#f472b6",
+      "experiencePoints": 1250,
+      "totalSessions": 45,
+      "lastInteractionAt": "2025-02-05T10:30:00.000Z"
+    },
+    {
+      "userAddress": "0x5678...",
+      "level": 3,
+      "levelTitle": "朋友",
+      "levelColor": "#34d399",
+      "experiencePoints": 420,
+      "totalSessions": 18,
+      "lastInteractionAt": "2025-02-04T16:20:00.000Z"
+    }
+  ],
+  "total": 2
+}
+```
+
+**经验获取方式**
+
+| 操作 | 经验值 |
+|------|--------|
+| 发送消息 | +2 |
+| 完成会话 | +10 |
+| 正面情绪互动 | +5 |
+| 长对话 (>10条消息) | +15 |
+| 连续互动 | +8 |
+
+---
+
+## 主题接口
+
+> v0.5.0 新增
+
+### GET /agent/:tokenId/topics
+
+获取对话主题统计（公开接口）
+
+**参数**
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| tokenId | number | Token ID |
+
+**响应**
+
+```json
+{
+  "tokenId": 7,
+  "totalTopics": 42,
+  "topTopics": [
+    {
+      "topic": "tech",
+      "count": 15,
+      "percentage": 36,
+      "label": "科技技术",
+      "emoji": "💻",
+      "color": "#06b6d4"
+    },
+    {
+      "topic": "emotions",
+      "count": 10,
+      "percentage": 24,
+      "label": "情感倾诉",
+      "emoji": "💭",
+      "color": "#f472b6"
+    }
+  ],
+  "distribution": [
+    { "topic": "tech", "count": 15, "label": "科技技术", "emoji": "💻", "color": "#06b6d4" },
+    { "topic": "emotions", "count": 10, "label": "情感倾诉", "emoji": "💭", "color": "#f472b6" },
+    { "topic": "daily_life", "count": 8, "label": "日常生活", "emoji": "🏠", "color": "#34d399" },
+    { "topic": "knowledge", "count": 5, "label": "知识问答", "emoji": "📚", "color": "#a78bfa" }
+  ],
+  "recentTopics": [
+    {
+      "id": "topic-uuid",
+      "sessionId": "session-uuid",
+      "topic": "tech",
+      "confidence": 0.85,
+      "messageCount": 12,
+      "createdAt": "2025-02-05T10:30:00.000Z",
+      "label": "科技技术",
+      "emoji": "💻"
+    }
+  ]
+}
+```
+
+**主题类别**
+
+| 类别 | 标签 | 表情 | 关键词示例 |
+|------|------|------|-----------|
+| greeting | 日常问候 | 👋 | 你好、早安、在吗 |
+| daily_life | 日常生活 | 🏠 | 吃饭、天气、周末 |
+| emotions | 情感倾诉 | 💭 | 开心、难过、压力 |
+| knowledge | 知识问答 | 📚 | 为什么、怎么、什么是 |
+| creative | 创意想象 | 🎨 | 想象、故事、设计 |
+| philosophy | 哲学思考 | 🤔 | 人生、意义、存在 |
+| tech | 科技技术 | 💻 | 编程、AI、区块链 |
+| entertainment | 娱乐休闲 | 🎮 | 电影、游戏、音乐 |
+| work | 工作事业 | 💼 | 上班、项目、面试 |
+| relationship | 人际关系 | 👥 | 朋友、家人、恋爱 |
+| health | 健康生活 | 🏃 | 锻炼、睡眠、减肥 |
+| future | 未来憧憬 | 🌟 | 计划、目标、梦想 |
+| other | 其他话题 | 💬 | (默认) |
 
 ---
 
