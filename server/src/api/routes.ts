@@ -115,19 +115,20 @@ router.get('/metadata/:tokenId', (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid token ID' });
     }
 
-    // Helper to get working image URL
+    // Helper to get working image URL (absolute URL for NFT marketplaces)
+    const API_BASE = process.env.API_BASE_URL || 'https://houseforgeserver-production.up.railway.app';
     const getImageUrl = (tid: number): string => {
       // Check for rendered images first
       const webpPath = path.join(RENDER_OUTPUT_DIR, `${tid}.webp`);
       const pngPath = path.join(RENDER_OUTPUT_DIR, `${tid}.png`);
       if (fs.existsSync(webpPath)) {
-        return `/images/${tid}.webp`;
+        return `${API_BASE}/images/${tid}.webp`;
       }
       if (fs.existsSync(pngPath)) {
-        return `/images/${tid}.png`;
+        return `${API_BASE}/images/${tid}.png`;
       }
       // Fall back to placeholder SVG
-      return `/placeholder/${tid}.svg`;
+      return `${API_BASE}/placeholder/${tid}.svg`;
     };
 
     // Try to read from file first
