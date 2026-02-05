@@ -339,16 +339,20 @@ export default function MintPage() {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Agent Image */}
             <div className="relative aspect-square rounded-xl overflow-hidden bg-black/80 border border-amber-500/20">
-              {/* 方案B: tokenId 为 null 时显示家族颜色占位符 */}
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-black/80 to-black/40">
-                <div
-                  className="w-40 h-40 rounded-full opacity-70"
-                  style={{
-                    backgroundColor: HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color,
-                    boxShadow: `0 0 60px ${HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color}40`
-                  }}
+              {/* 方案B: tokenId 为 null 时显示 house 占位符 SVG，铸造后显示实际图片 */}
+              {actualMintedTokenId ? (
+                <img
+                  src={`${API_URL}/placeholder/${actualMintedTokenId}.svg`}
+                  alt={`Agent #${actualMintedTokenId}`}
+                  className="w-full h-full object-cover"
                 />
-              </div>
+              ) : (
+                <img
+                  src={`${API_URL}/placeholder/house/${selectedHouse}.svg?rarity=${encodeURIComponent(getTraitValue('RarityTier') || 'Common')}`}
+                  alt={`${selectedHouse} Preview`}
+                  className="w-full h-full object-cover"
+                />
+              )}
               {/* Rarity Badge */}
               <div className="absolute top-4 left-4">
                 <div className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm font-medium text-amber-400 border border-amber-500/30">

@@ -937,6 +937,89 @@ const HOUSE_COLORS: Record<string, { primary: string; secondary: string }> = {
 };
 
 /**
+ * GET /placeholder/house/:house.svg
+ * Generate a placeholder SVG image based on house name (for pre-mint preview)
+ */
+router.get('/placeholder/house/:house.svg', (req: Request, res: Response) => {
+  try {
+    const house = req.params.house.toUpperCase();
+    const rarity = (req.query.rarity as string) || 'Common';
+
+    if (!HOUSE_COLORS[house]) {
+      return res.status(400).json({ error: 'Invalid house name' });
+    }
+
+    const colors = HOUSE_COLORS[house];
+
+    // Rarity glow effects
+    const rarityGlow: Record<string, string> = {
+      Common: '',
+      Uncommon: '<filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+      Rare: '<filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+      Epic: '<filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+      Legendary: '<filter id="glow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+      Mythic: '<filter id="glow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+    };
+
+    const glowFilter = rarityGlow[rarity] || '';
+    const useGlow = rarity !== 'Common' ? 'filter="url(#glow)"' : '';
+
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="house" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${colors.primary}"/>
+      <stop offset="100%" stop-color="${colors.secondary}"/>
+    </linearGradient>
+    ${glowFilter}
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#bg)"/>
+
+  <!-- Hexagon frame -->
+  <polygon points="200,40 340,110 340,250 200,320 60,250 60,110"
+           fill="none" stroke="url(#house)" stroke-width="3" ${useGlow}/>
+
+  <!-- DNA helix -->
+  <g stroke="url(#house)" stroke-width="4" stroke-linecap="round" fill="none" ${useGlow}>
+    <path d="M160,100 Q200,130 240,100"/>
+    <path d="M160,130 Q200,160 240,130"/>
+    <path d="M160,160 Q200,190 240,160"/>
+    <path d="M160,190 Q200,220 240,190"/>
+    <path d="M160,220 Q200,190 240,220"/>
+  </g>
+
+  <!-- Preview text -->
+  <text x="200" y="280" font-family="monospace" font-size="20" fill="${colors.primary}" text-anchor="middle" font-weight="bold">
+    预览
+  </text>
+
+  <!-- House name -->
+  <text x="200" y="350" font-family="sans-serif" font-size="16" fill="#666" text-anchor="middle">
+    ${house}
+  </text>
+
+  <!-- KinForge branding -->
+  <text x="200" y="380" font-family="sans-serif" font-size="12" fill="#444" text-anchor="middle">
+    KinForge
+  </text>
+</svg>`;
+
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour cache
+    res.send(svg);
+  } catch (error) {
+    console.error('House placeholder image error:', error);
+    res.status(500).json({ error: 'Failed to generate house placeholder' });
+  }
+});
+
+/**
  * GET /placeholder/:tokenId.svg
  * Generate a placeholder SVG image for tokens without rendered images
  */
