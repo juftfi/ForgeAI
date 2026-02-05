@@ -48,6 +48,7 @@ const STEPS = [
 
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     trackPageView('/', 'Home');
@@ -88,8 +89,40 @@ export default function Home() {
             </svg>
           </div>
 
-          <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 mb-6">
+          <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 mb-4">
             2,100 创世智能体 · BNB Chain
+          </div>
+
+          {/* Contract Address */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <span className="text-gray-500 text-sm">CA:</span>
+            <a
+              href="https://bscscan.com/address/0x2bbe12679fdb17ba51256a3a4142e9882aeeffff"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-sm text-amber-400 hover:text-amber-300 transition-colors"
+            >
+              0x2bbe12679fdb17ba51256a3a4142e9882aeeffff
+            </a>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText('0x2bbe12679fdb17ba51256a3a4142e9882aeeffff');
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className={`transition-colors ${copied ? 'text-green-400' : 'text-gray-500 hover:text-amber-400'}`}
+              title={copied ? '已复制' : '复制地址'}
+            >
+              {copied ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              )}
+            </button>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
