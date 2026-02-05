@@ -292,20 +292,24 @@ export default function MintPage() {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Agent Image */}
             <div className="relative aspect-square rounded-xl overflow-hidden bg-black/80 border border-amber-500/20">
-              {/* 使用 API 的占位符 SVG */}
+              {/* 优先加载渲染图片，失败后用占位符 SVG */}
               <img
-                src={`${API_URL}/placeholder/${reservedAgent.tokenId}.svg`}
+                src={`${API_URL}/images/${reservedAgent.tokenId}.webp`}
                 alt={reservedAgent.metadata.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  // 图片加载失败时隐藏并显示备用占位符
+                  // 渲染图片加载失败，尝试占位符 SVG
                   const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const placeholder = target.nextElementSibling as HTMLElement;
-                  if (placeholder) placeholder.style.display = 'flex';
+                  target.src = `${API_URL}/placeholder/${reservedAgent.tokenId}.svg`;
+                  target.onerror = () => {
+                    // 占位符也失败，显示颜色圆圈
+                    target.style.display = 'none';
+                    const placeholder = target.nextElementSibling as HTMLElement;
+                    if (placeholder) placeholder.style.display = 'flex';
+                  };
                 }}
               />
-              {/* 备用占位符 - 图片加载失败时显示 */}
+              {/* 备用占位符 - 所有图片都加载失败时显示 */}
               <div
                 className="w-full h-full flex items-center justify-center"
                 style={{ display: 'none' }}
