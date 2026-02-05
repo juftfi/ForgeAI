@@ -8,6 +8,7 @@ import { getLearningService } from '../services/learning.js';
 import { verifyTokenOwnership } from '../utils/blockchain.js';
 import path from 'path';
 import fs from 'fs';
+import sharp from 'sharp';
 
 const router = Router();
 
@@ -116,15 +117,17 @@ router.get('/metadata/:tokenId', (req: Request, res: Response) => {
     }
 
     // Helper to get working image URL (absolute URL for NFT marketplaces)
+    // Always return PNG for maximum wallet compatibility (WebP not supported by all wallets)
     const API_BASE = process.env.API_BASE_URL || 'https://houseforgeserver-production.up.railway.app';
     const getImageUrl = (tid: number): string => {
-      // Check for rendered images first
+      // Check for rendered images - prefer PNG for wallet compatibility
       const webpPath = path.join(RENDER_OUTPUT_DIR, `${tid}.webp`);
       const pngPath = path.join(RENDER_OUTPUT_DIR, `${tid}.png`);
-      if (fs.existsSync(webpPath)) {
-        return `${API_BASE}/images/${tid}.webp`;
-      }
       if (fs.existsSync(pngPath)) {
+        return `${API_BASE}/images/${tid}.png`;
+      }
+      // If only WebP exists, return PNG URL (server will auto-convert)
+      if (fs.existsSync(webpPath)) {
         return `${API_BASE}/images/${tid}.png`;
       }
       // Fall back to placeholder SVG
@@ -872,10 +875,10 @@ router.get('/placeholder/:tokenId.svg', (req: Request, res: Response) => {
 });
 
 /**
- * GET /images/:tokenId.webp
- * Serve rendered token image
+ * GET /images/:tokenId.webp or /images/:tokenId.png
+ * Serve rendered token image (auto-converts WebP to PNG if needed)
  */
-router.get('/images/:filename', (req: Request, res: Response) => {
+router.get('/images/:filename', async (req: Request, res: Response) => {
   try {
     const { filename } = req.params;
 
@@ -886,32 +889,43 @@ router.get('/images/:filename', (req: Request, res: Response) => {
     }
 
     const tokenId = match[1];
-    const ext = match[2];
+    const requestedExt = match[2];
 
     const filepath = path.join(RENDER_OUTPUT_DIR, filename);
 
-    if (!fs.existsSync(filepath)) {
-      // Try alternative extensions
-      const alternatives = ['webp', 'png', 'jpg'].filter(e => e !== ext);
-      for (const altExt of alternatives) {
-        const altPath = path.join(RENDER_OUTPUT_DIR, `${tokenId}.${altExt}`);
-        if (fs.existsSync(altPath)) {
-          return res.redirect(`/images/${tokenId}.${altExt}`);
-        }
-      }
-      return res.status(404).json({ error: 'Image not found' });
+    // If requested file exists, serve it directly
+    if (fs.existsSync(filepath)) {
+      const contentTypes: Record<string, string> = {
+        webp: 'image/webp',
+        png: 'image/png',
+        jpg: 'image/jpeg',
+      };
+      res.setHeader('Content-Type', contentTypes[requestedExt] || 'application/octet-stream');
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+      return res.sendFile(filepath);
     }
 
-    // Set content type
-    const contentTypes: Record<string, string> = {
-      webp: 'image/webp',
-      png: 'image/png',
-      jpg: 'image/jpeg',
-    };
+    // If PNG requested but only WebP exists, convert on-the-fly
+    if (requestedExt === 'png') {
+      const webpPath = path.join(RENDER_OUTPUT_DIR, `${tokenId}.webp`);
+      if (fs.existsSync(webpPath)) {
+        const pngBuffer = await sharp(webpPath).png().toBuffer();
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        return res.send(pngBuffer);
+      }
+    }
 
-    res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
-    res.sendFile(filepath);
+    // Try alternative extensions
+    const alternatives = ['webp', 'png', 'jpg'].filter(e => e !== requestedExt);
+    for (const altExt of alternatives) {
+      const altPath = path.join(RENDER_OUTPUT_DIR, `${tokenId}.${altExt}`);
+      if (fs.existsSync(altPath)) {
+        return res.redirect(`/images/${tokenId}.${altExt}`);
+      }
+    }
+
+    return res.status(404).json({ error: 'Image not found' });
   } catch (error) {
     console.error('Image serve error:', error);
     res.status(500).json({ error: 'Failed to serve image' });
