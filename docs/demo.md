@@ -1,6 +1,6 @@
-# HouseForge Demo Guide
+# KinForge Demo Guide
 
-This guide walks you through running the complete HouseForge demo from scratch.
+This guide walks you through running the complete KinForge demo from scratch.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ This guide walks you through running the complete HouseForge demo from scratch.
 ### 1. Install Dependencies
 
 ```bash
-cd HouseForge
+cd KinForge
 pnpm install
 ```
 
@@ -193,7 +193,7 @@ assert(keccak256(stableStringify(traits)) === onChainTraitsHash);
 ## Project Structure
 
 ```
-HouseForge/
+KinForge/
 ├── config/           # YAML configurations
 ├── contracts/        # Foundry smart contracts
 │   ├── src/          # Contract source

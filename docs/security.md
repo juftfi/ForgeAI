@@ -1,8 +1,8 @@
-# HouseForge Security Documentation
+# KinForge Security Documentation
 
 ## Overview
 
-This document outlines the security architecture, threat model, and mitigation strategies for HouseForge NFT contracts and services.
+This document outlines the security architecture, threat model, and mitigation strategies for KinForge NFT contracts and services.
 
 ## Smart Contract Security
 
@@ -93,7 +93,7 @@ require(MerkleProof.verify(proof, allowlistRoot, leaf), "Invalid proof");
 All fees are forwarded directly to treasury, never stored in contracts:
 
 ```solidity
-// In HouseForgeAgent
+// In KinForgeAgent
 (bool sent, ) = treasury.call{value: msg.value}("");
 require(sent, "Treasury transfer failed");
 
@@ -208,7 +208,7 @@ Recommended production configurations:
 
 ### Threat: Oracle Manipulation
 
-**Attack Vector:** Not applicable - HouseForge doesn't use external oracles for pricing or randomness.
+**Attack Vector:** Not applicable - KinForge doesn't use external oracles for pricing or randomness.
 
 **Mitigation:** Block hash provides sufficient randomness for trait generation. No price oracles used.
 
@@ -240,7 +240,7 @@ If critical vulnerability discovered:
 
 ### Upgrade Path
 
-HouseForge uses non-upgradeable contracts for immutability. If upgrade needed:
+KinForge uses non-upgradeable contracts for immutability. If upgrade needed:
 
 1. Deploy new contract version
 2. Snapshot existing state

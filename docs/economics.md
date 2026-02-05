@@ -1,8 +1,8 @@
-# HouseForge Economics Documentation
+# KinForge Economics Documentation
 
 ## Overview
 
-HouseForge implements a low-barrier, high-participation economic model designed for mass adoption on BSC. All prices are denominated in BNB.
+KinForge implements a low-barrier, high-participation economic model designed for mass adoption on BSC. All prices are denominated in BNB.
 
 ## Configuration
 
@@ -242,11 +242,11 @@ For power users requiring extensive learning history:
 
 | Project | Mint Price | Chain |
 |---------|------------|-------|
-| HouseForge | 0.01 BNB (~$6) | BSC |
+| KinForge | 0.01 BNB (~$6) | BSC |
 | Typical PFP | 0.05-0.1 ETH ($100-200) | Ethereum |
 | Ordinals | Variable sats | Bitcoin |
 
-HouseForge targets the **accessible gaming collectibles** segment, not luxury digital art.
+KinForge targets the **accessible gaming collectibles** segment, not luxury digital art.
 
 ## Economic Sustainability
 
@@ -352,7 +352,7 @@ function setTreasury(address _treasury) external onlyAdmin;
 
 ## Summary
 
-HouseForge's economic model prioritizes:
+KinForge's economic model prioritizes:
 - **Accessibility**: Low entry price (0.01 BNB)
 - **Sustainability**: Recurring fusion fees fund ongoing development
 - **Transparency**: All fees calculated on-chain, immediately forwarded

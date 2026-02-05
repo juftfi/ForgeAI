@@ -1,6 +1,6 @@
-# HouseForge 3D Rendering Pipeline
+# KinForge 3D Rendering Pipeline
 
-This document explains how to generate the 2100 ultra-realistic 3D rendered images for the HouseForge NFT collection using Blender + Cycles.
+This document explains how to generate the 2100 ultra-realistic 3D rendered images for the KinForge NFT collection using Blender + Cycles.
 
 ## Overview
 
@@ -44,7 +44,7 @@ For faster renders, enable GPU computing in Blender:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    HouseForge Render Pipeline                    │
+│                    KinForge Render Pipeline                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  1. Generate Templates    2. Generate Recipes    3. Build Jobs  │
@@ -83,7 +83,7 @@ Create the 7 house-specific Blender scene templates:
 
 ```bash
 # Navigate to project root
-cd HouseForge
+cd KinForge
 
 # Generate all 7 templates
 blender -b -P render/scripts/generate_templates.py -- --output-dir render/scenes

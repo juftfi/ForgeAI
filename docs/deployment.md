@@ -89,7 +89,7 @@ forge test -vvv
 ### 4. 部署到 BSC 主网
 
 ```bash
-# 部署 HouseForgeAgent
+# 部署 KinForgeAgent
 forge script script/DeployAgent.s.sol:DeployAgent \
   --rpc-url $RPC_URL \
   --broadcast \
