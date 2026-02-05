@@ -1,5 +1,5 @@
 {
-  "name": "HouseForge Agent #29 — House Monsoon",
+  "name": "HouseForge Agent #29 — House Frost",
   "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
   "image": "ipfs://PLACEHOLDER/29.png",
   "attributes": [
@@ -9,7 +9,7 @@
     },
     {
       "trait_type": "House",
-      "value": "MONSOON"
+      "value": "FROST"
     },
     {
       "trait_type": "RarityTier",
@@ -17,7 +17,7 @@
     },
     {
       "trait_type": "WeatherID",
-      "value": "S0-MONSOON-0107"
+      "value": "S0-FROST-0107"
     },
     {
       "trait_type": "FrameType",

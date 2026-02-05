@@ -8,12 +8,50 @@ import { getLearningService } from '../services/learning.js';
 import { getMoodService, MOOD_CONFIG } from '../services/mood.js';
 import { getRelationshipService, RELATIONSHIP_LEVELS } from '../services/relationship.js';
 import { getTopicService, TOPIC_CONFIG } from '../services/topic.js';
+import { getKeyPool } from '../services/keyPool.js';
 import { verifyTokenOwnership } from '../utils/blockchain.js';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
 
 const router = Router();
+
+// =============================================================
+//                      SYSTEM ROUTES
+// =============================================================
+
+/**
+ * GET /system/key-pool
+ * 获取 API Key Pool 状态（仅管理员）
+ */
+router.get('/system/key-pool', (req: Request, res: Response) => {
+  try {
+    // 简单的密钥验证（生产环境应使用更安全的方式）
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== process.env.ADMIN_API_KEY && process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const keyPool = getKeyPool();
+    const status = keyPool.getStatus();
+
+    res.json({
+      openai: {
+        total: keyPool.getTotalCount('openai'),
+        available: keyPool.getAvailableCount('openai'),
+        keys: status.openai,
+      },
+      anthropic: {
+        total: keyPool.getTotalCount('anthropic'),
+        available: keyPool.getAvailableCount('anthropic'),
+        keys: status.anthropic,
+      },
+    });
+  } catch (error) {
+    console.error('Key pool status error:', error);
+    res.status(500).json({ error: 'Failed to get key pool status' });
+  }
+});
 
 // =============================================================
 //                      VAULT ROUTES
@@ -652,14 +690,72 @@ router.get('/genesis/available/:house', (req: Request, res: Response) => {
 
 /**
  * POST /genesis/reserve
- * Reserve a specific genesis agent for minting (returns vault data)
+ * Reserve a genesis agent for minting
+ *
+ * 方案3: 用户只选择 house，系统自动分配匹配的 tokenId
+ * - 如果提供 house 参数，自动找一个该 house 的可用 tokenId
+ * - 如果提供 tokenId 参数（向后兼容），验证 house 必须匹配
  */
 router.post('/genesis/reserve', (req: Request, res: Response) => {
   try {
-    const { tokenId } = req.body;
+    let { tokenId, house } = req.body;
 
+    // Map house to ID
+    const HOUSE_KEY_TO_ID: Record<string, number> = {
+      CLEAR: 1, MONSOON: 2, THUNDER: 3, FROST: 4, AURORA: 5, SAND: 6, ECLIPSE: 7
+    };
+
+    // Map rarity to tier number
+    const RARITY_TO_TIER: Record<string, number> = {
+      Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Mythic: 4
+    };
+
+    const vaultService = getVaultService();
+
+    // 方案3: 如果提供 house，自动分配 tokenId
+    if (house && !tokenId) {
+      const houseUpper = house.toUpperCase();
+
+      if (!HOUSE_KEY_TO_ID[houseUpper]) {
+        return res.status(400).json({ error: 'Invalid house name' });
+      }
+
+      // 找到该 house 的所有可用 tokenId
+      if (!fs.existsSync(METADATA_DIR)) {
+        return res.status(404).json({ error: 'No genesis agents found' });
+      }
+
+      const files = fs.readdirSync(METADATA_DIR)
+        .filter(f => f.endsWith('.json') && f !== 'collection.json')
+        .sort((a, b) => parseInt(a) - parseInt(b)); // 按 tokenId 排序
+
+      // 遍历找到第一个匹配 house 且未被预订的 tokenId
+      for (const file of files) {
+        const tid = parseInt(file.replace('.json', ''), 10);
+        if (isNaN(tid)) continue;
+
+        const content = fs.readFileSync(path.join(METADATA_DIR, file), 'utf8');
+        const metadata = JSON.parse(content);
+        const houseAttr = metadata.attributes?.find((a: any) => a.trait_type === 'House');
+
+        if (houseAttr?.value === houseUpper) {
+          // 检查是否已被预订（vault 已存在）
+          const existingVault = vaultService.getByTokenId(tid);
+          if (!existingVault) {
+            tokenId = tid;
+            break;
+          }
+        }
+      }
+
+      if (!tokenId) {
+        return res.status(404).json({ error: `No available agents for house ${houseUpper}` });
+      }
+    }
+
+    // 验证 tokenId
     if (!tokenId || typeof tokenId !== 'number') {
-      return res.status(400).json({ error: 'tokenId is required and must be a number' });
+      return res.status(400).json({ error: 'house or tokenId is required' });
     }
 
     // Load metadata
@@ -677,23 +773,19 @@ router.post('/genesis/reserve', (req: Request, res: Response) => {
       traits[attr.trait_type] = attr.value;
     }
 
+    // 如果同时提供了 house 和 tokenId，验证必须匹配
+    if (house && traits.House !== house.toUpperCase()) {
+      return res.status(400).json({
+        error: `Token #${tokenId} belongs to house ${traits.House}, not ${house.toUpperCase()}`,
+      });
+    }
+
     // Create vault entry
-    const vaultService = getVaultService();
     const vault = vaultService.create({
       tokenId,
       traits,
       summary: `Genesis agent #${tokenId} | House: ${traits.House} | Rarity: ${traits.RarityTier}`,
     });
-
-    // Map house to ID
-    const HOUSE_KEY_TO_ID: Record<string, number> = {
-      CLEAR: 1, MONSOON: 2, THUNDER: 3, FROST: 4, AURORA: 5, SAND: 6, ECLIPSE: 7
-    };
-
-    // Map rarity to tier number
-    const RARITY_TO_TIER: Record<string, number> = {
-      Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Mythic: 4
-    };
 
     // Compute traits hash
     const { computeTraitsHash } = require('../utils/hash.js');

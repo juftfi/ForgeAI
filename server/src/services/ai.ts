@@ -1,9 +1,11 @@
 /**
  * AI Client Service
  * Supports OpenAI and Anthropic APIs for chat and embeddings
+ * 支持多 API Key 轮询和自动故障转移
  */
 
 import { AIMessage, ChatOptions, EmbeddingResult } from '../types/chat.js';
+import { getKeyPool, KeyPoolConfig } from './keyPool.js';
 
 export type AIProvider = 'openai' | 'anthropic';
 
@@ -33,26 +35,38 @@ interface OpenAIEmbeddingResponse {
 
 interface AIConfig {
   provider: AIProvider;
-  apiKey: string;
+  apiKey?: string; // 可选，如果不提供则使用 KeyPool
   model?: string;
   embeddingModel?: string;
   baseUrl?: string;
+  useKeyPool?: boolean; // 是否使用 Key Pool（默认 true）
+  keyPoolConfig?: KeyPoolConfig;
 }
 
 export class AIClient {
   private config: AIConfig;
   private defaultModel: string;
   private defaultEmbeddingModel: string;
+  private useKeyPool: boolean;
 
   constructor(config?: Partial<AIConfig>) {
     const provider = (config?.provider || process.env.AI_PROVIDER || 'openai') as AIProvider;
 
+    // 默认启用 KeyPool
+    this.useKeyPool = config?.useKeyPool !== false;
+
+    // 初始化 KeyPool（如果启用）
+    if (this.useKeyPool) {
+      getKeyPool(config?.keyPoolConfig);
+    }
+
     this.config = {
       provider,
-      apiKey: config?.apiKey || this.getApiKey(provider),
+      apiKey: config?.apiKey,
       model: config?.model,
       embeddingModel: config?.embeddingModel,
       baseUrl: config?.baseUrl,
+      useKeyPool: this.useKeyPool,
     };
 
     // Set default models based on provider
@@ -65,60 +79,116 @@ export class AIClient {
     }
   }
 
+  /**
+   * 获取 API Key（从 KeyPool 或配置）
+   */
   private getApiKey(provider: AIProvider): string {
+    // 如果配置了固定的 key，使用它
+    if (this.config.apiKey) {
+      return this.config.apiKey;
+    }
+
+    // 从 KeyPool 获取
+    if (this.useKeyPool) {
+      const key = getKeyPool().getKey(provider);
+      if (key) {
+        return key;
+      }
+    }
+
+    // 回退到环境变量
     if (provider === 'openai') {
       const key = process.env.OPENAI_API_KEY;
-      if (!key) throw new Error('OPENAI_API_KEY environment variable is required');
+      if (!key) throw new Error('No OpenAI API key available');
       return key;
     } else {
       const key = process.env.ANTHROPIC_API_KEY;
-      if (!key) throw new Error('ANTHROPIC_API_KEY environment variable is required');
+      if (!key) throw new Error('No Anthropic API key available');
       return key;
     }
   }
 
   /**
    * Send a chat request to the AI
+   * 支持多 Key 故障转移
    */
   async chat(messages: AIMessage[], options?: ChatOptions): Promise<string> {
-    const maxRetries = 3;
+    const maxRetries = this.useKeyPool ? getKeyPool().getTotalCount(this.config.provider) + 2 : 3;
     let lastError: Error | null = null;
+    const triedKeys = new Set<string>();
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
+      let currentKey: string;
+
       try {
-        if (this.config.provider === 'openai') {
-          return await this.chatOpenAI(messages, options);
-        } else {
-          return await this.chatAnthropic(messages, options);
+        currentKey = this.getApiKey(this.config.provider);
+
+        // 如果已经尝试过这个 key 且还有其他 key，跳过
+        if (triedKeys.has(currentKey) && triedKeys.size < getKeyPool().getTotalCount(this.config.provider)) {
+          continue;
         }
+        triedKeys.add(currentKey);
+
+        let result: string;
+        if (this.config.provider === 'openai') {
+          result = await this.chatOpenAI(messages, options, currentKey);
+        } else {
+          result = await this.chatAnthropic(messages, options, currentKey);
+        }
+
+        // 成功：报告并返回
+        if (this.useKeyPool) {
+          getKeyPool().reportSuccess(this.config.provider, currentKey);
+        }
+        return result;
+
       } catch (error) {
         lastError = error as Error;
-        console.error(`AI chat attempt ${attempt + 1} failed:`, error);
+        const errorMessage = (error as Error).message || '';
 
-        // Don't retry on auth errors
-        if ((error as any)?.status === 401) {
-          throw error;
+        console.error(`AI chat attempt ${attempt + 1} failed:`, errorMessage);
+
+        // 报告错误到 KeyPool
+        if (this.useKeyPool && currentKey!) {
+          const isRateLimit = errorMessage.includes('429') ||
+                             errorMessage.includes('rate') ||
+                             errorMessage.includes('quota');
+          getKeyPool().reportError(this.config.provider, currentKey!, errorMessage, isRateLimit);
         }
 
-        // Wait before retry with exponential backoff
+        // 认证错误不重试同一个 key
+        if (errorMessage.includes('401') || errorMessage.includes('invalid_api_key')) {
+          if (this.useKeyPool) {
+            getKeyPool().reportError(this.config.provider, currentKey!, errorMessage, false);
+          }
+          // 但如果还有其他 key，继续尝试
+          if (triedKeys.size >= getKeyPool().getTotalCount(this.config.provider)) {
+            throw error;
+          }
+          continue;
+        }
+
+        // 等待后重试（指数退避）
         if (attempt < maxRetries - 1) {
-          await this.sleep(Math.pow(2, attempt) * 1000);
+          const waitTime = Math.min(Math.pow(2, attempt) * 1000, 10000);
+          await this.sleep(waitTime);
         }
       }
     }
 
-    throw lastError || new Error('AI chat failed after retries');
+    throw lastError || new Error('AI chat failed after all retries');
   }
 
-  private async chatOpenAI(messages: AIMessage[], options?: ChatOptions): Promise<string> {
+  private async chatOpenAI(messages: AIMessage[], options?: ChatOptions, apiKey?: string): Promise<string> {
     const model = this.config.model || this.defaultModel;
     const baseUrl = this.config.baseUrl || 'https://api.openai.com/v1';
+    const key = apiKey || this.getApiKey('openai');
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        'Authorization': `Bearer ${key}`,
       },
       body: JSON.stringify({
         model,
@@ -141,9 +211,10 @@ export class AIClient {
     return data.choices[0]?.message?.content || '';
   }
 
-  private async chatAnthropic(messages: AIMessage[], options?: ChatOptions): Promise<string> {
+  private async chatAnthropic(messages: AIMessage[], options?: ChatOptions, apiKey?: string): Promise<string> {
     const model = this.config.model || this.defaultModel;
     const baseUrl = this.config.baseUrl || 'https://api.anthropic.com/v1';
+    const key = apiKey || this.getApiKey('anthropic');
 
     // Extract system message and convert format
     let systemMessage = '';
@@ -164,7 +235,7 @@ export class AIClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': this.config.apiKey,
+        'x-api-key': key,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
@@ -191,9 +262,20 @@ export class AIClient {
    * Falls back to OpenAI for Anthropic provider since Anthropic doesn't have embeddings
    */
   async embed(text: string): Promise<EmbeddingResult> {
-    const apiKey = this.config.provider === 'openai'
-      ? this.config.apiKey
-      : process.env.OPENAI_API_KEY;
+    let apiKey: string;
+
+    if (this.useKeyPool) {
+      const key = getKeyPool().getKey('openai');
+      if (key) {
+        apiKey = key;
+      } else {
+        apiKey = process.env.OPENAI_API_KEY || '';
+      }
+    } else {
+      apiKey = this.config.provider === 'openai'
+        ? (this.config.apiKey || process.env.OPENAI_API_KEY || '')
+        : (process.env.OPENAI_API_KEY || '');
+    }
 
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY is required for embeddings');
@@ -213,7 +295,19 @@ export class AIClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+
+      // 报告错误
+      if (this.useKeyPool) {
+        const isRateLimit = response.status === 429;
+        getKeyPool().reportError('openai', apiKey, `Embeddings: ${response.status}`, isRateLimit);
+      }
+
       throw new Error(`OpenAI Embeddings API error: ${response.status} - ${JSON.stringify(error)}`);
+    }
+
+    // 报告成功
+    if (this.useKeyPool) {
+      getKeyPool().reportSuccess('openai', apiKey);
     }
 
     const data = await response.json() as OpenAIEmbeddingResponse;
@@ -221,6 +315,13 @@ export class AIClient {
       embedding: data.data[0]?.embedding || [],
       tokenCount: data.usage?.total_tokens || 0,
     };
+  }
+
+  /**
+   * 获取 Key Pool 状态
+   */
+  getKeyPoolStatus() {
+    return getKeyPool().getStatus();
   }
 
   /**
@@ -266,4 +367,8 @@ export function getAIClient(): AIClient {
     aiClientInstance = new AIClient();
   }
   return aiClientInstance;
+}
+
+export function resetAIClient(): void {
+  aiClientInstance = null;
 }

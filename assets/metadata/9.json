@@ -1,5 +1,5 @@
 {
-  "name": "HouseForge Agent #9 — House Aurora",
+  "name": "HouseForge Agent #9 — House Clear",
   "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
   "image": "ipfs://PLACEHOLDER/9.png",
   "attributes": [
@@ -9,7 +9,7 @@
     },
     {
       "trait_type": "House",
-      "value": "AURORA"
+      "value": "CLEAR"
     },
     {
       "trait_type": "RarityTier",
@@ -17,7 +17,7 @@
     },
     {
       "trait_type": "WeatherID",
-      "value": "S0-AURORA-0237"
+      "value": "S0-CLEAR-0237"
     },
     {
       "trait_type": "FrameType",

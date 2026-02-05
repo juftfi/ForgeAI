@@ -1,5 +1,5 @@
 {
-  "name": "HouseForge Agent #31 — House Sand",
+  "name": "HouseForge Agent #31 — House Thunder",
   "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
   "image": "ipfs://PLACEHOLDER/31.png",
   "attributes": [
@@ -9,7 +9,7 @@
     },
     {
       "trait_type": "House",
-      "value": "SAND"
+      "value": "THUNDER"
     },
     {
       "trait_type": "RarityTier",
@@ -17,7 +17,7 @@
     },
     {
       "trait_type": "WeatherID",
-      "value": "S0-SAND-0303"
+      "value": "S0-THUNDER-0303"
     },
     {
       "trait_type": "FrameType",

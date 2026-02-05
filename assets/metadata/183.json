@@ -1,5 +1,5 @@
 {
-  "name": "HouseForge Agent #183 — House Thunder",
+  "name": "HouseForge Agent #183 — House Clear",
   "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
   "image": "ipfs://PLACEHOLDER/183.png",
   "attributes": [
@@ -9,7 +9,7 @@
     },
     {
       "trait_type": "House",
-      "value": "THUNDER"
+      "value": "CLEAR"
     },
     {
       "trait_type": "RarityTier",
@@ -17,7 +17,7 @@
     },
     {
       "trait_type": "WeatherID",
-      "value": "S0-THUNDER-0073"
+      "value": "S0-CLEAR-0073"
     },
     {
       "trait_type": "FrameType",

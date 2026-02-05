@@ -1,5 +1,5 @@
 {
-  "name": "HouseForge Agent #53 — House Eclipse",
+  "name": "HouseForge Agent #53 — House Thunder",
   "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
   "image": "ipfs://PLACEHOLDER/53.png",
   "attributes": [
@@ -9,7 +9,7 @@
     },
     {
       "trait_type": "House",
-      "value": "ECLIPSE"
+      "value": "THUNDER"
     },
     {
       "trait_type": "RarityTier",
@@ -17,7 +17,7 @@
     },
     {
       "trait_type": "WeatherID",
-      "value": "S0-ECLIPSE-0148"
+      "value": "S0-THUNDER-0148"
     },
     {
       "trait_type": "FrameType",

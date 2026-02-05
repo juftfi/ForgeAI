@@ -1,5 +1,5 @@
 {
-  "name": "HouseForge Agent #125 — House Aurora",
+  "name": "HouseForge Agent #125 — House Sand",
   "description": "A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.",
   "image": "ipfs://PLACEHOLDER/125.png",
   "attributes": [
@@ -9,7 +9,7 @@
     },
     {
       "trait_type": "House",
-      "value": "AURORA"
+      "value": "SAND"
     },
     {
       "trait_type": "RarityTier",
@@ -17,7 +17,7 @@
     },
     {
       "trait_type": "WeatherID",
-      "value": "S0-AURORA-0236"
+      "value": "S0-SAND-0236"
     },
     {
       "trait_type": "FrameType",

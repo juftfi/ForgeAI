@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId, useSimulateContract } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
 import Link from 'next/link';
@@ -71,11 +71,9 @@ export default function MintPage() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const [selectedHouse, setSelectedHouse] = useState<string | null>(null);
-  const [previewAgent, setPreviewAgent] = useState<PreviewAgent | null>(null);
   const [reservedAgent, setReservedAgent] = useState<ReservedAgent | null>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isReserving, setIsReserving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [reserveError, setReserveError] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const contractAddress = CONTRACTS.HouseForgeAgent[56]; // BSC Mainnet only
@@ -176,45 +174,29 @@ export default function MintPage() {
     return '交易失败，请重试。';
   };
 
-  // Fetch preview agent when house is selected
-  const fetchPreview = useCallback(async (house: string) => {
-    setIsLoadingPreview(true);
-    setError(null);
-    setPreviewAgent(null);
-    setReservedAgent(null);
-
-    try {
-      const res = await fetch(`${API_URL}/genesis/preview/${house}`);
-      if (!res.ok) throw new Error('Failed to fetch preview');
-      const data = await res.json();
-      setPreviewAgent(data);
-      trackEvent('preview_agent', { house, tokenId: data.tokenId });
-    } catch (err) {
-      setError('无法加载预览。服务器可能离线。');
-    } finally {
-      setIsLoadingPreview(false);
-    }
-  }, [API_URL]);
-
-  // Reserve agent for minting
+  // Reserve agent for minting - 方案3: 只传 house，系统自动分配 tokenId
   const reserveAgent = async () => {
-    if (!previewAgent) return;
+    if (!selectedHouse) return;
 
     setIsReserving(true);
-    setError(null);
+    setReserveError(null);
 
     try {
       const res = await fetch(`${API_URL}/genesis/reserve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tokenId: previewAgent.tokenId }),
+        // 方案3: 只传 house，后端自动分配匹配的 tokenId
+        body: JSON.stringify({ house: selectedHouse }),
       });
-      if (!res.ok) throw new Error('Failed to reserve agent');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to reserve agent');
+      }
       const data = await res.json();
       setReservedAgent(data);
-      trackEvent('reserve_agent', { tokenId: data.tokenId, house: selectedHouse || 'unknown' });
-    } catch (err) {
-      setError('预订智能体失败。请重试。');
+      trackEvent('reserve_agent', { tokenId: data.tokenId, house: selectedHouse });
+    } catch (err: any) {
+      setReserveError(err.message || '预订智能体失败。请重试。');
     } finally {
       setIsReserving(false);
     }
@@ -247,18 +229,10 @@ export default function MintPage() {
     });
   };
 
-  // Refresh preview
-  const refreshPreview = () => {
-    if (selectedHouse) {
-      fetchPreview(selectedHouse);
-    }
-  };
-
-  // Get trait value from metadata
+  // Get trait value from reserved agent metadata
   const getTraitValue = (traitType: string): string => {
-    const agent = reservedAgent?.metadata || previewAgent?.metadata;
-    if (!agent) return '—';
-    const attr = agent.attributes.find(a => a.trait_type === traitType);
+    if (!reservedAgent?.metadata) return '—';
+    const attr = reservedAgent.metadata.attributes.find((a: { trait_type: string; value: string }) => a.trait_type === traitType);
     return attr?.value || '—';
   };
 
@@ -291,7 +265,8 @@ export default function MintPage() {
               key={key}
               onClick={() => {
                 setSelectedHouse(key);
-                fetchPreview(key);
+                setReservedAgent(null); // 重置已预订的 agent
+                setReserveError(null);
               }}
               className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
                 selectedHouse === key
@@ -310,150 +285,107 @@ export default function MintPage() {
         </div>
       </section>
 
-      {/* Preview Section */}
-      {selectedHouse && (
+      {/* Assigned Agent Section - 只在已预订后显示分配的智能体详情 */}
+      {reservedAgent && (
         <section className="glass-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-amber-400">2. 预览你的智能体</h2>
-            <button
-              onClick={refreshPreview}
-              disabled={isLoadingPreview}
-              className="text-sm text-amber-400 hover:text-amber-300 flex items-center gap-2"
-            >
-              <span>↻</span> 换一个
-            </button>
+          <h2 className="text-xl font-semibold mb-4 text-amber-400">已分配的智能体</h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Agent Image */}
+            <div className="relative aspect-square rounded-xl overflow-hidden bg-black/80 border border-amber-500/20">
+              <div className="w-full h-full flex items-center justify-center">
+                <div
+                  className="w-32 h-32 rounded-full opacity-60"
+                  style={{ backgroundColor: HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color }}
+                />
+              </div>
+              {/* Rarity Badge */}
+              <div className="absolute top-4 left-4">
+                <div className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm font-medium text-amber-400 border border-amber-500/30">
+                  {getTraitValue('RarityTier')}
+                </div>
+              </div>
+              {/* Token ID */}
+              <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm text-gray-300 border border-gray-500/30">
+                #{reservedAgent.tokenId}
+              </div>
+            </div>
+
+            {/* Agent Details */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-2xl font-bold text-white">
+                  {reservedAgent.metadata.name.replace('HouseForge', 'KinForge').replace(/House\s+/g, '')}
+                </h3>
+                <p className="text-amber-400/70 text-sm mt-1">{getTraitValue('WeatherID')}</p>
+              </div>
+
+              {/* Core Traits */}
+              <div className="grid grid-cols-2 gap-3">
+                {['FrameType', 'CoreMaterial', 'LightSignature', 'InstrumentMark'].map(trait => (
+                  <div key={trait} className="p-3 bg-black/60 rounded-lg border border-amber-500/10">
+                    <p className="text-gray-500 text-xs">{getTraitLabel(trait)}</p>
+                    <p className="font-medium text-sm truncate text-white">{getTraitValue(trait)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Secondary Traits */}
+              <div className="grid grid-cols-3 gap-2">
+                {['Atmosphere', 'DioramaGeometry', 'PaletteTemperature', 'SurfaceAging', 'MicroEngraving', 'LensBloom'].map(trait => (
+                  <div key={trait} className="p-2 bg-black/40 rounded-lg text-center border border-amber-500/5">
+                    <p className="text-gray-500 text-[10px]">{getTraitLabel(trait)}</p>
+                    <p className="text-xs truncate text-gray-300">{getTraitValue(trait)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Assigned Badge */}
+              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                <p className="text-green-300 text-sm">
+                  <span className="font-semibold">已分配</span> — 系统已为你分配 {HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.name} 家族的智能体 #{reservedAgent.tokenId}。
+                </p>
+              </div>
+            </div>
           </div>
-
-          {isLoadingPreview ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-400 mb-4">{error}</p>
-              <button onClick={refreshPreview} className="btn-secondary">
-                重试
-              </button>
-            </div>
-          ) : previewAgent ? (
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Agent Image */}
-              <div className="relative aspect-square rounded-xl overflow-hidden bg-black/80 border border-amber-500/20">
-                {previewAgent.imageUrl ? (
-                  <img
-                    src={`${API_URL}${previewAgent.imageUrl}`}
-                    alt={previewAgent.metadata.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // On error, hide image and show fallback
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div
-                      className="w-32 h-32 rounded-full opacity-60"
-                      style={{ backgroundColor: HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color }}
-                    />
-                  </div>
-                )}
-                {/* Rarity Badge */}
-                <div className="absolute top-4 left-4 flex flex-col gap-1">
-                  <div className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm font-medium text-amber-400 border border-amber-500/30">
-                    {getTraitValue('RarityTier')}
-                  </div>
-                  <div className="px-2 py-0.5 rounded bg-yellow-500/20 backdrop-blur-sm text-[10px] text-yellow-300 border border-yellow-500/30">
-                    仅供参考
-                  </div>
-                </div>
-                {/* Token ID */}
-                <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm text-sm text-gray-300 border border-gray-500/30">
-                  #{previewAgent.tokenId}
-                </div>
-              </div>
-
-              {/* Agent Details */}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-white">
-                    {previewAgent.metadata.name.replace('HouseForge', 'KinForge').replace(/House\s+/g, '')}
-                  </h3>
-                  <p className="text-amber-400/70 text-sm mt-1">{getTraitValue('WeatherID')}</p>
-                </div>
-
-                {/* Core Traits */}
-                <div className="grid grid-cols-2 gap-3">
-                  {['FrameType', 'CoreMaterial', 'LightSignature', 'InstrumentMark'].map(trait => (
-                    <div key={trait} className="p-3 bg-black/60 rounded-lg border border-amber-500/10">
-                      <p className="text-gray-500 text-xs">{getTraitLabel(trait)}</p>
-                      <p className="font-medium text-sm truncate text-white">{getTraitValue(trait)}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Secondary Traits */}
-                <div className="grid grid-cols-3 gap-2">
-                  {['Atmosphere', 'DioramaGeometry', 'PaletteTemperature', 'SurfaceAging', 'MicroEngraving', 'LensBloom'].map(trait => (
-                    <div key={trait} className="p-2 bg-black/40 rounded-lg text-center border border-amber-500/5">
-                      <p className="text-gray-500 text-[10px]">{getTraitLabel(trait)}</p>
-                      <p className="text-xs truncate text-gray-300">{getTraitValue(trait)}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Preview Badge */}
-                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                  <p className="text-amber-300 text-sm">
-                    <span className="font-semibold">预览模式</span> — 这是从 {HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.name} 中随机选择的智能体。
-                    连接钱包并预订以锁定此智能体进行铸造。
-                  </p>
-                </div>
-
-                {/* Rarity Disclaimer */}
-                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                  <p className="text-yellow-300 text-sm">
-                    <span className="font-semibold">⚠️ 稀有度说明</span> — 预览显示的稀有度仅供参考。
-                    实际铸造的稀有度由 Token ID 的 traitsHash 决定，每个 ID 的稀有度是预先确定的，不受预览影响。
-                    点击「换一个」可以查看不同的可用智能体。
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
         </section>
       )}
 
-      {/* Mint Section */}
-      {previewAgent && (
+      {/* Mint Section - 方案3: 选择 house 后直接显示铸造区 */}
+      {selectedHouse && (
         <section className="glass-card p-6">
-          <h2 className="text-xl font-semibold mb-4 text-amber-400">3. 预订并铸造</h2>
+          <h2 className="text-xl font-semibold mb-4 text-amber-400">2. 预订并铸造</h2>
 
           {!isConnected ? (
             <div className="text-center py-8">
-              <p className="text-gray-400 mb-4">连接钱包以铸造此智能体</p>
+              <p className="text-gray-400 mb-4">连接钱包以铸造智能体</p>
               <p className="text-sm text-gray-500">
-                你可以在没有钱包的情况下预览智能体，但铸造需要连接钱包。
+                选择家族后，连接钱包即可铸造。系统会自动为你分配一个该家族的智能体。
               </p>
             </div>
           ) : !reservedAgent ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-black/60 rounded-lg border border-amber-500/20">
                 <div>
-                  <p className="text-gray-400 text-sm">已选智能体</p>
-                  <p className="font-bold text-white">#{previewAgent.tokenId}</p>
-                  <p className="text-yellow-400 text-xs">稀有度将在铸造时确定</p>
+                  <p className="text-gray-400 text-sm">已选家族</p>
+                  <p className="font-bold text-white">{HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.name}</p>
+                  <p className="text-amber-400/70 text-xs">系统将自动分配该家族的可用智能体</p>
                 </div>
                 <button
                   onClick={reserveAgent}
                   disabled={isReserving}
                   className="btn-secondary"
                 >
-                  {isReserving ? '预订中...' : '预订此智能体'}
+                  {isReserving ? '分配中...' : '预订智能体'}
                 </button>
               </div>
               <p className="text-gray-500 text-sm text-center">
-                预订会创建保险库条目并准备链上数据。稀有度由 Token ID 预先决定，非随机生成。
+                点击预订后，系统会自动分配一个 {HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.name} 的智能体给你。
               </p>
+              {reserveError && (
+                <div className="p-4 rounded-lg bg-red-900/30 border border-red-500">
+                  <p className="text-red-400 text-sm">{reserveError}</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -551,8 +483,8 @@ export default function MintPage() {
                     <button
                       onClick={() => {
                         setReservedAgent(null);
-                        setPreviewAgent(null);
                         setSelectedHouse(null);
+                        setReserveError(null);
                         resetWrite();
                       }}
                       className="text-gray-400 hover:text-white text-sm"
