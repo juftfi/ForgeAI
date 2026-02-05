@@ -1,132 +1,132 @@
-# KinForge Demo Guide
+# KinForge 演示指南
 
-This guide walks you through running the complete KinForge demo from scratch.
+本指南将引导您从头运行完整的 KinForge 演示。
 
-## Prerequisites
+## 前置要求
 
 - Node.js 18+
 - pnpm (`npm install -g pnpm`)
-- Foundry (for smart contracts)
+- Foundry（用于智能合约）
 
-## Quick Start
+## 快速开始
 
-### 1. Install Dependencies
+### 1. 安装依赖
 
 ```bash
 cd KinForge
 pnpm install
 ```
 
-### 2. Generate Genesis Metadata
+### 2. 生成创世元数据
 
-Generate all 2100 genesis token metadata files:
+生成所有 2100 个创世 Token 的元数据文件：
 
 ```bash
 pnpm gen:metadata
 ```
 
-This creates JSON files in `assets/metadata/` with deterministic traits based on the master seed.
+这会在 `assets/metadata/` 目录下创建 JSON 文件，特征基于主种子确定性生成。
 
-### 3. Run the Demo Script
+### 3. 运行演示脚本
 
 ```bash
 pnpm demo
 ```
 
-This demonstrates:
-- Genesis trait generation
-- Vault creation with hashes
-- Fusion seed computation
-- Offspring trait inheritance
-- Mythic conditions
+演示内容包括：
+- 创世特征生成
+- 带哈希的 Vault 创建
+- 融合种子计算
+- 后代特征继承
+- 神话条件触发
 
-### 4. Start the Development Server
+### 4. 启动开发服务器
 
 ```bash
 pnpm dev
 ```
 
-This starts:
-- Backend API at http://localhost:3001
-- Frontend at http://localhost:3000
+这会启动：
+- 后端 API：http://localhost:3001
+- 前端界面：http://localhost:3000
 
-### 5. Explore the UI
+### 5. 探索界面
 
-- **Gallery** (`/gallery`): Browse all generated agents
-- **Agent Detail** (`/agent/[id]`): View traits and lineage
-- **Fusion Lab** (`/fusion`): Simulate fusion process
-- **Lineage Tree** (`/tree`): Visualize ancestry
+- **图鉴** (`/gallery`)：浏览所有生成的智能体
+- **智能体详情** (`/agent/[id]`)：查看特征和血统
+- **融合实验室** (`/fusion`)：模拟融合流程
+- **血脉树** (`/tree`)：可视化祖先关系
 
-## Smart Contracts
+## 智能合约
 
-### Deploy to Local Network
+### 部署到本地网络
 
 ```bash
 cd contracts
 
-# Start local node (in another terminal)
+# 启动本地节点（在另一个终端）
 anvil
 
-# Deploy contracts
+# 部署合约
 forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
 ```
 
-### Deploy to BSC Testnet
+### 部署到 BSC 测试网
 
 ```bash
-# Set environment variables
+# 设置环境变量
 export DEPLOYER_PRIVATE_KEY=your_key
 export BSC_TESTNET_RPC_URL=https://bsc-testnet.public.blastapi.io
 
-# Deploy
+# 部署
 forge script script/Deploy.s.sol --rpc-url $BSC_TESTNET_RPC_URL --broadcast --verify
 ```
 
-### Run Contract Tests
+### 运行合约测试
 
 ```bash
 forge test
 ```
 
-## API Endpoints
+## API 端点
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/stats` | Collection statistics |
-| GET | `/metadata/:id` | Token metadata (OpenSea format) |
-| POST | `/vault/create` | Create new vault |
-| GET | `/vault/:id` | Get vault by ID |
-| GET | `/vault/token/:tokenId` | Get vault by token ID |
-| POST | `/fusion/prepare-commit` | Prepare fusion commit |
-| POST | `/fusion/prepare-reveal` | Generate offspring traits |
+| 方法 | 端点 | 描述 |
+|------|------|------|
+| GET | `/health` | 健康检查 |
+| GET | `/stats` | 收藏统计 |
+| GET | `/metadata/:id` | Token 元数据（OpenSea 格式）|
+| POST | `/vault/create` | 创建新 Vault |
+| GET | `/vault/:id` | 通过 ID 获取 Vault |
+| GET | `/vault/token/:tokenId` | 通过 Token ID 获取 Vault |
+| POST | `/fusion/prepare-commit` | 准备融合提交 |
+| POST | `/fusion/prepare-reveal` | 生成后代特征 |
 
-## Fusion Flow
+## 融合流程
 
-### 1. Commit Phase
+### 1. Commit 阶段
 
 ```javascript
-// User computes commit hash off-chain
+// 用户在链下计算 commit 哈希
 const commitHash = keccak256(abi.encode(
   parentA,
   parentB,
-  salt,        // Secret, saved for reveal
+  salt,        // 秘密值，保存用于 reveal
   blockNumber,
   userAddress,
-  mode         // 0 = BURN_TO_MINT, 1 = SEAL
+  mode         // 0 = 销毁铸造, 1 = 封印
 ));
 
-// Submit to contract
+// 提交到合约
 fusionCore.commitFusion(parentA, parentB, commitHash, mode);
 ```
 
-### 2. Reveal Phase (after 1+ blocks)
+### 2. Reveal 阶段（1+ 区块后）
 
 ```javascript
-// Get commit block hash
+// 获取 commit 区块哈希
 const blockHash = fusionCore.getCommitBlockHash(user, parentA, parentB);
 
-// Request offspring traits from API
+// 从 API 请求后代特征
 const response = await fetch('/fusion/prepare-reveal', {
   method: 'POST',
   body: JSON.stringify({
@@ -136,7 +136,7 @@ const response = await fetch('/fusion/prepare-reveal', {
 
 const { vault, offspringHouseId } = await response.json();
 
-// Submit reveal to contract
+// 提交 reveal 到合约
 fusionCore.revealFusion(
   parentA, parentB, salt,
   vault.vaultURI, vault.vaultHash, vault.learningRoot,
@@ -144,88 +144,94 @@ fusionCore.revealFusion(
 );
 ```
 
-## Trait Generation Rules
+## 特征生成规则
 
-### Genesis
-- Traits are weighted based on `config/traits.yaml`
-- House bias applies 2x multiplier to preferred traits
-- Rarity multipliers adjust rare/epic trait weights
+### 创世
 
-### Fusion
-- **House**: Same parents = 100% same house; different = 70/30 split
-- **Rarity**: Average of parents + bonuses (cross-house +1, high gen +1)
-- **Core Traits**: 50% inheritance, 50% weighted pick
-- **Other Traits**: 20% inheritance, 80% weighted pick
+- 特征基于 `config/traits.yaml` 的权重
+- 家族偏好对偏好特征应用 2 倍乘数
+- 稀有度乘数调整稀有/史诗特征权重
 
-### Mythic
-Mythics require ALL conditions:
-1. Specific parent house combinations
-2. Required traits on parents
-3. Minimum generation
-4. Seed modulo check (probabilistic)
+### 融合
 
-Example: "Eye of the Storm" requires:
-- Parents: THUNDER+THUNDER or THUNDER+MONSOON
-- Parent has Plasma_Ion CoreMaterial
-- Parent has LightningFork or IonBloom
-- Offspring is Gen 2+
-- seed % 200 === 0 (1/200 chance)
+- **家族**：相同父母 = 100% 继承；不同 = 70/30 分配
+- **稀有度**：父母平均值 + 加成（跨家族 +1，高世代 +1）
+- **核心特征**：50% 继承，50% 权重随机
+- **其他特征**：20% 继承，80% 权重随机
 
-## Verification
+### 神话
 
-All traits are deterministic and verifiable:
+神话需要满足所有条件：
+1. 特定的父母家族组合
+2. 父母具有必需特征
+3. 最低世代要求
+4. 种子取模检查（概率性）
+
+示例："风暴之眼"需要：
+- 父母：THUNDER+THUNDER 或 THUNDER+MONSOON
+- 父母具有 Plasma_Ion CoreMaterial
+- 父母具有 LightningFork 或 IonBloom
+- 后代为 Gen 2+
+- seed % 200 === 0（1/200 概率）
+
+## 验证
+
+所有特征都是确定性的且可验证：
 
 ```javascript
-// Recompute fusion seed
+// 重新计算融合种子
 const seed = keccak256(abi.encode(
   parentA, parentB,
   parentALearningRoot, parentBLearningRoot,
   salt, commitBlockHash
 ));
 
-// Regenerate traits
+// 重新生成特征
 const traits = traitEngine.generateFusionTraits(parentA, parentB, seed);
 
-// Verify hash matches on-chain
+// 验证哈希与链上匹配
 assert(keccak256(stableStringify(traits)) === onChainTraitsHash);
 ```
 
-## Project Structure
+## 项目结构
 
 ```
 KinForge/
-├── config/           # YAML configurations
-├── contracts/        # Foundry smart contracts
-│   ├── src/          # Contract source
-│   ├── test/         # Contract tests
-│   └── script/       # Deployment scripts
-├── server/           # Node.js backend
+├── config/           # YAML 配置文件
+├── contracts/        # Foundry 智能合约
+│   ├── src/          # 合约源码
+│   ├── test/         # 合约测试
+│   └── script/       # 部署脚本
+├── server/           # Node.js 后端
 │   └── src/
-│       ├── services/ # Vault, TraitEngine, Orchestrator
-│       ├── utils/    # RNG, Hash, YAML loader
-│       └── api/      # Express routes
-├── web/              # Next.js frontend
-│   └── app/          # App router pages
+│       ├── services/ # Vault、TraitEngine、Orchestrator
+│       ├── utils/    # RNG、Hash、YAML 加载器
+│       └── api/      # Express 路由
+├── web/              # Next.js 前端
+│   └── app/          # App Router 页面
 ├── assets/
-│   └── metadata/     # Generated JSON files
-└── docs/             # Documentation
+│   └── metadata/     # 生成的 JSON 文件
+└── docs/             # 文档
 ```
 
-## Troubleshooting
+## 故障排除
 
-### Metadata not loading
-- Ensure you ran `pnpm gen:metadata` first
-- Check that `assets/metadata/` contains JSON files
+### 元数据未加载
 
-### Vault errors
-- Check that SQLite database exists at `server/data/vault.db`
-- Delete the database to reset
+- 确保已运行 `pnpm gen:metadata`
+- 检查 `assets/metadata/` 是否包含 JSON 文件
 
-### Contract deployment fails
-- Verify Foundry is installed: `forge --version`
-- Check RPC endpoint is accessible
-- Ensure deployer has sufficient gas
+### Vault 错误
 
-## License
+- 检查 SQLite 数据库是否存在于 `server/data/vault.db`
+- 删除数据库以重置
+
+### 合约部署失败
+
+- 验证 Foundry 已安装：`forge --version`
+- 检查 RPC 端点是否可访问
+- 确保部署者有足够的 gas
+
+## 许可证
 
 MIT
