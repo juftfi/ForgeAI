@@ -870,11 +870,7 @@ router.post('/genesis/finalize', async (req: Request, res: Response) => {
       tokenId,
       owner: owner || 'pending',
       metadata,
-      vault: {
-        vaultId: vault.id,
-        vaultHash: vault.traits ? require('../utils/hash.js').computeVaultHash(vault) : '',
-        learningRoot: '',
-      },
+      vaultId: vault.id,
     });
   } catch (error: any) {
     console.error('Genesis finalize error:', error?.message || error);
