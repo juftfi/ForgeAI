@@ -108,7 +108,7 @@ export default function DocsPage() {
         <h2 className="text-xl font-bold mb-4 text-amber-400">外部资源</h2>
         <div className="grid md:grid-cols-2 gap-4">
           <a
-            href="https://github.com/kinforge"
+            href="https://github.com/KinForgeLab/kinforge"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 p-4 bg-black/60 rounded-lg hover:bg-black/80 transition-colors border border-amber-500/10"

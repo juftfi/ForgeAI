@@ -194,6 +194,6 @@ KinForge 是一个**数字宠物**项目：
 ## 联系我们
 
 - Twitter: [@kinforge_lab](https://x.com/kinforge_lab)
-- GitHub: [KinForgeLab](https://github.com/KinForgeLab)
+- GitHub: [KinForgeLab/kinforge](https://github.com/KinForgeLab/kinforge)
 
 有问题随时在 Twitter 上问我们！
