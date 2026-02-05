@@ -21,12 +21,17 @@
 - **神话稀有度**: 特定家族组合触发神话级智能体
 - **链上验证**: 通过 vaultHash 和 learningRoot 保证数据完整性
 
-### AI 对话系统 (新功能)
+### AI 对话系统
 - **个性化对话**: 每个智能体基于家族特征拥有独特性格
 - **记忆系统**: 智能体记住对话内容，积累知识
 - **学习成长**: 性格随互动逐渐演化
 - **性格向量**: 5 维性格（冷静、好奇、大胆、社交、自律）
 - **learningRoot 验证**: 链上可验证的学习历史
+
+### AI 增强功能 (v0.4.0 新增)
+- **情绪感知**: 检测用户情绪（8 种状态），调整回复风格
+- **对话统计**: 会话数、消息数、情绪分布可视化
+- **性格动态进化**: 性格随情绪互动逐渐变化，每个智能体独一无二
 
 ## 项目结构
 
@@ -224,6 +229,7 @@ POST /chat/session              - 创建对话会话
 POST /chat/message              - 发送消息获取 AI 回复
 GET  /chat/session/:sessionId   - 获取会话详情
 POST /chat/session/:id/end      - 结束会话并提取记忆
+GET  /chat/stats/:tokenId       - 获取对话统计（情绪分布、消息数等）
 ```
 
 ### 记忆接口
@@ -357,6 +363,7 @@ cd server && pnpm test
 
 ## 文档
 
+- [更新日志](CHANGELOG.md) - 版本更新记录
 - [用户指南](docs/user-guide.md) - 如何使用 KinForge
 - [技术白皮书](docs/whitepaper.md) - 技术设计详情
 - [API 参考](docs/api.md) - 完整 API 文档
@@ -364,6 +371,7 @@ cd server && pnpm test
 - [BAP-578 合规](docs/bap578-compliance.md) - 标准合规说明
 - [安全文档](docs/security.md) - 安全说明
 - [经济模型](docs/economics.md) - 经济设计
+- [开发历程](docs/development-story.md) - 项目开发故事
 
 ## 链接
 

@@ -311,6 +311,47 @@
 }
 ```
 
+### GET /chat/stats/:tokenId
+
+获取对话统计数据
+
+**参数**
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| tokenId | number | Token ID |
+
+**响应**
+
+```json
+{
+  "tokenId": 7,
+  "totalSessions": 5,
+  "totalMessages": 42,
+  "avgMessagesPerSession": 8.4,
+  "firstChatAt": "2025-02-01T10:00:00.000Z",
+  "lastChatAt": "2025-02-05T15:30:00.000Z",
+  "emotionDistribution": {
+    "happy": 12,
+    "curious": 8,
+    "neutral": 15,
+    "sad": 2,
+    "grateful": 3,
+    "angry": 0,
+    "anxious": 1,
+    "confused": 1
+  },
+  "dominantEmotion": "neutral",
+  "totalMemories": 8,
+  "memoryCount": {
+    "fact": 3,
+    "preference": 2,
+    "experience": 2,
+    "relationship": 1
+  }
+}
+```
+
 ---
 
 ## 记忆接口
@@ -795,4 +836,4 @@
 
 ---
 
-*最后更新: 2024-02-04*
+*最后更新: 2025-02-05*

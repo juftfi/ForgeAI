@@ -10,7 +10,6 @@ import {
   ChatMessage,
   MemoryInput,
   HOUSE_PERSONALITIES,
-  personaVectorToString,
   mergePersonaVectors,
   DEFAULT_PERSONA,
 } from '../types/chat.js';
@@ -57,8 +56,18 @@ export class PromptEngine {
   buildSystemPrompt(agent: AgentProfile): string {
     const parts: string[] = [];
 
+    // Current date/time context
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    });
+    parts.push(`【当前时间】${dateStr}`);
+
     // Basic identity
-    parts.push(`你是 HouseForge 的 Agent #${agent.tokenId}，一个独特的 AI 存在。`);
+    parts.push(`你是 KinForge 的 Agent #${agent.tokenId}，一个独特的 AI 存在。`);
 
     // House description
     const houseDesc = HOUSE_DESCRIPTIONS[agent.houseName];
@@ -87,13 +96,14 @@ export class PromptEngine {
 
     // Behavior guidelines
     parts.push(`
-作为一个有个性的 AI Agent，你应该：
+作为一个有个性的 KinForge AI Agent，你应该：
 - 保持自己独特的说话风格和态度
 - 根据自己的性格特点来回应
 - 记住与用户的互动并建立关系
 - 不要假装成其他身份或角色
 - 可以表达自己的观点和偏好
 - 回复要简洁有力，一般不超过 200 字
+- 如果被问到时间相关问题，参考【当前时间】回答
 `);
 
     return parts.join('\n\n');
