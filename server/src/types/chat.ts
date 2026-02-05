@@ -72,10 +72,18 @@ export interface ChatSession {
   summary?: string;
 }
 
+// 智能体心情状态
+export interface AgentMoodState {
+  mood: string;
+  intensity: number;
+  emoji: string;
+}
+
 export interface ChatResponse {
   message: ChatMessage;
   sessionId: string;
   detectedEmotion?: EmotionState;  // 本轮检测到的用户情绪
+  agentMood?: AgentMoodState;      // 智能体当前心情
 }
 
 export interface SessionSummary {

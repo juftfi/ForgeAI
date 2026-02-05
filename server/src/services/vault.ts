@@ -158,6 +158,56 @@ export class VaultService {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
+
+      -- Agent mood table (智能体心情系统)
+      CREATE TABLE IF NOT EXISTS agent_mood (
+        token_id INTEGER PRIMARY KEY,
+        current_mood TEXT NOT NULL DEFAULT 'neutral',
+        mood_intensity REAL NOT NULL DEFAULT 0.5,
+        mood_stability REAL NOT NULL DEFAULT 0.5,
+        last_interaction_at TEXT,
+        positive_streak INTEGER NOT NULL DEFAULT 0,
+        negative_streak INTEGER NOT NULL DEFAULT 0,
+        total_interactions INTEGER NOT NULL DEFAULT 0,
+        mood_history TEXT,
+        updated_at TEXT NOT NULL
+      );
+
+      -- User-Agent relationship table (关系等级系统)
+      CREATE TABLE IF NOT EXISTS agent_relationships (
+        id TEXT PRIMARY KEY,
+        token_id INTEGER NOT NULL,
+        user_address TEXT NOT NULL,
+        relationship_level INTEGER NOT NULL DEFAULT 1,
+        experience_points INTEGER NOT NULL DEFAULT 0,
+        total_sessions INTEGER NOT NULL DEFAULT 0,
+        total_messages INTEGER NOT NULL DEFAULT 0,
+        positive_interactions INTEGER NOT NULL DEFAULT 0,
+        last_interaction_at TEXT,
+        first_interaction_at TEXT NOT NULL,
+        relationship_title TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(token_id, user_address)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_relationships_token ON agent_relationships(token_id);
+      CREATE INDEX IF NOT EXISTS idx_relationships_user ON agent_relationships(user_address);
+
+      -- Conversation topics table (对话主题分析)
+      CREATE TABLE IF NOT EXISTS conversation_topics (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        token_id INTEGER NOT NULL,
+        topic TEXT NOT NULL,
+        confidence REAL NOT NULL DEFAULT 0.5,
+        message_count INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES chat_sessions(id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_topics_token ON conversation_topics(token_id);
+      CREATE INDEX IF NOT EXISTS idx_topics_session ON conversation_topics(session_id);
     `);
   }
 

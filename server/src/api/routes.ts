@@ -5,6 +5,9 @@ import { loadGenesis } from '../utils/yaml.js';
 import { getChatService } from '../services/chat.js';
 import { getMemoryService } from '../services/memory.js';
 import { getLearningService } from '../services/learning.js';
+import { getMoodService, MOOD_CONFIG } from '../services/mood.js';
+import { getRelationshipService, RELATIONSHIP_LEVELS } from '../services/relationship.js';
+import { getTopicService, TOPIC_CONFIG } from '../services/topic.js';
 import { verifyTokenOwnership } from '../utils/blockchain.js';
 import path from 'path';
 import fs from 'fs';
@@ -1208,6 +1211,56 @@ router.get('/chat/sessions/:tokenId', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /chat/history/:tokenId
+ * Get chat history with date filtering and messages (owner only)
+ * 获取对话历史，支持日期过滤和消息内容
+ */
+router.get('/chat/history/:tokenId', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    // Require ownership verification
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(401).json({ error: '需要提供钱包地址 (userAddress 参数或 x-user-address 头)' });
+    }
+
+    const isOwner = await verifyTokenOwnership(tokenId, userAddress);
+    if (!isOwner) {
+      return res.status(403).json({ error: '您不是此智能体的持有者，无法查看对话历史' });
+    }
+
+    // Parse query params
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+    const limit = parseInt(req.query.limit as string, 10) || 20;
+    const offset = parseInt(req.query.offset as string, 10) || 0;
+    const includeMessages = req.query.includeMessages === 'true';
+
+    const chatService = getChatService();
+    const result = chatService.getSessionsWithFilters(tokenId, {
+      startDate,
+      endDate,
+      limit,
+      offset,
+      includeMessages,
+    });
+
+    res.json({
+      tokenId,
+      ...result,
+      hasMore: offset + result.sessions.length < result.total,
+    });
+  } catch (error: any) {
+    console.error('Get chat history error:', error);
+    res.status(500).json({ error: 'Failed to get chat history', details: error?.message });
+  }
+});
+
+/**
  * POST /chat/session/:sessionId/end
  * End a session and extract memories (owner only)
  */
@@ -1244,6 +1297,191 @@ router.post('/chat/session/:sessionId/end', async (req: Request, res: Response) 
     }
 
     res.status(500).json({ error: 'Failed to end session', details: error?.message });
+  }
+});
+
+/**
+ * GET /agent/:tokenId/mood
+ * Get agent mood state (public - shows current mood)
+ * 获取智能体当前心情状态（公开接口）
+ */
+router.get('/agent/:tokenId/mood', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const moodService = getMoodService();
+    const mood = moodService.getMood(tokenId);
+    const config = MOOD_CONFIG[mood.currentMood];
+
+    res.json({
+      tokenId,
+      currentMood: mood.currentMood,
+      moodLabel: config.label,
+      moodEmoji: config.emoji,
+      moodColor: config.color,
+      moodIntensity: mood.moodIntensity,
+      moodStability: mood.moodStability,
+      positiveStreak: mood.positiveStreak,
+      negativeStreak: mood.negativeStreak,
+      totalInteractions: mood.totalInteractions,
+      lastInteractionAt: mood.lastInteractionAt,
+      recentMoodHistory: mood.moodHistory.slice(0, 5),
+    });
+  } catch (error: any) {
+    console.error('Get agent mood error:', error);
+    res.status(500).json({ error: 'Failed to get mood', details: error?.message });
+  }
+});
+
+/**
+ * GET /agent/:tokenId/relationship
+ * Get user-agent relationship (requires wallet address)
+ * 获取用户与智能体的关系等级
+ */
+router.get('/agent/:tokenId/relationship', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const userAddress = req.query.userAddress as string || req.headers['x-user-address'] as string;
+    if (!userAddress) {
+      return res.status(400).json({ error: '需要提供钱包地址 (userAddress 参数)' });
+    }
+
+    const relationshipService = getRelationshipService();
+    const relationship = relationshipService.getRelationship(tokenId, userAddress);
+    const levelConfig = relationshipService.getLevelConfig(relationship.relationshipLevel);
+    const expProgress = relationshipService.getExpToNextLevel(relationship.experiencePoints);
+
+    res.json({
+      tokenId,
+      userAddress: relationship.userAddress,
+      level: relationship.relationshipLevel,
+      levelTitle: levelConfig.title,
+      levelTitleEn: levelConfig.titleEn,
+      levelColor: levelConfig.color,
+      benefits: levelConfig.benefits,
+      experiencePoints: relationship.experiencePoints,
+      expProgress: {
+        current: expProgress.current,
+        required: expProgress.required,
+        percentage: expProgress.progress,
+      },
+      stats: {
+        totalSessions: relationship.totalSessions,
+        totalMessages: relationship.totalMessages,
+        positiveInteractions: relationship.positiveInteractions,
+      },
+      firstInteractionAt: relationship.firstInteractionAt,
+      lastInteractionAt: relationship.lastInteractionAt,
+      allLevels: RELATIONSHIP_LEVELS.map(l => ({
+        level: l.level,
+        title: l.title,
+        titleEn: l.titleEn,
+        minExp: l.minExp,
+        color: l.color,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Get relationship error:', error);
+    res.status(500).json({ error: 'Failed to get relationship', details: error?.message });
+  }
+});
+
+/**
+ * GET /agent/:tokenId/relationships
+ * Get all relationships for an agent (leaderboard)
+ * 获取智能体的所有关系（排行榜）
+ */
+router.get('/agent/:tokenId/relationships', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+
+    const relationshipService = getRelationshipService();
+    const relationships = relationshipService.getAgentRelationships(tokenId, limit);
+
+    const result = relationships.map(r => {
+      const levelConfig = relationshipService.getLevelConfig(r.relationshipLevel);
+      return {
+        userAddress: r.userAddress,
+        level: r.relationshipLevel,
+        levelTitle: levelConfig.title,
+        levelColor: levelConfig.color,
+        experiencePoints: r.experiencePoints,
+        totalSessions: r.totalSessions,
+        lastInteractionAt: r.lastInteractionAt,
+      };
+    });
+
+    res.json({
+      tokenId,
+      relationships: result,
+      total: result.length,
+    });
+  } catch (error: any) {
+    console.error('Get relationships error:', error);
+    res.status(500).json({ error: 'Failed to get relationships', details: error?.message });
+  }
+});
+
+/**
+ * GET /agent/:tokenId/topics
+ * Get conversation topic statistics (public)
+ * 获取对话主题统计（公开接口）
+ */
+router.get('/agent/:tokenId/topics', async (req: Request, res: Response) => {
+  try {
+    const tokenId = parseInt(req.params.tokenId, 10);
+    if (isNaN(tokenId)) {
+      return res.status(400).json({ error: 'Invalid token ID' });
+    }
+
+    const topicService = getTopicService();
+    const stats = topicService.getTopicStats(tokenId);
+
+    // 添加主题配置信息
+    const topicsWithConfig = stats.topTopics.map(t => ({
+      ...t,
+      label: TOPIC_CONFIG[t.topic]?.label || t.topic,
+      emoji: TOPIC_CONFIG[t.topic]?.emoji || '💬',
+      color: TOPIC_CONFIG[t.topic]?.color || '#9ca3af',
+    }));
+
+    const distributionWithConfig = Object.entries(stats.topicDistribution)
+      .filter(([_, count]) => count > 0)
+      .map(([topic, count]) => ({
+        topic,
+        count,
+        label: TOPIC_CONFIG[topic as keyof typeof TOPIC_CONFIG]?.label || topic,
+        emoji: TOPIC_CONFIG[topic as keyof typeof TOPIC_CONFIG]?.emoji || '💬',
+        color: TOPIC_CONFIG[topic as keyof typeof TOPIC_CONFIG]?.color || '#9ca3af',
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    res.json({
+      tokenId,
+      totalTopics: stats.totalTopics,
+      topTopics: topicsWithConfig,
+      distribution: distributionWithConfig,
+      recentTopics: stats.recentTopics.map(t => ({
+        ...t,
+        label: TOPIC_CONFIG[t.topic]?.label || t.topic,
+        emoji: TOPIC_CONFIG[t.topic]?.emoji || '💬',
+      })),
+    });
+  } catch (error: any) {
+    console.error('Get topics error:', error);
+    res.status(500).json({ error: 'Failed to get topics', details: error?.message });
   }
 });
 

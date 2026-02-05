@@ -15,11 +15,15 @@ import {
 import { HOUSES, AgentState } from '@/config/contracts';
 import AgentChat from '@/components/chat/AgentChat';
 import ChatStats from '@/components/chat/ChatStats';
+import ChatHistory from '@/components/chat/ChatHistory';
+import AgentMood from '@/components/chat/AgentMood';
+import RelationshipPanel from '@/components/chat/RelationshipPanel';
+import TopicAnalysis from '@/components/chat/TopicAnalysis';
 import LearningPanel from '@/components/learning/LearningPanel';
 import MemoryBrowser from '@/components/memory/MemoryBrowser';
 
 // Tab types
-type TabType = 'info' | 'chat' | 'learning' | 'memories';
+type TabType = 'info' | 'chat' | 'history' | 'relationship' | 'learning' | 'memories';
 
 // 家族名称映射
 const HOUSE_NAMES: Record<number, string> = {
@@ -275,11 +279,13 @@ export default function AgentDetailPage() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex gap-1 bg-black/40 p-1 rounded-lg">
+          <div className="flex gap-1 bg-black/40 p-1 rounded-lg flex-wrap">
             {[
               { key: 'info', label: '基本信息', icon: '📋' },
               { key: 'chat', label: '对话', icon: '💬' },
-              { key: 'learning', label: '学习成长', icon: '📈' },
+              { key: 'history', label: '历史', icon: '📜' },
+              { key: 'relationship', label: '关系', icon: '🤝' },
+              { key: 'learning', label: '成长', icon: '📈' },
               { key: 'memories', label: '记忆', icon: '🧠' },
             ].map((tab) => (
               <button
@@ -420,13 +426,25 @@ export default function AgentDetailPage() {
           {/* Chat Tab */}
           {activeTab === 'chat' && (
             <div className="space-y-6">
+              <AgentMood tokenId={Number(id)} />
               <AgentChat
                 tokenId={Number(id)}
                 agentName={metadata.name.replace('HouseForge', 'KinForge')}
                 houseName={house}
               />
               <ChatStats tokenId={Number(id)} />
+              <TopicAnalysis tokenId={Number(id)} />
             </div>
+          )}
+
+          {/* History Tab */}
+          {activeTab === 'history' && (
+            <ChatHistory tokenId={Number(id)} />
+          )}
+
+          {/* Relationship Tab */}
+          {activeTab === 'relationship' && (
+            <RelationshipPanel tokenId={Number(id)} />
           )}
 
           {/* Learning Tab */}

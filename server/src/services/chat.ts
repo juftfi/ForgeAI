@@ -21,6 +21,9 @@ import { getVaultService } from './vault.js';
 import { AIClient, getAIClient } from './ai.js';
 import { PromptEngine, getPromptEngine } from './prompt.js';
 import { MemoryService, getMemoryService } from './memory.js';
+import { MoodService, getMoodService, AgentMood } from './mood.js';
+import { RelationshipService, getRelationshipService, EXP_CONFIG } from './relationship.js';
+import { TopicService, getTopicService } from './topic.js';
 
 // House ID to name mapping
 const HOUSE_NAMES: Record<number, string> = {
@@ -38,6 +41,9 @@ export class ChatService {
   private aiClient: AIClient;
   private promptEngine: PromptEngine;
   private memoryService: MemoryService;
+  private moodService: MoodService;
+  private relationshipService: RelationshipService;
+  private topicService: TopicService;
   private maxContextMessages: number;
 
   constructor() {
@@ -45,6 +51,9 @@ export class ChatService {
     this.aiClient = getAIClient();
     this.promptEngine = getPromptEngine();
     this.memoryService = getMemoryService();
+    this.moodService = getMoodService();
+    this.relationshipService = getRelationshipService();
+    this.topicService = getTopicService();
     this.maxContextMessages = 20;
   }
 
@@ -113,6 +122,73 @@ export class ChatService {
   }
 
   /**
+   * Get sessions with filters (for history review)
+   * 获取带过滤条件的会话列表（用于历史回顾）
+   */
+  getSessionsWithFilters(
+    tokenId: number,
+    options: {
+      startDate?: string;
+      endDate?: string;
+      limit?: number;
+      offset?: number;
+      includeMessages?: boolean;
+    } = {}
+  ): { sessions: (ChatSession & { messages?: ChatMessage[] })[]; total: number } {
+    const { startDate, endDate, limit = 20, offset = 0, includeMessages = false } = options;
+
+    // Build WHERE clause
+    const conditions: string[] = ['token_id = ?'];
+    const params: any[] = [tokenId];
+
+    if (startDate) {
+      conditions.push('started_at >= ?');
+      params.push(startDate);
+    }
+    if (endDate) {
+      conditions.push('started_at <= ?');
+      params.push(endDate);
+    }
+
+    const whereClause = conditions.join(' AND ');
+
+    // Get total count
+    const countStmt = this.db.prepare(`
+      SELECT COUNT(*) as total FROM chat_sessions WHERE ${whereClause}
+    `);
+    const { total } = countStmt.get(...params) as { total: number };
+
+    // Get sessions
+    const sessionsStmt = this.db.prepare(`
+      SELECT * FROM chat_sessions
+      WHERE ${whereClause}
+      ORDER BY started_at DESC
+      LIMIT ? OFFSET ?
+    `);
+    const rows = sessionsStmt.all(...params, limit, offset) as any[];
+
+    const sessions = rows.map(row => {
+      const session: ChatSession & { messages?: ChatMessage[] } = {
+        id: row.id,
+        tokenId: row.token_id,
+        userAddress: row.user_address,
+        startedAt: row.started_at,
+        endedAt: row.ended_at,
+        messageCount: row.message_count,
+        summary: row.summary,
+      };
+
+      if (includeMessages) {
+        session.messages = this.getHistory(row.id, 100);
+      }
+
+      return session;
+    });
+
+    return { sessions, total };
+  }
+
+  /**
    * Send a message and get AI response
    */
   async sendMessage(sessionId: string, content: string): Promise<ChatResponse> {
@@ -140,13 +216,28 @@ export class ChatService {
     // Get relevant memories
     const memories = this.memoryService.retrieve(session.tokenId, content, 8);
 
+    // Get agent mood
+    const agentMood = this.moodService.getMood(session.tokenId);
+    const moodContext = this.moodService.getMoodPromptAddition(agentMood);
+
+    // Get user-agent relationship
+    const relationship = this.relationshipService.getRelationship(session.tokenId, session.userAddress);
+    const relationshipContext = this.relationshipService.getRelationshipPromptAddition(relationship);
+
+    // Add experience for sending message
+    this.relationshipService.addExperience(session.tokenId, session.userAddress, 'messageSent');
+    // Bonus for positive emotions
+    if (['happy', 'grateful', 'curious'].includes(detectedEmotion.primary) && detectedEmotion.confidence > 0.5) {
+      this.relationshipService.addExperience(session.tokenId, session.userAddress, 'positiveEmotion');
+    }
+
     // Build messages for AI
     const systemPrompt = this.promptEngine.buildSystemPrompt(profile);
     const memoryContext = this.promptEngine.buildContext(memories);
     const emotionContext = this.getEmotionPromptAddition(detectedEmotion);
 
     const aiMessages: AIMessage[] = [
-      { role: 'system', content: systemPrompt + (memoryContext ? '\n\n' + memoryContext : '') + emotionContext },
+      { role: 'system', content: systemPrompt + (memoryContext ? '\n\n' + memoryContext : '') + moodContext + relationshipContext + emotionContext },
     ];
 
     // Add conversation history
@@ -176,7 +267,29 @@ export class ChatService {
       message: agentMessage,
       sessionId,
       detectedEmotion,
+      agentMood: {
+        mood: agentMood.currentMood,
+        intensity: agentMood.moodIntensity,
+        emoji: this.getMoodEmoji(agentMood.currentMood),
+      },
     };
+  }
+
+  /**
+   * Get emoji for mood type
+   */
+  private getMoodEmoji(mood: string): string {
+    const emojis: Record<string, string> = {
+      joyful: '😄',
+      content: '😊',
+      neutral: '😐',
+      melancholy: '😔',
+      irritated: '😤',
+      curious: '🤔',
+      energetic: '⚡',
+      tired: '😴',
+    };
+    return emojis[mood] || '😐';
   }
 
   /**
@@ -388,6 +501,58 @@ export class ChatService {
 
     // 增强: 根据情绪分布进一步调整性格影响
     const enhancedImpact = this.enhancePersonaImpact(personaImpact, messages);
+
+    // 更新智能体心情（基于本次对话的用户情绪）
+    const userEmotions = messages
+      .filter(m => m.role === 'user' && m.emotion)
+      .map(m => ({ primary: m.emotion!.primary, intensity: m.emotion!.intensity }));
+
+    if (userEmotions.length > 0) {
+      this.moodService.updateMoodFromConversation(session.tokenId, userEmotions);
+    }
+
+    // 更新关系统计和经验
+    const userMessages = messages.filter(m => m.role === 'user');
+    const positiveEmotionCount = userEmotions.filter(
+      e => ['happy', 'grateful', 'curious'].includes(e.primary)
+    ).length;
+
+    // 添加会话完成经验
+    this.relationshipService.addExperience(session.tokenId, session.userAddress, 'sessionCompleted');
+
+    // 长对话奖励
+    if (userMessages.length >= 10) {
+      this.relationshipService.addExperience(session.tokenId, session.userAddress, 'longSession');
+    }
+
+    // 记忆提取奖励
+    if (memories.length > 0) {
+      this.relationshipService.addExperience(
+        session.tokenId,
+        session.userAddress,
+        'memoryExtracted',
+        memories.length
+      );
+    }
+
+    // 更新会话统计
+    this.relationshipService.updateSessionStats(
+      session.tokenId,
+      session.userAddress,
+      messages.length,
+      positiveEmotionCount
+    );
+
+    // 提取并存储对话主题
+    const detectedTopics = this.topicService.extractTopicsFromMessages(messages);
+    if (detectedTopics.length > 0) {
+      this.topicService.storeSessionTopics(
+        sessionId,
+        session.tokenId,
+        detectedTopics,
+        messages.length
+      );
+    }
 
     // Update session with persona impact
     const now = new Date().toISOString();
