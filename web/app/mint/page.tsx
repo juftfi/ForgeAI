@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId, useSimulateContract } from 'wagmi';
-import { parseEther, formatEther } from 'viem';
+import { parseEther, formatEther, decodeEventLog } from 'viem';
 import Link from 'next/link';
 import { CONTRACTS, HOUSE_FORGE_AGENT_ABI } from '@/config/contracts';
 import { trackEvent, trackMintAttempt } from '@/lib/analytics';
@@ -74,6 +74,7 @@ export default function MintPage() {
   const [reservedAgent, setReservedAgent] = useState<ReservedAgent | null>(null);
   const [isReserving, setIsReserving] = useState(false);
   const [reserveError, setReserveError] = useState<string | null>(null);
+  const [actualMintedTokenId, setActualMintedTokenId] = useState<number | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const contractAddress = CONTRACTS.HouseForgeAgent[56]; // BSC Mainnet only
@@ -92,7 +93,22 @@ export default function MintPage() {
   });
 
   const { writeContract, data: hash, isPending, error: writeError, reset: resetWrite } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash });
+
+  // 从交易回执中解析实际铸造的 tokenId
+  useEffect(() => {
+    if (isSuccess && receipt?.logs) {
+      // 查找 Transfer 事件 (topic0 = Transfer(address,address,uint256))
+      const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+      const transferLog = receipt.logs.find(log => log.topics[0] === transferTopic);
+      if (transferLog && transferLog.topics[3]) {
+        // topics[3] 是 tokenId (indexed)
+        const tokenId = parseInt(transferLog.topics[3], 16);
+        console.log('[Mint] Actual minted tokenId:', tokenId);
+        setActualMintedTokenId(tokenId);
+      }
+    }
+  }, [isSuccess, receipt]);
 
   // 模拟铸造交易，提前检测错误
   const { error: simulateError, isError: isSimulateError } = useSimulateContract({
@@ -495,10 +511,15 @@ export default function MintPage() {
               {isSuccess && (
                 <div className="p-4 rounded-lg bg-green-900/30 border border-green-500">
                   <p className="text-green-400 mb-2">
-                    成功铸造智能体 #{reservedAgent.tokenId}！
+                    成功铸造智能体 #{actualMintedTokenId || reservedAgent.tokenId}！
                   </p>
+                  {actualMintedTokenId && actualMintedTokenId !== reservedAgent.tokenId && (
+                    <p className="text-yellow-400 text-xs mb-2">
+                      注意：合约分配的实际 Token ID 与预订 ID 不同
+                    </p>
+                  )}
                   <div className="flex gap-4 mt-3">
-                    <Link href={`/agent/${reservedAgent.tokenId}`} className="text-amber-400 hover:text-amber-300 text-sm">
+                    <Link href={`/agent/${actualMintedTokenId || reservedAgent.tokenId}`} className="text-amber-400 hover:text-amber-300 text-sm">
                       查看你的智能体 →
                     </Link>
                     <button
@@ -506,6 +527,7 @@ export default function MintPage() {
                         setReservedAgent(null);
                         setSelectedHouse(null);
                         setReserveError(null);
+                        setActualMintedTokenId(null);
                         resetWrite();
                       }}
                       className="text-gray-400 hover:text-white text-sm"
