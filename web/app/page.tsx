@@ -40,6 +40,30 @@ const FEATURES = [
   },
 ];
 
+// AI 对话功能特性
+const AI_FEATURES = [
+  {
+    icon: '💬',
+    title: 'AI 个性化对话',
+    desc: '每个智能体基于家族特征拥有独特性格，与你进行个性化对话。',
+  },
+  {
+    icon: '😄',
+    title: '智能体心情',
+    desc: '8 种心情状态（愉悦、满足、好奇等），影响 AI 回复风格。',
+  },
+  {
+    icon: '🤝',
+    title: '关系等级',
+    desc: '从初识到灵魂伴侣，7 级亲密度系统，互动累积经验解锁权益。',
+  },
+  {
+    icon: '📊',
+    title: '话题分析',
+    desc: '自动分析 13 种话题类别，洞察你与智能体的对话偏好。',
+  },
+];
+
 const STEPS = [
   { num: '01', title: '铸造', desc: '选择你的家族，铸造一个拥有确定性特征的创世智能体。' },
   { num: '02', title: '融合', desc: '在融合实验室中将两个智能体结合，创造继承天气基因的后代。' },
@@ -190,6 +214,35 @@ export default function Home() {
               <p className="text-gray-400 leading-relaxed">{f.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* AI Features Section */}
+      <section>
+        <div className="text-center mb-12">
+          <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 mb-4">
+            v0.5.0 新功能
+          </div>
+          <h2 className="section-title">AI 对话与社交系统</h2>
+          <p className="section-subtitle mx-auto">
+            你的智能体不仅是收藏品，更是有情感、会成长的数字伙伴。
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {AI_FEATURES.map((f, i) => (
+            <div key={i} className="glass-card p-6 hover:border-amber-500/30 transition-colors group">
+              <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{f.icon}</div>
+              <h3 className="text-lg font-bold text-white mb-2">{f.title}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <Link href="/gallery" className="text-amber-400 hover:text-amber-300 text-sm">
+            前往图鉴，与智能体对话 →
+          </Link>
         </div>
       </section>
 
