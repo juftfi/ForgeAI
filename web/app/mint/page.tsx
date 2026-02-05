@@ -292,7 +292,24 @@ export default function MintPage() {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Agent Image */}
             <div className="relative aspect-square rounded-xl overflow-hidden bg-black/80 border border-amber-500/20">
-              <div className="w-full h-full flex items-center justify-center">
+              {/* 使用 API 的占位符 SVG */}
+              <img
+                src={`${API_URL}/placeholder/${reservedAgent.tokenId}.svg`}
+                alt={reservedAgent.metadata.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // 图片加载失败时隐藏并显示备用占位符
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const placeholder = target.nextElementSibling as HTMLElement;
+                  if (placeholder) placeholder.style.display = 'flex';
+                }}
+              />
+              {/* 备用占位符 - 图片加载失败时显示 */}
+              <div
+                className="w-full h-full flex items-center justify-center"
+                style={{ display: 'none' }}
+              >
                 <div
                   className="w-32 h-32 rounded-full opacity-60"
                   style={{ backgroundColor: HOUSE_DATA[selectedHouse as keyof typeof HOUSE_DATA]?.color }}
