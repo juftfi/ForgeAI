@@ -24,6 +24,7 @@ import { MemoryService, getMemoryService } from './memory.js';
 import { MoodService, getMoodService, AgentMood } from './mood.js';
 import { RelationshipService, getRelationshipService, EXP_CONFIG } from './relationship.js';
 import { TopicService, getTopicService } from './topic.js';
+import { getLearningService } from './learning.js';
 
 // House ID to name mapping
 const HOUSE_NAMES: Record<number, string> = {
@@ -560,6 +561,21 @@ export class ChatService {
       UPDATE chat_sessions SET ended_at = ?, summary = ?, persona_impact = ? WHERE id = ?
     `);
     updateStmt.run(now, summary, JSON.stringify(enhancedImpact), sessionId);
+
+    // Check if learning snapshot should be created and synced to chain
+    try {
+      const learningService = getLearningService();
+      const snapshot = learningService.maybeCreateSnapshot(session.tokenId);
+      if (snapshot) {
+        console.log(`[Learning] Created snapshot v${snapshot.version} for token #${session.tokenId}`);
+        if (learningService.isAutoSyncEnabled()) {
+          const txHash = await learningService.syncToChain(session.tokenId, snapshot.version);
+          console.log(`[Learning] Auto-synced to chain: ${txHash}`);
+        }
+      }
+    } catch (error) {
+      console.error(`[Learning] Snapshot/sync error for token #${session.tokenId}:`, error);
+    }
 
     return {
       sessionId,

@@ -206,7 +206,7 @@ export default function WhitepaperPage() {
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="glass-card p-4">
               <h4 className="font-semibold text-white mb-2">封印模式</h4>
-              <p className="text-gray-400 text-sm">亲本被封印（无法再融合）但仍可交易。标准融合路径。</p>
+              <p className="text-gray-400 text-sm">亲本被永久封印，无法再融合或转让。标准融合路径。</p>
             </div>
             <div className="glass-card p-4">
               <h4 className="font-semibold text-white mb-2">销毁铸造模式</h4>

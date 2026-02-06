@@ -18,9 +18,9 @@ import { getMemoryService, MemoryService } from './memory.js';
 import { getPromptEngine, PromptEngine } from './prompt.js';
 import { hashString, hashConcat } from '../utils/hash.js';
 
-// Contract ABI for updateLearning
+// Contract ABI for updateLearning (must match deployed contract signature)
 const AGENT_ABI = [
-  'function updateLearning(uint256 tokenId, bytes32 learningRoot, uint256 version) external',
+  'function updateLearning(uint256 tokenId, string newVaultURI, bytes32 newVaultHash, bytes32 newLearningRoot, uint256 newVersion) external',
   'function getAgentMetadata(uint256 tokenId) view returns (tuple(string persona, string experience, string vaultURI, bytes32 vaultHash, bytes32 learningRoot, uint256 learningVersion, uint256 lastLearningUpdate))',
 ];
 
@@ -273,6 +273,13 @@ export class LearningService {
   }
 
   /**
+   * Check if auto-sync is enabled
+   */
+  isAutoSyncEnabled(): boolean {
+    return this.autoSync;
+  }
+
+  /**
    * Sync learning root to blockchain
    */
   async syncToChain(tokenId: number, version: number, privateKey?: string): Promise<string> {
@@ -306,14 +313,26 @@ export class LearningService {
 
     const contract = new ethers.Contract(agentAddress, AGENT_ABI, signer);
 
-    // Call updateLearning
+    // Get vault data for vaultURI and vaultHash
+    const vault = getVaultService().getByTokenId(tokenId);
+    const vaultURI = vault?.id
+      ? `${process.env.BASE_URL || 'https://houseforgeserver-production.up.railway.app'}/vault/${vault.id}`
+      : '';
+    const vaultHash = vault
+      ? hashString(JSON.stringify({ traits: vault.traits, tokenId: vault.tokenId }))
+      : hashString(`token-${tokenId}`);
+
+    // Call updateLearning with all 5 parameters
     const tx = await contract.updateLearning(
       tokenId,
+      vaultURI,
+      vaultHash,
       snapshot.learningRoot,
       version
     );
 
     const receipt = await tx.wait();
+    console.log(`[Learning] Synced tokenId=${tokenId} v${version} to chain: ${receipt.hash}`);
 
     // Update snapshot as synced
     const updateStmt = this.db.prepare(`

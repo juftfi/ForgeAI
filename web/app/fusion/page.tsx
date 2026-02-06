@@ -640,7 +640,7 @@ function FusionPageContent() {
               >
                 <div className="font-medium text-white">封印亲本</div>
                 <div className="text-sm text-gray-400 mt-1">
-                  亲本被封印（无法再融合）但仍可交易
+                  亲本被永久封印，无法再融合或转让
                 </div>
               </button>
               <button
