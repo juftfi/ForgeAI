@@ -288,14 +288,14 @@ export default function MintPage() {
     <div className="space-y-8">
       {/* Hero Section */}
       <div className="text-center space-y-4">
-        <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-sm text-amber-300 mb-2">
-          创世系列 — 2,100 智能体
+        <div className="inline-block px-4 py-1.5 rounded-full bg-red-500/20 border border-red-500/30 text-sm text-red-300 mb-2">
+          创世铸造已结束 — 共 1,302 个创世智能体
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-gold-gradient">
-          铸造你的创世智能体
+          创世铸造已结束
         </h1>
         <p className="text-gray-400 max-w-2xl mx-auto">
-          选择你的家族，预览你的智能体，然后铸造。每个智能体都有预生成的特征、保险库数据和可验证哈希。
+          创世系列已全部铸造完成。你可以在二级市场获取创世智能体，或通过融合创造新的后代。
         </p>
       </div>
 

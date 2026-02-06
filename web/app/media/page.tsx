@@ -45,7 +45,7 @@ export default function MediaKitPage() {
         <div className="prose prose-invert max-w-none">
           <p className="text-gray-300 leading-relaxed">
             <strong className="text-white">KinForge</strong> 是一个建立在 BNB Chain 上的开创性非同质化智能体（NFA）平台。
-            该项目引入了 2,100 个创世智能体，分布在七大家族中，每个智能体都具有确定性特征、可验证的成长能力和融合繁殖机制。
+            该项目引入了 1,302 个创世智能体，分布在七大家族中，每个智能体都具有确定性特征、可验证的成长能力和融合繁殖机制。
           </p>
           <p className="text-gray-300 leading-relaxed mt-4">
             实现 BAP-578 标准，KinForge 智能体在链上维护元数据摘要，同时在链下保险库中存储扩展学习数据。
@@ -70,7 +70,7 @@ export default function MediaKitPage() {
         <div className="grid md:grid-cols-2 gap-4">
           {[
             { label: '发布链', value: 'BNB 智能链' },
-            { label: '创世供应', value: '2,100 智能体' },
+            { label: '创世供应', value: '1,302 智能体' },
             { label: '家族', value: '7 大 Kin 家族' },
             { label: '标准', value: 'BAP-578 (非同质化智能体)' },
             { label: '渲染引擎', value: 'Blender Cycles (GPU/OptiX)' },

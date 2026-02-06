@@ -51,7 +51,7 @@ export default function GalleryPage() {
   const [rarityFilter, setRarityFilter] = useState('全部');
   const [page, setPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
-  const [totalPages, setTotalPages] = useState(88); // 2100 / 24 = 87.5 -> 88
+  const [totalPages, setTotalPages] = useState(55); // 1310 / 24 = 54.6 -> 55
   const pageSize = 24;
 
   useEffect(() => {

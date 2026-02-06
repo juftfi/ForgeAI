@@ -6,7 +6,7 @@ import { ConnectButton } from '@/components/wallet/ConnectButton';
 
 export const metadata: Metadata = {
   title: 'KinForge - 链上基因智能体 | BNB Chain',
-  description: '铸造血脉，交易身份。2,100 个创世智能体，跨越 7 大基因家族，在 BNB Chain 上实现可验证的成长与进化。',
+  description: '铸造血脉，交易身份。1,302 个创世智能体，跨越 7 大基因家族，在 BNB Chain 上实现可验证的成长与进化。',
   keywords: ['NFT', 'NFA', 'BNB Chain', 'BSC', 'AI智能体', '区块链', 'BAP-578', '基因', 'DNA'],
   icons: {
     icon: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'KinForge - 链上基因智能体',
-    description: '铸造血脉，交易身份。2,100 个创世智能体，可验证的成长与进化。',
+    description: '铸造血脉，交易身份。1,302 个创世智能体，可验证的成长与进化。',
     type: 'website',
     locale: 'zh_CN',
     siteName: 'KinForge',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'KinForge - 链上基因智能体',
-    description: '铸造血脉，交易身份。2,100 个创世智能体，可验证的成长与进化。',
+    description: '铸造血脉，交易身份。1,302 个创世智能体，可验证的成长与进化。',
   },
 };
 

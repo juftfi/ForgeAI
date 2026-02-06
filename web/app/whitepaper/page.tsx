@@ -253,9 +253,9 @@ export default function WhitepaperPage() {
           <h3 className="text-xl font-semibold text-gray-200 mb-3">8.1 创世供应</h3>
           <div className="glass-card p-4 mb-6">
             <ul className="text-gray-400 space-y-2">
-              <li><strong className="text-gray-200">总供应量：</strong> 2,100 创世智能体（固定，永不增加）</li>
-              <li><strong className="text-gray-200">每家族：</strong> 300 智能体 × 7 家族</li>
-              <li><strong className="text-gray-200">铸造价格：</strong> 低门槛进入（具体价格待定）</li>
+              <li><strong className="text-gray-200">总供应量：</strong> 1,302 创世智能体（铸造已结束，永不增加）</li>
+              <li><strong className="text-gray-200">家族分布：</strong> 7 大家族</li>
+              <li><strong className="text-gray-200">铸造价格：</strong> 0.05 BNB</li>
             </ul>
           </div>
 
@@ -293,7 +293,7 @@ export default function WhitepaperPage() {
                 <h4 className="font-semibold text-white">第一阶段：创世发布</h4>
               </div>
               <ul className="text-gray-400 text-sm space-y-1 ml-6">
-                <li>• 2,100 创世智能体配备 3D 渲染视觉</li>
+                <li>• 1,302 创世智能体已铸造完成</li>
                 <li>• 铸造网站配合钱包集成</li>
                 <li>• 融合实验室和血脉树工具</li>
                 <li>• 完整文档和白皮书</li>

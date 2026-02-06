@@ -119,7 +119,7 @@ export default function Home() {
           </div>
 
           <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 mb-4">
-            2,100 创世智能体 · BNB Chain
+            1,302 创世智能体 · BNB Chain
           </div>
 
           {/* Contract Address */}
@@ -184,8 +184,8 @@ export default function Home() {
       <section className="glass-card p-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="text-center">
-            <div className="text-4xl font-bold text-white mb-1">{stats?.totalSupply || '2,100'}</div>
-            <div className="text-gray-400 text-sm">创世供应量</div>
+            <div className="text-4xl font-bold text-white mb-1">{stats?.totalSupply || '1,302'}</div>
+            <div className="text-gray-400 text-sm">总供应量</div>
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold text-amber-400 mb-1">7</div>
