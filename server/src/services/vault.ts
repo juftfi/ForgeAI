@@ -47,7 +47,7 @@ export class VaultService {
   private baseUrl: string;
 
   constructor(dbPath?: string, baseUrl?: string) {
-    const resolvedPath = dbPath || path.resolve(__dirname, '../../../data/vault.db');
+    const resolvedPath = dbPath || process.env.DATABASE_PATH || path.resolve(__dirname, '../../../data/db/vault.db');
 
     // Ensure data directory exists
     const dir = path.dirname(resolvedPath);
