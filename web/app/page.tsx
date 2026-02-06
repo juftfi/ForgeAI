@@ -62,6 +62,11 @@ const AI_FEATURES = [
     title: '话题分析',
     desc: '自动分析 13 种话题类别，洞察你与智能体的对话偏好。',
   },
+  {
+    icon: '💾',
+    title: '永久记忆',
+    desc: 'Agent 的对话记忆、关系等级、心情状态持久化存储，不因服务更新而丢失。',
+  },
 ];
 
 const STEPS = [
@@ -221,15 +226,15 @@ export default function Home() {
       <section>
         <div className="text-center mb-12">
           <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 mb-4">
-            v0.5.0 新功能
+            v0.6.0 新功能
           </div>
           <h2 className="section-title">AI 对话与社交系统</h2>
           <p className="section-subtitle mx-auto">
-            你的智能体不仅是收藏品，更是有情感、会成长的数字伙伴。
+            你的智能体不仅是收藏品，更是有情感、会成长的数字伙伴。对话记忆永久保存，不因更新丢失。
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {AI_FEATURES.map((f, i) => (
             <div key={i} className="glass-card p-6 hover:border-amber-500/30 transition-colors group">
               <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{f.icon}</div>

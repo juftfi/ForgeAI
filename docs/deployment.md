@@ -144,7 +144,25 @@ server/
 3. 连接 GitHub 仓库
 4. 选择 `server/` 目录
 
-### 3. 配置环境变量
+### 3. 配置持久化存储 (Volume)
+
+> **重要**: 不配置 Volume 会导致每次部署丢失对话记忆、关系等级等数据。
+
+1. 在项目主页按 `Ctrl+K` 打开 Command Palette
+2. 输入 "Volume"，选择创建 Volume
+3. 连接到 `@houseforge/server` 服务
+4. **Mount Path**: `/app/data/db`
+5. 确认创建
+
+这样数据库文件 (`vault.db`) 存储在持久化卷中，而 metadata 和渲染图片从 Git 获取，互不影响：
+
+| 数据 | 存储位置 | 持久化方式 |
+|------|----------|-----------|
+| vault.db（对话/记忆/关系） | Volume `/app/data/db` | 跨部署持久 |
+| metadata JSON | Git → `/app/data/metadata` | 每次部署自动带入 |
+| 渲染图片 | Git → `/app/data/render/output` | 每次部署自动带入 |
+
+### 4. 配置环境变量
 
 在 Railway Dashboard → Variables 中添加:
 
@@ -155,7 +173,7 @@ RPC_URL=https://bsc-dataseed.binance.org
 CHAIN_ID=56
 HOUSEFORGE_AGENT_ADDRESS=0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f
 FUSION_CORE_ADDRESS=0xa62E109Db724308FEB530A0b00431cf47BBC1f6E
-DATABASE_PATH=./data/vault.db
+DATABASE_PATH=/app/data/db/vault.db
 SERVER_PORT=3001
 
 # 可选
@@ -166,7 +184,7 @@ LEARNING_SYNC_THRESHOLD=10
 MEMORY_MAX_COUNT=1000
 ```
 
-### 4. 配置构建命令
+### 5. 配置构建命令
 
 在 Railway Settings 中:
 
@@ -174,7 +192,7 @@ MEMORY_MAX_COUNT=1000
 - **Start Command**: `pnpm start`
 - **Root Directory**: `server`
 
-### 5. 部署
+### 6. 部署
 
 ```bash
 # 推送到 GitHub 自动部署
@@ -185,7 +203,7 @@ cd server
 railway up
 ```
 
-### 6. 验证部署
+### 7. 验证部署
 
 ```bash
 curl https://your-app.railway.app/health
@@ -286,7 +304,7 @@ FUSION_CORE_ADDRESS=0xa62E109Db724308FEB530A0b00431cf47BBC1f6E
 # ========== 服务器配置 ==========
 SERVER_PORT=3001
 SERVER_HOST=0.0.0.0
-DATABASE_PATH=./data/vault.db
+DATABASE_PATH=/app/data/db/vault.db
 
 # ========== AI 配置 ==========
 AI_PROVIDER=openai
@@ -497,4 +515,4 @@ cp data/vault.db backups/vault-$(date +%Y%m%d).db
 
 ---
 
-*最后更新: 2024-02-04*
+*最后更新: 2026-02-06*

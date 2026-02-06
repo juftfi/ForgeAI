@@ -2,6 +2,38 @@
 
 All notable changes to KinForge will be documented in this file.
 
+## [0.6.0] - 2026-02-06
+
+### Added
+
+#### 数据持久化存储 (Persistent Data Storage)
+- Railway Volume 持久化配置，服务更新不再丢失数据
+- 数据库路径分离：`vault.db` 独立存储于持久化卷
+- 支持 `DATABASE_PATH` 环境变量自定义数据库路径
+- 对话记忆、心情状态、关系等级、学习快照跨部署持久保存
+
+#### 铸造流程优化 (Minting Flow Optimization)
+- 简化铸造为三步流程：选择家族 → 预览智能体 → 一键铸造
+- 链上状态校验：自动跳过已铸造 Token，避免交易失败
+- 交易回执实时解析：铸造成功即刻确认 Token ID 归属
+- 新增 `/genesis/finalize` 端点，铸造后绑定实际 Token ID
+
+#### 图片显示优化 (Image Display)
+- 优先展示高清渲染图（WebP），fallback 到 SVG 占位符
+- 新增 `/placeholder/house/:house.svg` 端点用于家族预览
+- 支持稀有度光效的 SVG 占位符生成
+
+### Changed
+- `VaultService` 默认数据库路径从 `data/vault.db` 改为 `data/db/vault.db`
+- Reserve API 增加链上铸造状态检查
+- Mint 页面适配动态 Token ID 分配流程
+
+### Infrastructure
+- Railway 部署新增 Volume 挂载点 `/app/data/db`
+- 静态文件（metadata、渲染图片）与动态数据（数据库）分离存储
+
+---
+
 ## [0.5.0] - 2025-02-05
 
 ### Added

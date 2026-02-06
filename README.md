@@ -33,11 +33,16 @@
 - **对话统计**: 会话数、消息数、情绪分布可视化
 - **性格动态进化**: 性格随情绪互动逐渐变化，每个智能体独一无二
 
-### 社交与分析功能 (v0.5.0 新增)
+### 社交与分析功能 (v0.5.0)
 - **对话历史**: 回顾所有历史对话，支持日期筛选
 - **智能体心情**: 8 种心情状态，影响 AI 回复风格
 - **关系等级**: 7 级亲密度系统（初识→灵魂伴侣），经验值累积
 - **主题分析**: 13 种话题类别，偏好统计与洞察
+
+### 基础设施与铸造 (v0.6.0 新增)
+- **数据持久化**: Railway Volume 存储，服务更新不再丢失对话记忆和关系数据
+- **铸造流程优化**: 三步铸造（选择家族 → 预览 → 铸造），链上状态自动校验
+- **图片优化**: 优先高清渲染图，支持家族 SVG 占位符预览
 
 ## 项目结构
 
@@ -129,7 +134,7 @@ cp .env.example .env
 ```env
 # 服务器
 SERVER_PORT=3001
-DATABASE_PATH=./data/vault.db
+DATABASE_PATH=./data/db/vault.db
 
 # 区块链
 RPC_URL=https://bsc-dataseed.binance.org/
@@ -409,7 +414,7 @@ Railway 必需环境变量：
 - `RPC_URL`
 - `CHAIN_ID`
 - `HOUSEFORGE_AGENT_ADDRESS`
-- `DATABASE_PATH`
+- `DATABASE_PATH` (建议: `/app/data/db/vault.db`，配合 Volume 持久化)
 
 ### 合约 (Foundry)
 
