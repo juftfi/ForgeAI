@@ -15,7 +15,7 @@
 
 ### 核心功能
 - **7 大天气家族**: CLEAR、MONSOON、THUNDER、FROST、AURORA、SAND、ECLIPSE
-- **2,100 个创世智能体**: 确定性特征生成，带家族偏好系统
+- **1,302 个创世智能体**: 确定性特征生成，带家族偏好系统（铸造已结束）
 - **融合系统**: Commit-reveal 繁殖机制，支持亲本特征继承
 - **BAP-578 合规**: 完整实现标准接口，支持学习更新
 - **神话稀有度**: 特定家族组合触发神话级智能体
@@ -43,6 +43,12 @@
 - **数据持久化**: Railway Volume 存储，服务更新不再丢失对话记忆和关系数据
 - **铸造流程优化**: 三步铸造（选择家族 → 预览 → 铸造），链上状态自动校验
 - **图片优化**: 优先高清渲染图，支持家族 SVG 占位符预览
+
+### 学习链上存证 (v0.7.0 新增)
+- **成长上链**: Agent 的学习快照 (learningRoot) 自动同步到 BSC 链上
+- **不可篡改**: 性格进化、记忆积累的证明永久存储在链上
+- **自动触发**: 每积累 10 条新记忆，自动创建快照并上链
+- **5 参数同步**: `updateLearning(tokenId, vaultURI, vaultHash, learningRoot, version)`
 
 ## 项目结构
 
@@ -414,7 +420,10 @@ Railway 必需环境变量：
 - `RPC_URL`
 - `CHAIN_ID`
 - `HOUSEFORGE_AGENT_ADDRESS`
+- `FUSION_CORE_ADDRESS`
 - `DATABASE_PATH` (建议: `/app/data/db/vault.db`，配合 Volume 持久化)
+- `SERVER_PRIVATE_KEY` (学习上链必需，admin 钱包私钥)
+- `LEARNING_AUTO_SYNC=true` (启用自动上链)
 
 ### 合约 (Foundry)
 
