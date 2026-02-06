@@ -17,7 +17,8 @@
     "render:jobs": "tsx src/scripts/buildRenderJobs.ts",
     "render:batch": "tsx src/scripts/runRenderBatch.ts",
     "render:all": "tsx src/scripts/runRenderBatch.ts -- --all",
-    "render:update-metadata": "tsx src/scripts/updateMetadataImages.ts"
+    "render:update-metadata": "tsx src/scripts/updateMetadataImages.ts",
+    "check-wallet": "tsx src/scripts/checkWallet.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",

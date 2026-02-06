@@ -3,42 +3,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
-import { useAgentBalance, useContractAddress } from '@/hooks/useContracts';
-import { HOUSES, HOUSE_FORGE_AGENT_ABI } from '@/config/contracts';
-import { useReadContracts } from 'wagmi';
 
-// 特性名称中英文映射
-const TRAIT_NAMES_CN: Record<string, string> = {
-  // 基本信息
-  'Season': '季节',
-  'House': '家族',
-  'RarityTier': '稀有度',
-  'Generation': '世代',
-  'WeatherID': '气象编号',
-  // 外观特性
-  'FrameType': '框架类型',
-  'CoreMaterial': '核心材质',
-  'LightSignature': '光纹特征',
-  'InstrumentMark': '仪表标记',
-  'Atmosphere': '氛围',
-  'DioramaGeometry': '透视结构',
-  'PaletteTemperature': '色温',
-  'SurfaceAging': '表面质感',
-  'MicroEngraving': '微雕',
-  'LensBloom': '镜头光晕',
-  // 行为特性
-  'Eye Style': '眼睛样式',
-  'EyeStyle': '眼睛样式',
-  'Accent Mark': '装饰标记',
-  'AccentMark': '装饰标记',
-  'Voice Tone': '声音音调',
-  'VoiceTone': '声音音调',
-  'Behavior Mode': '行为模式',
-  'BehaviorMode': '行为模式',
-  'Data Preference': '数据偏好',
-  'DataPreference': '数据偏好',
-  'Energy Pattern': '能量模式',
-  'EnergyPattern': '能量模式',
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// 家族颜色
+const HOUSE_COLORS: Record<number, string> = {
+  1: '#60A5FA', // CLEAR
+  2: '#34D399', // MONSOON
+  3: '#A78BFA', // THUNDER
+  4: '#93C5FD', // FROST
+  5: '#F472B6', // AURORA
+  6: '#FBBF24', // SAND
+  7: '#6B7280', // ECLIPSE
 };
 
 // 家族名称映射
@@ -66,7 +42,6 @@ interface AgentCardData {
   houseId: number;
   generation: number;
   sealed: boolean;
-  state: number;
   metadata?: {
     name: string;
     attributes: { trait_type: string; value: string }[];
@@ -74,7 +49,7 @@ interface AgentCardData {
 }
 
 function AgentCard({ agent, onSelect }: { agent: AgentCardData; onSelect?: (id: number) => void }) {
-  const house = HOUSES[agent.houseId as keyof typeof HOUSES];
+  const color = HOUSE_COLORS[agent.houseId] || '#fbbf24';
   const rarity = agent.metadata?.attributes.find(a => a.trait_type === 'RarityTier')?.value || 'Common';
   const weatherId = agent.metadata?.attributes.find(a => a.trait_type === 'WeatherID')?.value;
 
@@ -87,11 +62,10 @@ function AgentCard({ agent, onSelect }: { agent: AgentCardData; onSelect?: (id: 
       <div
         className="h-24 flex items-center justify-center relative"
         style={{
-          background: `linear-gradient(135deg, ${house?.color || '#fbbf24'}40, transparent)`,
+          background: `linear-gradient(135deg, ${color}40, transparent)`,
         }}
       >
         <span className="text-4xl font-bold text-white/20">#{agent.tokenId}</span>
-        {/* 状态标签 */}
         <div className={`absolute top-2 right-2 text-xs px-2 py-1 rounded ${
           agent.sealed ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'
         }`}>
@@ -108,9 +82,9 @@ function AgentCard({ agent, onSelect }: { agent: AgentCardData; onSelect?: (id: 
           </div>
           <div
             className="px-2 py-1 rounded text-xs font-medium"
-            style={{ backgroundColor: `${house?.color}30`, color: house?.color }}
+            style={{ backgroundColor: `${color}30`, color }}
           >
-            {HOUSE_NAMES[agent.houseId] || house?.name}
+            {HOUSE_NAMES[agent.houseId] || `House ${agent.houseId}`}
           </div>
         </div>
 
@@ -155,128 +129,41 @@ function AgentCard({ agent, onSelect }: { agent: AgentCardData; onSelect?: (id: 
 
 export default function MyAgentsPage() {
   const { address, isConnected } = useAccount();
-  const { data: balance, isLoading: isBalanceLoading } = useAgentBalance(address);
   const [agents, setAgents] = useState<AgentCardData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedAgents, setSelectedAgents] = useState<number[]>([]);
 
-  const agentContractAddress = useContractAddress('HouseForgeAgent');
-
-  // 获取总供应量
-  const { data: totalSupply, isLoading: isTotalSupplyLoading } = useReadContracts({
-    contracts: [{
-      address: agentContractAddress,
-      abi: HOUSE_FORGE_AGENT_ABI,
-      functionName: 'totalSupply',
-    }],
-    query: { enabled: !!agentContractAddress },
-  });
-
-  const supply = totalSupply?.[0]?.result as bigint | undefined;
-
-  // 创建所有可能的tokenId列表 (1 到 totalSupply)
-  // 注意：合约中tokenId从1开始，不是0
-  const allTokenIds = supply ? Array.from({ length: Number(supply) }, (_, i) => BigInt(i + 1)) : [];
-
-  // 批量查询所有token的ownerOf - 合约不支持ERC721Enumerable，所以需要遍历所有token
-  const { data: owners, isLoading: isOwnersLoading } = useReadContracts({
-    contracts: allTokenIds.map(tokenId => ({
-      address: agentContractAddress,
-      abi: HOUSE_FORGE_AGENT_ABI,
-      functionName: 'ownerOf',
-      args: [tokenId],
-    })),
-    query: { enabled: allTokenIds.length > 0 },
-  });
-
-  // 筛选出属于当前用户的tokenIds
-  const userTokenIds = allTokenIds.filter((tokenId, index) => {
-    const owner = owners?.[index]?.result as string | undefined;
-    return owner && address && owner.toLowerCase() === address.toLowerCase();
-  });
-
-  // 批量读取lineage
-  const { data: lineages, isLoading: isLineagesLoading } = useReadContracts({
-    contracts: userTokenIds.map(tokenId => ({
-      address: agentContractAddress,
-      abi: HOUSE_FORGE_AGENT_ABI,
-      functionName: 'getLineage',
-      args: [tokenId],
-    })),
-    query: { enabled: userTokenIds.length > 0 },
-  });
-
-  // 加载metadata并组装数据
   useEffect(() => {
-    async function loadAgents() {
-      // 如果还在加载基础数据，等待
-      if (isBalanceLoading || isTotalSupplyLoading || isOwnersLoading || isLineagesLoading) {
-        return;
-      }
-
-      // 如果没有余额或为0，设置为空
-      if (!balance || Number(balance) === 0) {
-        setAgents([]);
-        setLoading(false);
-        return;
-      }
-
-      // 如果userTokenIds还没加载完成
-      if (!userTokenIds.length) {
-        // 可能owners还没返回
-        if (owners && owners.length > 0) {
-          // owners已返回但没找到用户的token
-          setAgents([]);
-          setLoading(false);
-        }
-        return;
-      }
-
-      // 如果lineages还没加载完成
-      if (!lineages || lineages.length === 0) {
-        return;
-      }
-
-      const agentData: AgentCardData[] = [];
-
-      for (let i = 0; i < userTokenIds.length; i++) {
-        const tokenId = Number(userTokenIds[i]);
-        const lineage = lineages[i]?.result as any;
-
-        if (!lineage) {
-          console.log(`[MyAgents] No lineage for token ${tokenId}`);
-          continue;
-        }
-
-        // 尝试加载metadata
-        let metadata;
-        try {
-          const res = await fetch(`/metadata/${tokenId}.json`);
-          if (res.ok) {
-            metadata = await res.json();
-          }
-        } catch {
-          // Metadata可能不存在（offspring）
-        }
-
-        agentData.push({
-          tokenId,
-          houseId: Number(lineage.houseId ?? lineage[3] ?? 1),
-          generation: Number(lineage.generation ?? lineage[2] ?? 0),
-          sealed: lineage.sealed ?? lineage.isSealed ?? lineage[4] ?? false,
-          state: (lineage.sealed || lineage.isSealed) ? 1 : 0,
-          metadata,
-        });
-      }
-
-      // 按tokenId排序
-      agentData.sort((a, b) => a.tokenId - b.tokenId);
-      setAgents(agentData);
+    if (!isConnected || !address) {
+      setAgents([]);
       setLoading(false);
+      return;
     }
 
-    loadAgents();
-  }, [balance, userTokenIds, lineages, owners, isBalanceLoading, isTotalSupplyLoading, isOwnersLoading, isLineagesLoading]);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fetch(`${API_URL}/user/${address}/tokens`)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (cancelled) return;
+        setAgents(data.tokens || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.error('[MyAgents] Failed to load:', err);
+        setError('加载失败，请稍后重试');
+        setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [isConnected, address]);
 
   const handleSelect = (tokenId: number) => {
     setSelectedAgents(prev => {
@@ -314,6 +201,17 @@ export default function MyAgentsPage() {
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
           <p className="mt-4 text-gray-400">加载中...</p>
+        </div>
+      ) : error ? (
+        <div className="glass-card p-12 text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-white mb-2">{error}</h2>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded transition-colors"
+          >
+            重新加载
+          </button>
         </div>
       ) : agents.length === 0 ? (
         <div className="glass-card p-12 text-center">

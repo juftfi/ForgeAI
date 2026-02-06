@@ -26,9 +26,18 @@ function getRpcUrl(): string {
 // HouseForgeAgent contract address (V3 - new economics)
 const AGENT_CONTRACT = process.env.HOUSEFORGE_AGENT_ADDRESS || '0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f';
 
-// Minimal ABI for ownership check
-const OWNER_OF_ABI = [
+// Minimal ABI for contract reads
+const AGENT_ABI = [
   'function ownerOf(uint256 tokenId) view returns (address)',
+  'function getRarityTier(uint256 tokenId) view returns (uint8)',
+  'function totalSupply() view returns (uint256)',
+  'function getLineage(uint256 tokenId) view returns (uint256 parent1, uint256 parent2, uint256 generation, uint8 houseId, bool sealed)',
+];
+
+// Multicall3 on BSC (standard address)
+const MULTICALL3_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11';
+const MULTICALL3_ABI = [
+  'function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) view returns (tuple(bool success, bytes returnData)[])',
 ];
 
 // Cache provider instance
@@ -62,7 +71,7 @@ export async function verifyTokenOwnership(tokenId: number, userAddress: string)
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const provider = getProvider();
-      const contract = new ethers.Contract(AGENT_CONTRACT, OWNER_OF_ABI, provider);
+      const contract = new ethers.Contract(AGENT_CONTRACT, AGENT_ABI, provider);
 
       console.log(`[Blockchain] Checking ownership: token=${tokenId}, user=${userAddress.substring(0, 10)}...`);
       const owner = await contract.ownerOf(tokenId);
@@ -108,7 +117,7 @@ export async function getTokenOwner(tokenId: number): Promise<string | null> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const provider = getProvider();
-      const contract = new ethers.Contract(AGENT_CONTRACT, OWNER_OF_ABI, provider);
+      const contract = new ethers.Contract(AGENT_CONTRACT, AGENT_ABI, provider);
 
       const owner = await contract.ownerOf(tokenId);
       return owner;
@@ -131,4 +140,217 @@ export async function getTokenOwner(tokenId: number): Promise<string | null> {
   }
 
   return null;
+}
+
+/**
+ * Get the on-chain rarity tier for a token
+ * @param tokenId The NFT token ID
+ * @returns The rarity tier (0-4) or null if token doesn't exist
+ */
+export async function getOnChainRarityTier(tokenId: number): Promise<number | null> {
+  const maxRetries = 3;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const provider = getProvider();
+      const contract = new ethers.Contract(AGENT_CONTRACT, AGENT_ABI, provider);
+      const tier = await contract.getRarityTier(tokenId);
+      return Number(tier);
+    } catch (error: any) {
+      if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('403') || error?.message?.includes('Forbidden')) {
+        resetProvider();
+        continue;
+      }
+      if (error?.code === 'CALL_EXCEPTION' || error?.message?.includes('revert')) {
+        return null;
+      }
+      resetProvider();
+    }
+  }
+  return null;
+}
+
+/**
+ * Get total supply from the contract
+ */
+export async function getTotalSupply(): Promise<number | null> {
+  const maxRetries = 3;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const provider = getProvider();
+      const contract = new ethers.Contract(AGENT_CONTRACT, AGENT_ABI, provider);
+      const supply = await contract.totalSupply();
+      return Number(supply);
+    } catch (error: any) {
+      if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('403') || error?.message?.includes('Forbidden')) {
+        resetProvider();
+        continue;
+      }
+      resetProvider();
+    }
+  }
+  return null;
+}
+
+// =============================================================
+//  Ownership Cache + Multicall Batch Queries
+// =============================================================
+
+interface OwnershipCache {
+  // tokenId -> owner address (lowercase)
+  owners: Map<number, string>;
+  supply: number;
+  updatedAt: number;
+}
+
+let ownershipCache: OwnershipCache | null = null;
+const CACHE_TTL = 30_000; // 30 seconds
+let cacheRefreshPromise: Promise<OwnershipCache> | null = null;
+
+/**
+ * Batch query ownerOf for a range of tokens using Multicall3.
+ * Returns a Map of tokenId -> owner address.
+ */
+async function batchOwnerOf(startId: number, endId: number): Promise<Map<number, string>> {
+  const provider = getProvider();
+  const multicall = new ethers.Contract(MULTICALL3_ADDRESS, MULTICALL3_ABI, provider);
+  const agentIface = new ethers.Interface(AGENT_ABI);
+  const result = new Map<number, string>();
+
+  // Process in chunks of 200 to avoid RPC payload limits
+  const CHUNK = 200;
+  for (let from = startId; from <= endId; from += CHUNK) {
+    const to = Math.min(from + CHUNK - 1, endId);
+    const calls = [];
+    for (let id = from; id <= to; id++) {
+      calls.push({
+        target: AGENT_CONTRACT,
+        allowFailure: true,
+        callData: agentIface.encodeFunctionData('ownerOf', [id]),
+      });
+    }
+
+    try {
+      const responses: Array<{ success: boolean; returnData: string }> = await multicall.aggregate3(calls);
+      for (let i = 0; i < responses.length; i++) {
+        if (responses[i].success && responses[i].returnData !== '0x') {
+          try {
+            const [owner] = agentIface.decodeFunctionResult('ownerOf', responses[i].returnData);
+            result.set(from + i, (owner as string).toLowerCase());
+          } catch {}
+        }
+      }
+    } catch (error: any) {
+      console.error(`[Blockchain] Multicall batch ${from}-${to} failed:`, error?.message?.substring(0, 150));
+      // Fallback: skip this chunk (will be retried on next cache refresh)
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Refresh the ownership cache using Multicall3.
+ */
+async function refreshOwnershipCache(): Promise<OwnershipCache> {
+  const supply = await getTotalSupply();
+  if (!supply) {
+    throw new Error('Cannot get totalSupply');
+  }
+
+  console.log(`[Blockchain] Refreshing ownership cache for ${supply} tokens...`);
+  const start = Date.now();
+  const owners = await batchOwnerOf(1, supply);
+  console.log(`[Blockchain] Cache refreshed: ${owners.size} owners in ${Date.now() - start}ms`);
+
+  const cache: OwnershipCache = {
+    owners,
+    supply,
+    updatedAt: Date.now(),
+  };
+  ownershipCache = cache;
+  return cache;
+}
+
+/**
+ * Get (or refresh) the ownership cache. Deduplicates concurrent refresh requests.
+ */
+async function getOwnershipCache(): Promise<OwnershipCache> {
+  if (ownershipCache && Date.now() - ownershipCache.updatedAt < CACHE_TTL) {
+    return ownershipCache;
+  }
+
+  // Deduplicate concurrent refresh calls
+  if (!cacheRefreshPromise) {
+    cacheRefreshPromise = refreshOwnershipCache().finally(() => {
+      cacheRefreshPromise = null;
+    });
+  }
+  return cacheRefreshPromise;
+}
+
+export interface UserToken {
+  tokenId: number;
+  houseId: number;
+  generation: number;
+  sealed: boolean;
+  metadata?: any;
+}
+
+/**
+ * Get all tokens owned by a specific address.
+ * Uses cached ownership data + Multicall for lineage.
+ */
+export async function getUserTokens(userAddress: string): Promise<UserToken[]> {
+  const cache = await getOwnershipCache();
+  const addr = userAddress.toLowerCase();
+
+  // Find all tokens owned by this address
+  const tokenIds: number[] = [];
+  for (const [tokenId, owner] of cache.owners) {
+    if (owner === addr) tokenIds.push(tokenId);
+  }
+
+  if (tokenIds.length === 0) return [];
+
+  // Batch query lineage via Multicall
+  const provider = getProvider();
+  const multicall = new ethers.Contract(MULTICALL3_ADDRESS, MULTICALL3_ABI, provider);
+  const agentIface = new ethers.Interface(AGENT_ABI);
+
+  const calls = tokenIds.map(id => ({
+    target: AGENT_CONTRACT,
+    allowFailure: true,
+    callData: agentIface.encodeFunctionData('getLineage', [id]),
+  }));
+
+  const tokens: UserToken[] = [];
+
+  try {
+    const responses: Array<{ success: boolean; returnData: string }> = await multicall.aggregate3(calls);
+    for (let i = 0; i < responses.length; i++) {
+      if (responses[i].success) {
+        try {
+          const decoded = agentIface.decodeFunctionResult('getLineage', responses[i].returnData);
+          tokens.push({
+            tokenId: tokenIds[i],
+            houseId: Number(decoded.houseId),
+            generation: Number(decoded.generation),
+            sealed: decoded.sealed,
+          });
+        } catch {
+          tokens.push({ tokenId: tokenIds[i], houseId: 0, generation: 0, sealed: false });
+        }
+      }
+    }
+  } catch (error: any) {
+    console.error(`[Blockchain] Lineage multicall failed:`, error?.message?.substring(0, 150));
+    // Return token IDs without lineage as fallback
+    for (const id of tokenIds) {
+      tokens.push({ tokenId: id, houseId: 0, generation: 0, sealed: false });
+    }
+  }
+
+  return tokens.sort((a, b) => a.tokenId - b.tokenId);
 }

@@ -9,7 +9,7 @@ import { getMoodService, MOOD_CONFIG } from '../services/mood.js';
 import { getRelationshipService, RELATIONSHIP_LEVELS } from '../services/relationship.js';
 import { getTopicService, TOPIC_CONFIG } from '../services/topic.js';
 import { getKeyPool } from '../services/keyPool.js';
-import { verifyTokenOwnership, getTokenOwner } from '../utils/blockchain.js';
+import { verifyTokenOwnership, getTokenOwner, getOnChainRarityTier, getTotalSupply, getUserTokens } from '../utils/blockchain.js';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
@@ -844,11 +844,32 @@ router.post('/genesis/finalize', async (req: Request, res: Response) => {
 
     // 生成并保存元数据文件
     const traits = vault.traits;
+
+    // Rarity protection: if a pre-generated metadata file exists,
+    // preserve its rarity (authoritative source) rather than overwriting
+    const metadataPath = path.join(METADATA_DIR, `${tokenId}.json`);
+    let preservedRarity: string | null = null;
+    if (fs.existsSync(metadataPath)) {
+      try {
+        const existing = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+        const existingRarity = existing.attributes?.find((a: any) => a.trait_type === 'RarityTier')?.value;
+        if (existingRarity && existingRarity !== traits.RarityTier) {
+          console.log(`[Finalize] WARNING: Vault rarity (${traits.RarityTier}) differs from pre-generated (${existingRarity}) for token #${tokenId}. Preserving pre-generated rarity.`);
+          preservedRarity = existingRarity;
+        }
+      } catch {}
+    }
+
+    // Use pre-generated rarity if available (prevents any manipulation pathway)
+    const finalTraits = preservedRarity
+      ? { ...traits, RarityTier: preservedRarity }
+      : traits;
+
     const metadata = {
-      name: `HouseForge Agent #${tokenId} — House ${traits.House}`,
+      name: `HouseForge Agent #${tokenId} — House ${finalTraits.House}`,
       description: `A tradable Non-Fungible Agent born in HouseForge. Lineage and learning are verifiable via vaultHash/learningRoot; details live in the vault.`,
       image: `ipfs://PLACEHOLDER/${tokenId}.png`,
-      attributes: Object.entries(traits).map(([trait_type, value]) => ({
+      attributes: Object.entries(finalTraits).map(([trait_type, value]) => ({
         trait_type,
         value,
       })),
@@ -860,10 +881,19 @@ router.post('/genesis/finalize', async (req: Request, res: Response) => {
     }
 
     // 保存元数据文件
-    const metadataPath = path.join(METADATA_DIR, `${tokenId}.json`);
     fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
 
-    console.log(`[Finalize] Token #${tokenId} finalized, metadata saved to ${metadataPath}`);
+    // Log on-chain rarity mismatch for auditing
+    const onChainTier = await getOnChainRarityTier(tokenId);
+    const TIER_NAMES_LOCAL = ['Common', 'Uncommon', 'Rare', 'Epic', 'Mythic'];
+    if (onChainTier !== null) {
+      const onChainRarity = TIER_NAMES_LOCAL[onChainTier] || 'Unknown';
+      if (onChainRarity !== finalTraits.RarityTier) {
+        console.log(`[Finalize] RARITY MISMATCH: Token #${tokenId} on-chain=${onChainRarity}(${onChainTier}) metadata=${finalTraits.RarityTier} owner=${owner || 'unknown'}`);
+      }
+    }
+
+    console.log(`[Finalize] Token #${tokenId} finalized, rarity=${finalTraits.RarityTier}, metadata saved`);
 
     res.json({
       success: true,
@@ -875,6 +905,43 @@ router.post('/genesis/finalize', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Genesis finalize error:', error?.message || error);
     res.status(500).json({ error: `Failed to finalize: ${error?.message || 'Unknown error'}` });
+  }
+});
+
+// =============================================================
+//                    USER TOKEN ROUTES
+// =============================================================
+
+/**
+ * GET /user/:address/tokens
+ * Get all tokens owned by an address with lineage + metadata.
+ * Uses server-side Multicall3 with 30s cache — replaces 780+ individual RPC calls on frontend.
+ */
+router.get('/user/:address/tokens', async (req: Request, res: Response) => {
+  try {
+    const { address } = req.params;
+    if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid address' });
+    }
+
+    const tokens = await getUserTokens(address);
+
+    // Attach metadata from files
+    const tokensWithMeta = tokens.map(t => {
+      const filepath = path.join(METADATA_DIR, `${t.tokenId}.json`);
+      let metadata;
+      if (fs.existsSync(filepath)) {
+        try {
+          metadata = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+        } catch {}
+      }
+      return { ...t, metadata };
+    });
+
+    res.json({ address, count: tokensWithMeta.length, tokens: tokensWithMeta });
+  } catch (error: any) {
+    console.error('User tokens error:', error?.message);
+    res.status(500).json({ error: 'Failed to fetch user tokens' });
   }
 });
 
@@ -919,6 +986,125 @@ router.get('/stats', (_req: Request, res: Response) => {
  */
 router.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// =============================================================
+//                    AUDIT ROUTES
+// =============================================================
+
+const TIER_NAMES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Mythic'];
+
+/**
+ * GET /audit/rarity?start=1&end=50
+ * Compare on-chain rarityTier vs metadata rarityTier for a range of tokens.
+ * Flags mismatches where someone manipulated the contract's rarityTier parameter.
+ */
+router.get('/audit/rarity', async (req: Request, res: Response) => {
+  try {
+    const start = parseInt(req.query.start as string) || 1;
+    const end = parseInt(req.query.end as string) || 50;
+    const limit = Math.min(end - start + 1, 100); // Max 100 tokens per request
+
+    const mismatches: Array<{
+      tokenId: number;
+      onChainTier: number;
+      onChainRarity: string;
+      metadataRarity: string;
+      owner?: string;
+    }> = [];
+
+    const distribution = { onChain: [0, 0, 0, 0, 0], metadata: [0, 0, 0, 0, 0] };
+    let checked = 0;
+
+    for (let tokenId = start; tokenId < start + limit; tokenId++) {
+      const onChainTier = await getOnChainRarityTier(tokenId);
+      if (onChainTier === null) continue; // Token doesn't exist
+
+      checked++;
+      distribution.onChain[onChainTier]++;
+
+      // Read metadata file rarity
+      const filepath = path.join(METADATA_DIR, `${tokenId}.json`);
+      let metadataRarity = 'Unknown';
+      if (fs.existsSync(filepath)) {
+        const content = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+        const rarityAttr = content.attributes?.find((a: any) => a.trait_type === 'RarityTier');
+        metadataRarity = rarityAttr?.value || 'Unknown';
+      }
+
+      const metaTierIndex = TIER_NAMES.indexOf(metadataRarity);
+      if (metaTierIndex >= 0) distribution.metadata[metaTierIndex]++;
+
+      // Check mismatch
+      if (TIER_NAMES[onChainTier] !== metadataRarity) {
+        const owner = await getTokenOwner(tokenId);
+        mismatches.push({
+          tokenId,
+          onChainTier,
+          onChainRarity: TIER_NAMES[onChainTier] || `Unknown(${onChainTier})`,
+          metadataRarity,
+          owner: owner || undefined,
+        });
+      }
+    }
+
+    res.json({
+      range: { start, end: start + limit - 1 },
+      checked,
+      mismatchCount: mismatches.length,
+      mismatches,
+      distribution: {
+        onChain: TIER_NAMES.reduce((acc, name, i) => ({ ...acc, [name]: distribution.onChain[i] }), {}),
+        metadata: TIER_NAMES.reduce((acc, name, i) => ({ ...acc, [name]: distribution.metadata[i] }), {}),
+      },
+      note: 'Metadata rarity is the authoritative source. On-chain mismatches indicate parameter manipulation.',
+    });
+  } catch (error: any) {
+    console.error('Audit rarity error:', error);
+    res.status(500).json({ error: 'Audit failed' });
+  }
+});
+
+/**
+ * GET /audit/rarity/summary
+ * Quick summary: total supply, expected vs actual on-chain rarity distribution
+ */
+router.get('/audit/rarity/summary', async (_req: Request, res: Response) => {
+  try {
+    const supply = await getTotalSupply();
+    if (!supply) return res.status(503).json({ error: 'Cannot reach contract' });
+
+    // Count metadata rarity distribution from files
+    const metaDist: Record<string, number> = { Common: 0, Uncommon: 0, Rare: 0, Epic: 0, Mythic: 0 };
+    if (fs.existsSync(METADATA_DIR)) {
+      const files = fs.readdirSync(METADATA_DIR).filter(f => f.endsWith('.json') && f !== 'collection.json');
+      for (const file of files) {
+        const tid = parseInt(file);
+        if (isNaN(tid) || tid > supply) continue;
+        try {
+          const content = JSON.parse(fs.readFileSync(path.join(METADATA_DIR, file), 'utf8'));
+          const rarity = content.attributes?.find((a: any) => a.trait_type === 'RarityTier')?.value;
+          if (rarity && metaDist[rarity] !== undefined) metaDist[rarity]++;
+        } catch {}
+      }
+    }
+
+    const genesis = loadGenesis().genesis;
+    const expected: Record<string, number> = {};
+    for (const [rarity, prob] of Object.entries(genesis.rarity_distribution)) {
+      expected[rarity] = Math.round((prob as number) * supply);
+    }
+
+    res.json({
+      totalSupply: supply,
+      metadataDistribution: metaDist,
+      expectedDistribution: expected,
+      note: 'Metadata files are the authoritative rarity source for NFT marketplaces.',
+    });
+  } catch (error: any) {
+    console.error('Audit summary error:', error);
+    res.status(500).json({ error: 'Audit failed' });
+  }
 });
 
 // =============================================================
