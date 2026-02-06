@@ -5,7 +5,7 @@
 
 基于 BNB Chain 的 BAP-578 兼容非同质化智能体 (NFA) 系统，包含 7 大天气家族、AI 驱动的个性化对话、记忆系统和 commit-reveal 融合机制。
 
-安全声明 / Security Notice
+## 安全声明 / Security Notice
 KinForge 近日遭受匿名对手的恶意举报，导致网站被 Google Safe Browsing 错误标记为"危险网站"， 同时 X (Twitter) 账号被封禁 12 小时。我们已向 Google 提交申诉，正在加紧处理中。
 
 KinForge has been maliciously reported by anonymous adversaries, causing our site to be incorrectly flagged by Google Safe Browsing, and our X (Twitter) account was suspended for 12 hours. We have submitted an appeal to Google and are working to resolve this as quickly as possible.
