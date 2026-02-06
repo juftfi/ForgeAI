@@ -186,9 +186,11 @@ export default function RootLayout({
                 <p className="text-gray-500 text-sm">
                   © 2026 KinForge. 保留所有权利。
                 </p>
-                <p className="text-gray-600 text-xs">
-                  NFT 为数字收藏品，非投资产品。
-                </p>
+                <div className="flex items-center gap-4">
+                  <Link href="/privacy" className="text-gray-500 hover:text-amber-400 text-xs transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="text-gray-500 hover:text-amber-400 text-xs transition-colors">Terms of Service</Link>
+                  <span className="text-gray-600 text-xs">NFT 为数字收藏品，非投资产品。</span>
+                </div>
               </div>
             </div>
           </footer>
