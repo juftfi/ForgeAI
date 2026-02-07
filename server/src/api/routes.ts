@@ -2260,4 +2260,59 @@ router.get('/agent/:tokenId/profile', async (req: Request, res: Response) => {
   }
 });
 
+// =============================================================
+//  ADMIN: One-time vault rarity fix (temporary endpoint)
+// =============================================================
+
+router.post('/admin/fix-vault-rarity', async (_req: Request, res: Response) => {
+  try {
+    const adminKey = process.env.ADMIN_KEY || 'kinforge-admin-2026';
+    const authHeader = _req.headers['x-admin-key'] as string;
+    if (authHeader !== adminKey) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const vaultService = getVaultService();
+    const db = (vaultService as any).db;
+    if (!db) {
+      return res.status(500).json({ error: 'Cannot access vault database' });
+    }
+
+    const rarityCacheMap = await getRarityCache();
+
+    const vaults = db.prepare('SELECT id, token_id, traits, summary FROM vaults WHERE token_id IS NOT NULL').all() as any[];
+    let fixed = 0;
+    let skipped = 0;
+    const details: string[] = [];
+
+    const updateStmt = db.prepare('UPDATE vaults SET traits = ?, summary = ?, updated_at = ? WHERE id = ?');
+    const now = new Date().toISOString();
+
+    for (const vault of vaults) {
+      const chainRarity = rarityCacheMap.get(vault.token_id);
+      if (!chainRarity) { skipped++; continue; }
+
+      const traits = JSON.parse(vault.traits);
+      if (traits.RarityTier === chainRarity) { skipped++; continue; }
+
+      const oldRarity = traits.RarityTier;
+      traits.RarityTier = chainRarity;
+
+      let newSummary = vault.summary || '';
+      if (newSummary.includes('Rarity:')) {
+        newSummary = newSummary.replace(/Rarity:\s*\w+/, `Rarity: ${chainRarity}`);
+      }
+
+      updateStmt.run(JSON.stringify(traits), newSummary, now, vault.id);
+      fixed++;
+      if (details.length < 10) details.push(`#${vault.token_id}: ${oldRarity} → ${chainRarity}`);
+    }
+
+    res.json({ total: vaults.length, fixed, skipped, details });
+  } catch (error: any) {
+    console.error('Admin fix-vault-rarity error:', error);
+    res.status(500).json({ error: error?.message });
+  }
+});
+
 export default router;
