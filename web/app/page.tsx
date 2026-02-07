@@ -89,33 +89,6 @@ export default function Home() {
 
   return (
     <div className="space-y-24">
-      {/* Security Notice Banner */}
-      <div className="relative -mt-8 mb-[-4rem]">
-        <div className="border border-red-500/40 bg-red-950/30 backdrop-blur-sm rounded-xl p-5">
-          <div className="flex items-start gap-3">
-            <span className="text-red-400 text-xl mt-0.5 shrink-0">⚠️</span>
-            <div className="space-y-2">
-              <h3 className="text-red-400 font-semibold text-sm">安全声明 / Security Notice</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                KinForge 近日遭受匿名对手的恶意举报，导致网站被 Google Safe Browsing 错误标记为"危险网站"，
-                同时 X (Twitter) 账号被封禁 12 小时。我们已向 Google 提交申诉，正在加紧处理中。
-              </p>
-              <p className="text-gray-400 text-xs leading-relaxed">
-                KinForge has been maliciously reported by anonymous adversaries, causing our site to be incorrectly flagged by
-                Google Safe Browsing, and our X (Twitter) account was suspended for 12 hours. We have submitted an appeal to Google
-                and are working to resolve this as quickly as possible.
-              </p>
-              <div className="flex flex-wrap gap-3 pt-1">
-                <a href="/privacy" className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors">Privacy Policy →</a>
-                <a href="/terms" className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors">Terms of Service →</a>
-                <a href="https://bscscan.com/address/0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f#code" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors">Verified Contract →</a>
-                <a href="https://github.com/KinForgeLab/kinforge" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors">Open Source →</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Hero Section */}
       <section className="relative py-20 text-center">
         {/* Background glow - Gold DNA theme */}
