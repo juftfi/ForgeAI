@@ -9,8 +9,8 @@ import { CONTRACTS, HOUSE_FORGE_AGENT_ABI, HOUSES } from '@/config/contracts';
 const TIERS = ['Common', 'Uncommon', 'Rare', 'Epic', 'Mythic'] as const;
 const TIER_LABELS: Record<string, string> = {
   Common: '普通',
-  Uncommon: '非凡',
-  Rare: '稀有',
+  Uncommon: '稀有',
+  Rare: '精良',
   Epic: '史诗',
   Mythic: '神话',
 };
