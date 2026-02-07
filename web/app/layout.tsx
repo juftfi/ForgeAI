@@ -36,6 +36,7 @@ const NAV_LINKS = [
   { href: '/gallery', label: '图鉴' },
   { href: '/fusion', label: '融合' },
   { href: '/tree', label: '血脉' },
+  { href: '/query', label: '查询' },
   { href: '/whitepaper', label: '白皮书' },
   { href: '/docs', label: '文档' },
 ];
@@ -145,6 +146,7 @@ export default function RootLayout({
                     <Link href="/mint" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">铸造</Link>
                     <Link href="/fusion" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">融合实验室</Link>
                     <Link href="/tree" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">血脉树</Link>
+                    <Link href="/query" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">链上查询</Link>
                   </div>
                 </div>
 

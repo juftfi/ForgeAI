@@ -63,6 +63,14 @@ export const HOUSE_FORGE_AGENT_ABI = [
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
   },
+  // Rarity tier (0=Common, 1=Uncommon, 2=Rare, 3=Epic, 4=Mythic)
+  {
+    type: 'function',
+    name: 'getRarityTier',
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    outputs: [{ name: '', type: 'uint8' }],
+    stateMutability: 'view',
+  },
   // HouseForge specific - Public mint (S3 strategy: all params at mint)
   {
     type: 'function',
