@@ -969,6 +969,95 @@ router.get('/user/:address/tokens', async (req: Request, res: Response) => {
 });
 
 // =============================================================
+//                    GALLERY ROUTES
+// =============================================================
+
+// Cached gallery index: { tokenId, house, rarity }[]
+let galleryIndex: { tokenId: number; house: string; rarity: string }[] = [];
+let galleryIndexBuiltAt = 0;
+const GALLERY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function buildGalleryIndex() {
+  if (Date.now() - galleryIndexBuiltAt < GALLERY_CACHE_TTL && galleryIndex.length > 0) {
+    return galleryIndex;
+  }
+
+  if (!fs.existsSync(METADATA_DIR)) return [];
+
+  const rarityCacheMap = await getRarityCache();
+  const files = fs.readdirSync(METADATA_DIR)
+    .filter(f => f.endsWith('.json') && f !== 'collection.json');
+
+  const index: typeof galleryIndex = [];
+  for (const file of files) {
+    const tokenId = parseInt(file.replace('.json', ''), 10);
+    if (isNaN(tokenId)) continue;
+    try {
+      const content = JSON.parse(fs.readFileSync(path.join(METADATA_DIR, file), 'utf8'));
+      const house = content.attributes?.find((a: any) => a.trait_type === 'House')?.value || '';
+      let rarity = content.attributes?.find((a: any) => a.trait_type === 'RarityTier')?.value || 'Common';
+      const chainRarity = rarityCacheMap.get(tokenId);
+      if (chainRarity) rarity = chainRarity;
+      index.push({ tokenId, house, rarity });
+    } catch {}
+  }
+
+  index.sort((a, b) => a.tokenId - b.tokenId);
+  galleryIndex = index;
+  galleryIndexBuiltAt = Date.now();
+  return galleryIndex;
+}
+
+/**
+ * GET /gallery
+ * List tokens with server-side filtering and pagination
+ * Query params: house, rarity, page (1-based), limit (default 24)
+ */
+router.get('/gallery', async (req: Request, res: Response) => {
+  try {
+    const house = (req.query.house as string) || '';
+    const rarity = (req.query.rarity as string) || '';
+    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 24));
+
+    const index = await buildGalleryIndex();
+
+    let filtered = index;
+    if (house) {
+      filtered = filtered.filter(t => t.house === house);
+    }
+    if (rarity) {
+      filtered = filtered.filter(t => t.rarity === rarity);
+    }
+
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const offset = (page - 1) * limit;
+    const pageItems = filtered.slice(offset, offset + limit);
+
+    // Load full metadata for page items
+    const tokens = pageItems.map(item => {
+      const filepath = path.join(METADATA_DIR, `${item.tokenId}.json`);
+      try {
+        const metadata = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+        if (item.rarity) {
+          const attr = metadata.attributes?.find((a: any) => a.trait_type === 'RarityTier');
+          if (attr) attr.value = item.rarity;
+        }
+        return { id: item.tokenId, metadata };
+      } catch {
+        return { id: item.tokenId, metadata: null };
+      }
+    }).filter(t => t.metadata !== null);
+
+    res.json({ tokens, total, totalPages, page });
+  } catch (error: any) {
+    console.error('Gallery error:', error?.message);
+    res.status(500).json({ error: 'Failed to load gallery' });
+  }
+});
+
+// =============================================================
 //                    STATS ROUTES
 // =============================================================
 

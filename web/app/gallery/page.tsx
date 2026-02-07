@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 
 interface TokenMetadata {
@@ -35,9 +35,7 @@ const RARITY_NAMES: Record<string, string> = {
 // Helper to get full image URL (handle relative paths from API)
 const getImageUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
-  // If it's already absolute (http/https/ipfs), return as is
   if (url.startsWith('http') || url.startsWith('ipfs://')) return url;
-  // If it's relative, prepend API URL
   if (url.startsWith('/')) {
     return `${process.env.NEXT_PUBLIC_API_URL || ''}${url}`;
   }
@@ -51,56 +49,58 @@ export default function GalleryPage() {
   const [rarityFilter, setRarityFilter] = useState('全部');
   const [page, setPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
-  const [totalPages, setTotalPages] = useState(55); // 1310 / 24 = 54.6 -> 55
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const pageSize = 24;
 
-  useEffect(() => {
-    async function loadTokens() {
-      setLoading(true);
-      const loaded: { id: number; metadata: TokenMetadata }[] = [];
+  const loadTokens = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('limit', String(pageSize));
+      if (houseFilter !== '全部') params.set('house', houseFilter);
+      if (rarityFilter !== '全部') params.set('rarity', rarityFilter);
 
-      // Load tokens for current page
-      const start = (page - 1) * pageSize + 1;
-      const end = start + pageSize;
-
-      for (let i = start; i < end; i++) {
-        try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/metadata/${i}`);
-          if (res.ok) {
-            const metadata = await res.json();
-            loaded.push({ id: i, metadata });
-          }
-        } catch {
-          // Skip missing tokens
-        }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/gallery?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTokens(data.tokens || []);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
       }
-
-      setTokens(loaded);
-      setLoading(false);
+    } catch (e) {
+      console.error('Failed to load gallery:', e);
     }
+    setLoading(false);
+  }, [page, houseFilter, rarityFilter]);
 
+  useEffect(() => {
     loadTokens();
-  }, [page]);
+  }, [loadTokens]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+    setPageInput('1');
+  }, [houseFilter, rarityFilter]);
 
   // Sync page input with page state
   useEffect(() => {
     setPageInput(String(page));
   }, [page]);
 
-  const filteredTokens = tokens.filter(token => {
-    const house = token.metadata.attributes.find(a => a.trait_type === 'House')?.value;
-    const rarity = token.metadata.attributes.find(a => a.trait_type === 'RarityTier')?.value;
-
-    if (houseFilter !== '全部' && house !== houseFilter) return false;
-    if (rarityFilter !== '全部' && rarity !== rarityFilter) return false;
-
-    return true;
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-gold-gradient">智能体图鉴</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gold-gradient">智能体图鉴</h1>
+          {!loading && (
+            <p className="text-gray-400 text-sm mt-1">
+              共 {total} 个智能体
+            </p>
+          )}
+        </div>
         <div className="flex gap-4">
           <select
             value={houseFilter}
@@ -131,7 +131,7 @@ export default function GalleryPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredTokens.map(token => {
+            {tokens.map(token => {
               const house = token.metadata.attributes.find(a => a.trait_type === 'House')?.value || 'ALPHA';
               const rarity = token.metadata.attributes.find(a => a.trait_type === 'RarityTier')?.value || 'Common';
 
@@ -144,7 +144,6 @@ export default function GalleryPage() {
                         alt={token.metadata.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         onError={(e) => {
-                          // On error, hide image and show fallback
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
@@ -166,7 +165,7 @@ export default function GalleryPage() {
             })}
           </div>
 
-          {filteredTokens.length === 0 && (
+          {tokens.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-400">没有找到匹配的智能体</p>
             </div>
@@ -175,14 +174,14 @@ export default function GalleryPage() {
           {/* Pagination */}
           <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
             <button
-              onClick={() => { setPage(1); setPageInput('1'); }}
+              onClick={() => setPage(1)}
               disabled={page === 1}
               className="btn-secondary disabled:opacity-50"
             >
               首页
             </button>
             <button
-              onClick={() => { setPage(p => Math.max(1, p - 1)); setPageInput(String(Math.max(1, page - 1))); }}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
               className="btn-secondary disabled:opacity-50"
             >
@@ -213,14 +212,14 @@ export default function GalleryPage() {
               <span className="text-gray-400">/ {totalPages} 页</span>
             </div>
             <button
-              onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setPageInput(String(Math.min(totalPages, page + 1))); }}
-              disabled={page >= totalPages || tokens.length < pageSize}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
               className="btn-secondary disabled:opacity-50"
             >
               下一页
             </button>
             <button
-              onClick={() => { setPage(totalPages); setPageInput(String(totalPages)); }}
+              onClick={() => setPage(totalPages)}
               disabled={page >= totalPages}
               className="btn-secondary disabled:opacity-50"
             >
