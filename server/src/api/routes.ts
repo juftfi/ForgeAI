@@ -977,12 +977,27 @@ let galleryIndex: { tokenId: number; house: string; rarity: string }[] = [];
 let galleryIndexBuiltAt = 0;
 const GALLERY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Helper: get image URL for a token (same logic as /metadata/:id)
+function getGalleryImageUrl(tid: number): string {
+  const API_BASE = process.env.API_BASE_URL || 'https://houseforgeserver-production.up.railway.app';
+  const pngPath = path.join(RENDER_OUTPUT_DIR, `${tid}.png`);
+  const webpPath = path.join(RENDER_OUTPUT_DIR, `${tid}.webp`);
+  if (fs.existsSync(pngPath) || fs.existsSync(webpPath)) {
+    return `${API_BASE}/images/${tid}.png`;
+  }
+  return `${API_BASE}/placeholder/${tid}.svg`;
+}
+
 async function buildGalleryIndex() {
   if (Date.now() - galleryIndexBuiltAt < GALLERY_CACHE_TTL && galleryIndex.length > 0) {
     return galleryIndex;
   }
 
   if (!fs.existsSync(METADATA_DIR)) return [];
+
+  // Only include minted tokens (up to on-chain totalSupply)
+  const supply = await getTotalSupply();
+  const maxTokenId = supply || 1310; // fallback if RPC fails
 
   const rarityCacheMap = await getRarityCache();
   const files = fs.readdirSync(METADATA_DIR)
@@ -991,7 +1006,7 @@ async function buildGalleryIndex() {
   const index: typeof galleryIndex = [];
   for (const file of files) {
     const tokenId = parseInt(file.replace('.json', ''), 10);
-    if (isNaN(tokenId)) continue;
+    if (isNaN(tokenId) || tokenId > maxTokenId) continue;
     try {
       const content = JSON.parse(fs.readFileSync(path.join(METADATA_DIR, file), 'utf8'));
       const house = content.attributes?.find((a: any) => a.trait_type === 'House')?.value || '';
@@ -1035,15 +1050,18 @@ router.get('/gallery', async (req: Request, res: Response) => {
     const offset = (page - 1) * limit;
     const pageItems = filtered.slice(offset, offset + limit);
 
-    // Load full metadata for page items
+    // Load full metadata for page items, fix image URLs
     const tokens = pageItems.map(item => {
       const filepath = path.join(METADATA_DIR, `${item.tokenId}.json`);
       try {
         const metadata = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+        // Override rarity with on-chain value
         if (item.rarity) {
           const attr = metadata.attributes?.find((a: any) => a.trait_type === 'RarityTier');
           if (attr) attr.value = item.rarity;
         }
+        // Fix image URL (same as /metadata/:id endpoint)
+        metadata.image = getGalleryImageUrl(item.tokenId);
         return { id: item.tokenId, metadata };
       } catch {
         return { id: item.tokenId, metadata: null };
