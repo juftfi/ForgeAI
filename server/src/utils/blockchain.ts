@@ -194,6 +194,102 @@ export async function getTotalSupply(): Promise<number | null> {
 }
 
 // =============================================================
+//  On-Chain Rarity Cache (immutable — loaded once)
+// =============================================================
+
+const TIER_NAMES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Mythic'];
+
+/** tokenId -> rarity name (e.g. "Common") */
+let rarityCache: Map<number, string> | null = null;
+let rarityCachePromise: Promise<Map<number, string>> | null = null;
+
+/**
+ * Batch query getRarityTier for a range of tokens using Multicall3.
+ */
+async function batchRarityTier(startId: number, endId: number): Promise<Map<number, string>> {
+  const provider = getProvider();
+  const multicall = new ethers.Contract(MULTICALL3_ADDRESS, MULTICALL3_ABI, provider);
+  const agentIface = new ethers.Interface(AGENT_ABI);
+  const result = new Map<number, string>();
+
+  const CHUNK = 200;
+  for (let from = startId; from <= endId; from += CHUNK) {
+    const to = Math.min(from + CHUNK - 1, endId);
+    const calls = [];
+    for (let id = from; id <= to; id++) {
+      calls.push({
+        target: AGENT_CONTRACT,
+        allowFailure: true,
+        callData: agentIface.encodeFunctionData('getRarityTier', [id]),
+      });
+    }
+
+    try {
+      const responses: Array<{ success: boolean; returnData: string }> = await multicall.aggregate3(calls);
+      for (let i = 0; i < responses.length; i++) {
+        if (responses[i].success && responses[i].returnData !== '0x') {
+          try {
+            const [tier] = agentIface.decodeFunctionResult('getRarityTier', responses[i].returnData);
+            const tierNum = Number(tier);
+            if (tierNum >= 0 && tierNum < TIER_NAMES.length) {
+              result.set(from + i, TIER_NAMES[tierNum]);
+            }
+          } catch {}
+        }
+      }
+    } catch (error: any) {
+      console.error(`[Blockchain] Rarity multicall batch ${from}-${to} failed:`, error?.message?.substring(0, 150));
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Load all on-chain rarity tiers into cache. Minting is closed so this is immutable.
+ */
+async function loadRarityCache(): Promise<Map<number, string>> {
+  const supply = await getTotalSupply();
+  if (!supply) {
+    throw new Error('Cannot get totalSupply for rarity cache');
+  }
+
+  console.log(`[Blockchain] Loading on-chain rarity cache for ${supply} tokens...`);
+  const start = Date.now();
+  const cache = await batchRarityTier(1, supply);
+  console.log(`[Blockchain] Rarity cache loaded: ${cache.size} tokens in ${Date.now() - start}ms`);
+
+  rarityCache = cache;
+  return cache;
+}
+
+/**
+ * Get the on-chain rarity name for a token. Uses permanent cache.
+ * Returns e.g. "Common", "Epic", or null if token not found.
+ */
+export async function getOnChainRarity(tokenId: number): Promise<string | null> {
+  if (!rarityCache) {
+    if (!rarityCachePromise) {
+      rarityCachePromise = loadRarityCache().finally(() => { rarityCachePromise = null; });
+    }
+    const cache = await rarityCachePromise;
+    return cache.get(tokenId) ?? null;
+  }
+  return rarityCache.get(tokenId) ?? null;
+}
+
+/**
+ * Get the full rarity cache map. Loads if not yet loaded.
+ */
+export async function getRarityCache(): Promise<Map<number, string>> {
+  if (rarityCache) return rarityCache;
+  if (!rarityCachePromise) {
+    rarityCachePromise = loadRarityCache().finally(() => { rarityCachePromise = null; });
+  }
+  return rarityCachePromise;
+}
+
+// =============================================================
 //  Ownership Cache + Multicall Batch Queries
 // =============================================================
 

@@ -9,7 +9,7 @@ import { getMoodService, MOOD_CONFIG } from '../services/mood.js';
 import { getRelationshipService, RELATIONSHIP_LEVELS } from '../services/relationship.js';
 import { getTopicService, TOPIC_CONFIG } from '../services/topic.js';
 import { getKeyPool } from '../services/keyPool.js';
-import { verifyTokenOwnership, getTokenOwner, getOnChainRarityTier, getTotalSupply, getUserTokens } from '../utils/blockchain.js';
+import { verifyTokenOwnership, getTokenOwner, getOnChainRarityTier, getTotalSupply, getUserTokens, getOnChainRarity, getRarityCache } from '../utils/blockchain.js';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
@@ -150,7 +150,7 @@ const RENDER_RECIPES_DIR = path.resolve(process.cwd(), 'data/render/recipes');
  * GET /metadata/:tokenId
  * Get token metadata (OpenSea format)
  */
-router.get('/metadata/:tokenId', (req: Request, res: Response) => {
+router.get('/metadata/:tokenId', async (req: Request, res: Response) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId) || tokenId < 1) {
@@ -175,6 +175,20 @@ router.get('/metadata/:tokenId', (req: Request, res: Response) => {
       return `${API_BASE}/placeholder/${tid}.svg`;
     };
 
+    // Get on-chain rarity (authoritative source, immutable)
+    const onChainRarity = await getOnChainRarity(tokenId);
+
+    // Helper: override RarityTier attribute with on-chain value
+    const overrideRarity = (metadata: any) => {
+      if (onChainRarity && metadata.attributes) {
+        const attr = metadata.attributes.find((a: any) => a.trait_type === 'RarityTier');
+        if (attr) {
+          attr.value = onChainRarity;
+        }
+      }
+      return metadata;
+    };
+
     // Try to read from file first
     const filepath = path.join(METADATA_DIR, `${tokenId}.json`);
     if (fs.existsSync(filepath)) {
@@ -182,7 +196,7 @@ router.get('/metadata/:tokenId', (req: Request, res: Response) => {
       const metadata = JSON.parse(content);
       // Override image URL to use working URL
       metadata.image = getImageUrl(tokenId);
-      return res.json(metadata);
+      return res.json(overrideRarity(metadata));
     }
 
     // Try to get from vault
@@ -200,7 +214,7 @@ router.get('/metadata/:tokenId', (req: Request, res: Response) => {
           value,
         })),
       };
-      return res.json(metadata);
+      return res.json(overrideRarity(metadata));
     }
 
     res.status(404).json({ error: 'Metadata not found' });
@@ -635,7 +649,7 @@ router.get('/genesis/preview/:house', (req: Request, res: Response) => {
  * GET /genesis/available/:house
  * Get list of available (unminted) genesis agents for a house
  */
-router.get('/genesis/available/:house', (req: Request, res: Response) => {
+router.get('/genesis/available/:house', async (req: Request, res: Response) => {
   try {
     const { house } = req.params;
     const limit = parseInt(req.query.limit as string, 10) || 20;
@@ -651,6 +665,7 @@ router.get('/genesis/available/:house', (req: Request, res: Response) => {
       return res.status(404).json({ error: 'No genesis agents found' });
     }
 
+    const rarityCacheMap = await getRarityCache();
     const files = fs.readdirSync(METADATA_DIR)
       .filter(f => f.endsWith('.json') && f !== 'collection.json');
 
@@ -667,9 +682,11 @@ router.get('/genesis/available/:house', (req: Request, res: Response) => {
       if (houseAttr?.value === houseUpper) {
         const rarityAttr = metadata.attributes?.find((a: any) => a.trait_type === 'RarityTier');
         const weatherIdAttr = metadata.attributes?.find((a: any) => a.trait_type === 'WeatherID');
+        // Use on-chain rarity if available, otherwise file value
+        const chainRarity = rarityCacheMap.get(tokenId);
         availableAgents.push({
           tokenId,
-          rarity: rarityAttr?.value || 'Common',
+          rarity: chainRarity || rarityAttr?.value || 'Common',
           weatherId: weatherIdAttr?.value || `S0-${houseUpper}-${tokenId}`,
         });
       }
@@ -925,14 +942,20 @@ router.get('/user/:address/tokens', async (req: Request, res: Response) => {
     }
 
     const tokens = await getUserTokens(address);
+    const rarityCacheMap = await getRarityCache();
 
-    // Attach metadata from files
+    // Attach metadata from files, override rarity with on-chain
     const tokensWithMeta = tokens.map(t => {
       const filepath = path.join(METADATA_DIR, `${t.tokenId}.json`);
       let metadata;
       if (fs.existsSync(filepath)) {
         try {
           metadata = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+          const chainRarity = rarityCacheMap.get(t.tokenId);
+          if (chainRarity && metadata.attributes) {
+            const attr = metadata.attributes.find((a: any) => a.trait_type === 'RarityTier');
+            if (attr) attr.value = chainRarity;
+          }
         } catch {}
       }
       return { ...t, metadata };
