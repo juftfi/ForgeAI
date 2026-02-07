@@ -32,7 +32,7 @@ const HOUSE_NAMES: Record<number, string> = {
 const RARITY_NAMES: Record<string, string> = {
   'Common': '普通',
   'Uncommon': '稀有',
-  'Rare': '珍稀',
+  'Rare': '精良',
   'Epic': '史诗',
   'Mythic': '神话',
 };
