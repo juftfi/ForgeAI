@@ -30,7 +30,7 @@ const CRYPTO_PRICE_TOOL = {
   type: 'function' as const,
   function: {
     name: 'crypto_price',
-    description: 'Get real-time cryptocurrency prices. Use this when the user asks about the current price of any cryptocurrency or token (BTC, ETH, BNB, SOL, etc). Returns live market data.',
+    description: 'Get general cryptocurrency prices from CoinGecko aggregated data. ONLY use this for general price queries. If the user mentions a specific exchange like Binance/币安/OKX/Bybit, do NOT use this tool — use read_url with that exchange API instead. Example: for Binance BTC/USDT, use read_url with url=https://data-api.binance.vision/api/v3/ticker/24hr?symbol=BTCUSDT',
     parameters: {
       type: 'object',
       properties: {
@@ -53,7 +53,7 @@ const READ_URL_TOOL = {
   type: 'function' as const,
   function: {
     name: 'read_url',
-    description: 'Fetch and read content from a URL. Use this when: (1) the user pastes a link in chat, (2) the user asks to check a specific website, (3) reading public API endpoints (e.g., Binance API, CoinGecko API). Works with both web pages (HTML→text) and JSON APIs.',
+    description: 'Fetch and read content from a URL. MUST use this when user mentions a specific exchange (Binance/币安/OKX/Bybit). For Binance price with timestamp, use https://data-api.binance.vision/api/v3/ticker/24hr?symbol=BTCUSDT (closeTime is ms timestamp). Also use for: (1) user pastes a link, (2) checking a website, (3) reading public APIs. Works with both web pages (HTML→text) and JSON APIs.',
     parameters: {
       type: 'object',
       properties: {
@@ -143,8 +143,9 @@ async function fetchUrlContent(url: string): Promise<string> {
         result = 'Page loaded but no readable content found.';
       }
 
+      const fetchTimestamp = new Date().toISOString();
       console.log(`[ReadURL] Success: ${tryUrl} (${result.length} chars)`);
-      return result;
+      return `${result}\n\n---\nSource URL: ${tryUrl}\nFetched at: ${fetchTimestamp}`;
     } catch (error) {
       const msg = (error as Error).message;
       console.error(`[ReadURL] Error for ${tryUrl}: ${msg}`);
@@ -270,7 +271,8 @@ async function tavilySearch(query: string): Promise<string> {
 // CoinGecko Price Lookup (free, no API key needed)
 async function cryptoPriceLookup(coins: string, vsCurrency: string = 'usd'): Promise<string> {
   try {
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coins)}&vs_currencies=${vsCurrency}&include_24hr_change=true&include_market_cap=true`;
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coins)}&vs_currencies=${vsCurrency}&include_24hr_change=true&include_market_cap=true&include_last_updated_at=true`;
+    const fetchedAt = new Date().toISOString();
 
     const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
@@ -290,6 +292,7 @@ async function cryptoPriceLookup(coins: string, vsCurrency: string = 'usd'): Pro
       const price = info[vsCurrency];
       const change = info[`${vsCurrency}_24h_change`];
       const marketCap = info[`${vsCurrency}_market_cap`];
+      const lastUpdated = info['last_updated_at'];
 
       if (price !== undefined) {
         const changeStr = change !== undefined
@@ -298,14 +301,17 @@ async function cryptoPriceLookup(coins: string, vsCurrency: string = 'usd'): Pro
         const mcStr = marketCap !== undefined
           ? ` | Market Cap: ${formatMarketCap(marketCap, vsCurrency)}`
           : '';
-        formatted += `${coinId}: ${formatPrice(price, vsCurrency)}${changeStr}${mcStr}\n`;
+        const timeStr = lastUpdated
+          ? ` | Updated: ${new Date(lastUpdated * 1000).toISOString()}`
+          : '';
+        formatted += `${coinId}: ${formatPrice(price, vsCurrency)}${changeStr}${mcStr}${timeStr}\n`;
       }
     }
 
     const result = formatted || `No price data found for: ${coins}`;
 
     console.log(`[CryptoPrice] Success: ${coins}`);
-    return result;
+    return `${result}\nData source: CoinGecko API\nFetched at: ${fetchedAt}`;
   } catch (error) {
     return `Price lookup error: ${(error as Error).message}`;
   }
