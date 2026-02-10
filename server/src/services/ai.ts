@@ -48,6 +48,102 @@ const CRYPTO_PRICE_TOOL = {
   },
 };
 
+// Read URL Tool Definition (web pages + public APIs)
+const READ_URL_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'read_url',
+    description: 'Fetch and read content from a URL. Use this when: (1) the user pastes a link in chat, (2) the user asks to check a specific website, (3) reading public API endpoints (e.g., Binance API, CoinGecko API). Works with both web pages (HTML→text) and JSON APIs.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The full URL to fetch (must start with http:// or https://)',
+        },
+      },
+      required: ['url'],
+    },
+  },
+};
+
+// URL Fetch with cache
+const urlCache = new Map<string, { result: string; expiry: number }>();
+const URL_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+
+async function fetchUrlContent(url: string): Promise<string> {
+  // Validate URL
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return 'Invalid URL: must start with http:// or https://';
+  }
+
+  // Check cache
+  const cached = urlCache.get(url);
+  if (cached && cached.expiry > Date.now()) {
+    console.log(`[ReadURL] Cache hit: ${url}`);
+    return cached.result;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; KinForgeAgent/1.0)',
+        'Accept': 'text/html,application/json,text/plain,*/*',
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return `Failed to fetch URL: HTTP ${response.status}`;
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    let result: string;
+
+    if (contentType.includes('application/json')) {
+      // JSON API response — return formatted
+      const json = await response.json();
+      const jsonStr = JSON.stringify(json, null, 2);
+      result = jsonStr.length > 4000 ? jsonStr.slice(0, 4000) + '\n... (truncated)' : jsonStr;
+    } else {
+      // HTML or text — strip tags, extract readable text
+      const html = await response.text();
+      const text = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+      result = text.length > 4000 ? text.slice(0, 4000) + '... (truncated)' : text;
+    }
+
+    if (!result || result.length < 10) {
+      result = 'Page loaded but no readable content found.';
+    }
+
+    // Cache result
+    urlCache.set(url, { result, expiry: Date.now() + URL_CACHE_TTL });
+    console.log(`[ReadURL] Success: ${url} (${result.length} chars)`);
+    return result;
+  } catch (error) {
+    const msg = (error as Error).message;
+    if (msg.includes('abort')) {
+      return 'URL fetch timed out (10s limit).';
+    }
+    return `URL fetch error: ${msg}`;
+  }
+}
+
 // Tavily Search with Rate Limiting & Caching
 const searchRateLimit = {
   hourlyCount: 0,
@@ -432,9 +528,12 @@ export class AIClient {
     };
 
     if (enableTools) {
-      // crypto_price always available (free CoinGecko API, no key needed)
+      // crypto_price + read_url always available (free, no key needed)
       // web_search only available when TAVILY_API_KEY is configured
-      const tools: Array<typeof WEB_SEARCH_TOOL | typeof CRYPTO_PRICE_TOOL> = [CRYPTO_PRICE_TOOL];
+      const tools: Array<typeof WEB_SEARCH_TOOL | typeof CRYPTO_PRICE_TOOL | typeof READ_URL_TOOL> = [
+        CRYPTO_PRICE_TOOL,
+        READ_URL_TOOL,
+      ];
       if (hasTavily) {
         tools.push(WEB_SEARCH_TOOL);
       }
@@ -459,7 +558,7 @@ export class AIClient {
     const data = await response.json() as OpenAIChatResponse;
     const choice = data.choices[0];
 
-    // Handle tool calls (web search or crypto price)
+    // Handle tool calls (web search, crypto price, or read URL)
     if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
       const toolCall = choice.message.tool_calls[0];
       let toolResult: string | null = null;
@@ -472,6 +571,10 @@ export class AIClient {
         const args = JSON.parse(toolCall.function.arguments);
         console.log(`[CryptoPrice] Coins: ${args.coins}, Currency: ${args.vs_currency || 'usd'}`);
         toolResult = await cryptoPriceLookup(args.coins, args.vs_currency || 'usd');
+      } else if (toolCall.function.name === 'read_url') {
+        const args = JSON.parse(toolCall.function.arguments);
+        console.log(`[ReadURL] URL: ${args.url}`);
+        toolResult = await fetchUrlContent(args.url);
       }
 
       if (toolResult) {
