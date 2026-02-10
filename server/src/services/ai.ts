@@ -183,6 +183,9 @@ function normalizeQuery(query: string): string {
   return query.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
+// Detect if a query is news-related
+const NEWS_KEYWORDS = /news|新闻|最新|今天|今日|latest|recent|breaking|update|动态|热点|headline/i;
+
 async function tavilySearch(query: string): Promise<string> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) {
@@ -216,24 +219,38 @@ async function tavilySearch(query: string): Promise<string> {
     searchRateLimit.hourlyCount++;
     searchRateLimit.dailyCount++;
 
+    // Auto-detect news queries for better results
+    const isNewsQuery = NEWS_KEYWORDS.test(query);
+    const searchParams: Record<string, unknown> = {
+      api_key: apiKey,
+      query,
+      max_results: 5,
+      include_answer: true,
+      search_depth: 'advanced',
+    };
+
+    if (isNewsQuery) {
+      searchParams.topic = 'news';
+      searchParams.days = 3;  // Only last 3 days for freshness
+    }
+
+    console.log(`[WebSearch] Searching: "${query}" (topic: ${isNewsQuery ? 'news' : 'general'}, depth: advanced)`);
+
     const response = await fetch('https://api.tavily.com/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key: apiKey,
-        query,
-        max_results: 5,
-        include_answer: true,
-      }),
+      body: JSON.stringify(searchParams),
     });
 
     if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      console.error(`[WebSearch] API error: ${response.status} - ${errBody.slice(0, 200)}`);
       return `Search failed: ${response.status}`;
     }
 
     const data = await response.json() as {
       answer?: string;
-      results?: Array<{ title?: string; content?: string; url?: string }>;
+      results?: Array<{ title?: string; content?: string; url?: string; published_date?: string }>;
     };
 
     // Format results for the AI
@@ -241,20 +258,23 @@ async function tavilySearch(query: string): Promise<string> {
     if (data.answer) {
       formatted += `Summary: ${data.answer}\n\n`;
     }
-    if (data.results) {
+    if (data.results && data.results.length > 0) {
       formatted += 'Sources:\n';
-      for (const r of data.results.slice(0, 3)) {
-        formatted += `- ${r.title}: ${r.content?.slice(0, 200)}... (${r.url})\n`;
+      for (const r of data.results.slice(0, 5)) {
+        const date = r.published_date ? ` [${r.published_date}]` : '';
+        formatted += `- ${r.title}${date}: ${r.content?.slice(0, 200)}... (${r.url})\n`;
       }
     }
     const result = formatted || 'No results found';
 
-    // Cache the result
-    searchCache.set(cacheKey, { result, expiry: Date.now() + CACHE_TTL });
+    // Cache the result (shorter TTL for news)
+    const ttl = isNewsQuery ? 5 * 60 * 1000 : CACHE_TTL; // 5min for news, 10min for general
+    searchCache.set(cacheKey, { result, expiry: Date.now() + ttl });
 
-    console.log(`[WebSearch] Success (today: ${searchRateLimit.dailyCount}/${searchRateLimit.maxPerDay})`);
+    console.log(`[WebSearch] Success: ${data.results?.length || 0} results (today: ${searchRateLimit.dailyCount}/${searchRateLimit.maxPerDay})`);
     return result;
   } catch (error) {
+    console.error(`[WebSearch] Error: ${(error as Error).message}`);
     return `Search error: ${(error as Error).message}`;
   }
 }
