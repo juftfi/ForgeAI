@@ -558,9 +558,37 @@ export class AIClient {
     const data = await response.json() as OpenAIChatResponse;
     const choice = data.choices[0];
 
+    // Detect if GPT refused to use tools when it should have (e.g., short follow-up "现在呢?")
+    // If response contains "can't get data" phrases and tools are enabled, retry with tool_choice: 'required'
+    if (enableTools && !choice?.message?.tool_calls?.length && choice?.message?.content) {
+      const refusalPatterns = /无法获取|暂时无法|无法访问|没有.*实时|can't access|cannot access|don't have access|unable to (get|fetch|access|retrieve)|I lack the ability/i;
+      if (refusalPatterns.test(choice.message.content)) {
+        console.log(`[ToolCall] GPT refused to use tools, retrying with tool_choice=required`);
+        const retryBody = { ...body, tool_choice: 'required' };
+        const retryResponse = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`,
+          },
+          body: JSON.stringify(retryBody),
+        });
+        if (retryResponse.ok) {
+          const retryData = await retryResponse.json() as OpenAIChatResponse;
+          const retryChoice = retryData.choices[0];
+          if (retryChoice?.message?.tool_calls?.length) {
+            // Use the retried response instead
+            data.choices[0] = retryChoice;
+          }
+        }
+      }
+    }
+
+    const finalChoice = data.choices[0];
+
     // Handle tool calls (web search, crypto price, or read URL)
-    if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
-      const toolCall = choice.message.tool_calls[0];
+    if (finalChoice?.message?.tool_calls && finalChoice.message.tool_calls.length > 0) {
+      const toolCall = finalChoice.message.tool_calls[0];
       let toolResult: string | null = null;
 
       if (toolCall.function.name === 'web_search') {
@@ -616,7 +644,7 @@ export class AIClient {
       }
     }
 
-    return choice?.message?.content || '';
+    return finalChoice?.message?.content || '';
   }
 
   private async chatAnthropic(messages: AIMessage[], options?: ChatOptions, apiKey?: string): Promise<string> {
