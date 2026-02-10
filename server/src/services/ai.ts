@@ -67,10 +67,6 @@ const READ_URL_TOOL = {
   },
 };
 
-// URL Fetch with cache
-const urlCache = new Map<string, { result: string; expiry: number }>();
-const URL_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
-
 // Domain fallbacks for geo-blocked APIs
 const DOMAIN_FALLBACKS: Record<string, string[]> = {
   'api.binance.com': ['data-api.binance.vision', 'api1.binance.com', 'api2.binance.com'],
@@ -80,13 +76,6 @@ async function fetchUrlContent(url: string): Promise<string> {
   // Validate URL
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return 'Invalid URL: must start with http:// or https://';
-  }
-
-  // Check cache
-  const cached = urlCache.get(url);
-  if (cached && cached.expiry > Date.now()) {
-    console.log(`[ReadURL] Cache hit: ${url}`);
-    return cached.result;
   }
 
   // Build URL list: original + fallbacks
@@ -154,8 +143,6 @@ async function fetchUrlContent(url: string): Promise<string> {
         result = 'Page loaded but no readable content found.';
       }
 
-      // Cache with original URL as key
-      urlCache.set(url, { result, expiry: Date.now() + URL_CACHE_TTL });
       console.log(`[ReadURL] Success: ${tryUrl} (${result.length} chars)`);
       return result;
     } catch (error) {
