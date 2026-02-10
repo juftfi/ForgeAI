@@ -98,10 +98,12 @@ async function fetchUrlContent(url: string): Promise<string> {
     clearTimeout(timeout);
 
     if (!response.ok) {
-      return `Failed to fetch URL: HTTP ${response.status}`;
+      console.error(`[ReadURL] HTTP error: ${response.status} for ${url}`);
+      return `Failed to fetch URL: HTTP ${response.status}. The server may be blocking automated requests.`;
     }
 
     const contentType = response.headers.get('content-type') || '';
+    console.log(`[ReadURL] Content-Type: ${contentType}, Status: ${response.status}`);
     let result: string;
 
     if (contentType.includes('application/json')) {
@@ -137,8 +139,9 @@ async function fetchUrlContent(url: string): Promise<string> {
     return result;
   } catch (error) {
     const msg = (error as Error).message;
+    console.error(`[ReadURL] Fetch error for ${url}: ${msg}`);
     if (msg.includes('abort')) {
-      return 'URL fetch timed out (10s limit).';
+      return 'URL fetch timed out (10s limit). The website may be slow or blocking requests.';
     }
     return `URL fetch error: ${msg}`;
   }
@@ -577,13 +580,17 @@ export class AIClient {
         toolResult = await fetchUrlContent(args.url);
       }
 
+      console.log(`[ToolCall] ${toolCall.function.name} result: ${toolResult ? toolResult.slice(0, 200) : 'null'}`);
+
       if (toolResult) {
         // Build follow-up messages with tool results
         const followUpMessages = [
           ...messages.map(m => ({ role: m.role, content: m.content })),
-          { role: 'assistant' as const, content: null, tool_calls: [toolCall] },
+          { role: 'assistant' as const, content: '', tool_calls: [toolCall] },
           { role: 'tool' as const, tool_call_id: toolCall.id, content: toolResult },
         ];
+
+        console.log(`[ToolCall] Sending follow-up to GPT with tool result (${toolResult.length} chars)`);
 
         const followUpResponse = await fetch(`${baseUrl}/chat/completions`, {
           method: 'POST',
@@ -601,11 +608,14 @@ export class AIClient {
 
         if (!followUpResponse.ok) {
           const error = await followUpResponse.json().catch(() => ({}));
+          console.error(`[ToolCall] Follow-up API error: ${followUpResponse.status}`, JSON.stringify(error));
           throw new Error(`OpenAI API error (follow-up): ${followUpResponse.status} - ${JSON.stringify(error)}`);
         }
 
         const followUpData = await followUpResponse.json() as OpenAIChatResponse;
-        return followUpData.choices[0]?.message?.content || '';
+        const finalResponse = followUpData.choices[0]?.message?.content || '';
+        console.log(`[ToolCall] Final response (${finalResponse.length} chars): ${finalResponse.slice(0, 100)}...`);
+        return finalResponse;
       }
     }
 
