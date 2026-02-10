@@ -172,9 +172,6 @@ const searchRateLimit = {
   maxPerDay: parseInt(process.env.SEARCH_MAX_PER_DAY || '500', 10),
 };
 
-const searchCache = new Map<string, { result: string; expiry: number }>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
 function checkSearchRateLimit(): string | null {
   const now = Date.now();
   if (now > searchRateLimit.hourlyReset) {
@@ -194,10 +191,6 @@ function checkSearchRateLimit(): string | null {
   return null;
 }
 
-function normalizeQuery(query: string): string {
-  return query.toLowerCase().trim().replace(/\s+/g, ' ');
-}
-
 // Detect if a query is news-related
 const NEWS_KEYWORDS = /news|新闻|最新|今天|今日|latest|recent|breaking|update|动态|热点|headline/i;
 
@@ -212,22 +205,6 @@ async function tavilySearch(query: string): Promise<string> {
   if (rateLimitMsg) {
     console.warn(`[WebSearch] Rate limited: ${rateLimitMsg}`);
     return rateLimitMsg;
-  }
-
-  // Check cache
-  const cacheKey = normalizeQuery(query);
-  const cached = searchCache.get(cacheKey);
-  if (cached && cached.expiry > Date.now()) {
-    console.log(`[WebSearch] Cache hit: "${query}"`);
-    return cached.result;
-  }
-
-  // Clean expired cache entries periodically
-  if (searchCache.size > 100) {
-    const now = Date.now();
-    for (const [k, v] of searchCache) {
-      if (v.expiry < now) searchCache.delete(k);
-    }
   }
 
   try {
@@ -282,10 +259,6 @@ async function tavilySearch(query: string): Promise<string> {
     }
     const result = formatted || 'No results found';
 
-    // Cache the result (shorter TTL for news)
-    const ttl = isNewsQuery ? 5 * 60 * 1000 : CACHE_TTL; // 5min for news, 10min for general
-    searchCache.set(cacheKey, { result, expiry: Date.now() + ttl });
-
     console.log(`[WebSearch] Success: ${data.results?.length || 0} results (today: ${searchRateLimit.dailyCount}/${searchRateLimit.maxPerDay})`);
     return result;
   } catch (error) {
@@ -295,17 +268,7 @@ async function tavilySearch(query: string): Promise<string> {
 }
 
 // CoinGecko Price Lookup (free, no API key needed)
-const priceCache = new Map<string, { result: string; expiry: number }>();
-const PRICE_CACHE_TTL = 60 * 1000; // 1 minute (prices update fast)
-
 async function cryptoPriceLookup(coins: string, vsCurrency: string = 'usd'): Promise<string> {
-  const cacheKey = `${coins.toLowerCase()}_${vsCurrency}`;
-  const cached = priceCache.get(cacheKey);
-  if (cached && cached.expiry > Date.now()) {
-    console.log(`[CryptoPrice] Cache hit: ${coins}`);
-    return cached.result;
-  }
-
   try {
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coins)}&vs_currencies=${vsCurrency}&include_24hr_change=true&include_market_cap=true`;
 
@@ -341,7 +304,6 @@ async function cryptoPriceLookup(coins: string, vsCurrency: string = 'usd'): Pro
 
     const result = formatted || `No price data found for: ${coins}`;
 
-    priceCache.set(cacheKey, { result, expiry: Date.now() + PRICE_CACHE_TTL });
     console.log(`[CryptoPrice] Success: ${coins}`);
     return result;
   } catch (error) {
