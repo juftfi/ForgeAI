@@ -235,7 +235,7 @@ describe('Tavily Search (mocked)', () => {
   });
 
   it('handles empty results', () => {
-    const data = { results: [] };
+    const data: { results: Array<{ title?: string; content?: string; url?: string }> } = { results: [] };
     let formatted = '';
     if (data.results && data.results.length > 0) {
       formatted += 'Sources:\n';
@@ -247,7 +247,7 @@ describe('Tavily Search (mocked)', () => {
   });
 
   it('handles answer-only response (no results)', () => {
-    const data = { answer: 'The weather is sunny', results: [] };
+    const data: { answer: string; results: Array<{ title?: string; content?: string; url?: string }> } = { answer: 'The weather is sunny', results: [] };
     let formatted = '';
     if (data.answer) {
       formatted += `Summary: ${data.answer}\n\n`;
