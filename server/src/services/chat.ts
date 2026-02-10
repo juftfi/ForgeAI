@@ -249,10 +249,11 @@ export class ChatService {
       });
     }
 
-    // Call AI
+    // Call AI (with web search if TAVILY_API_KEY configured)
     const response = await this.aiClient.chat(aiMessages, {
       temperature: this.getTemperatureForPersona(profile.personaVector),
       maxTokens: 512,
+      enableWebSearch: true,
     });
 
     // Store agent response

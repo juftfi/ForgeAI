@@ -158,6 +158,7 @@ export interface ChatOptions {
   temperature?: number;
   maxTokens?: number;
   stopSequences?: string[];
+  enableWebSearch?: boolean;
 }
 
 export interface EmbeddingResult {

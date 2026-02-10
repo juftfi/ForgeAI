@@ -9,12 +9,151 @@ import { getKeyPool, KeyPoolConfig } from './keyPool.js';
 
 export type AIProvider = 'openai' | 'anthropic';
 
+// Web Search Tool Definition
+const WEB_SEARCH_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'web_search',
+    description: 'Search the internet for real-time information when the user asks about recent events, current prices, weather, news, live data, or anything requiring up-to-date information beyond your training data.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'The search query in the same language as the user message' },
+      },
+      required: ['query'],
+    },
+  },
+};
+
+// Tavily Search with Rate Limiting & Caching
+const searchRateLimit = {
+  hourlyCount: 0,
+  dailyCount: 0,
+  hourlyReset: Date.now() + 3600_000,
+  dailyReset: Date.now() + 86400_000,
+  maxPerHour: parseInt(process.env.SEARCH_MAX_PER_HOUR || '50', 10),
+  maxPerDay: parseInt(process.env.SEARCH_MAX_PER_DAY || '500', 10),
+};
+
+const searchCache = new Map<string, { result: string; expiry: number }>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function checkSearchRateLimit(): string | null {
+  const now = Date.now();
+  if (now > searchRateLimit.hourlyReset) {
+    searchRateLimit.hourlyCount = 0;
+    searchRateLimit.hourlyReset = now + 3600_000;
+  }
+  if (now > searchRateLimit.dailyReset) {
+    searchRateLimit.dailyCount = 0;
+    searchRateLimit.dailyReset = now + 86400_000;
+  }
+  if (searchRateLimit.hourlyCount >= searchRateLimit.maxPerHour) {
+    return 'Web search temporarily unavailable: hourly limit reached. Please try again later.';
+  }
+  if (searchRateLimit.dailyCount >= searchRateLimit.maxPerDay) {
+    return 'Web search temporarily unavailable: daily limit reached. Please try again tomorrow.';
+  }
+  return null;
+}
+
+function normalizeQuery(query: string): string {
+  return query.toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+async function tavilySearch(query: string): Promise<string> {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) {
+    return 'Web search unavailable: TAVILY_API_KEY not configured';
+  }
+
+  // Check rate limit
+  const rateLimitMsg = checkSearchRateLimit();
+  if (rateLimitMsg) {
+    console.warn(`[WebSearch] Rate limited: ${rateLimitMsg}`);
+    return rateLimitMsg;
+  }
+
+  // Check cache
+  const cacheKey = normalizeQuery(query);
+  const cached = searchCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    console.log(`[WebSearch] Cache hit: "${query}"`);
+    return cached.result;
+  }
+
+  // Clean expired cache entries periodically
+  if (searchCache.size > 100) {
+    const now = Date.now();
+    for (const [k, v] of searchCache) {
+      if (v.expiry < now) searchCache.delete(k);
+    }
+  }
+
+  try {
+    searchRateLimit.hourlyCount++;
+    searchRateLimit.dailyCount++;
+
+    const response = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        max_results: 5,
+        include_answer: true,
+      }),
+    });
+
+    if (!response.ok) {
+      return `Search failed: ${response.status}`;
+    }
+
+    const data = await response.json() as {
+      answer?: string;
+      results?: Array<{ title?: string; content?: string; url?: string }>;
+    };
+
+    // Format results for the AI
+    let formatted = '';
+    if (data.answer) {
+      formatted += `Summary: ${data.answer}\n\n`;
+    }
+    if (data.results) {
+      formatted += 'Sources:\n';
+      for (const r of data.results.slice(0, 3)) {
+        formatted += `- ${r.title}: ${r.content?.slice(0, 200)}... (${r.url})\n`;
+      }
+    }
+    const result = formatted || 'No results found';
+
+    // Cache the result
+    searchCache.set(cacheKey, { result, expiry: Date.now() + CACHE_TTL });
+
+    console.log(`[WebSearch] Success (today: ${searchRateLimit.dailyCount}/${searchRateLimit.maxPerDay})`);
+    return result;
+  } catch (error) {
+    return `Search error: ${(error as Error).message}`;
+  }
+}
+
 // API Response Types
+interface OpenAIToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
 interface OpenAIChatResponse {
   choices: Array<{
     message?: {
       content?: string;
+      tool_calls?: OpenAIToolCall[];
     };
+    finish_reason?: string;
   }>;
 }
 
@@ -184,22 +323,31 @@ export class AIClient {
     const baseUrl = this.config.baseUrl || 'https://api.openai.com/v1';
     const key = apiKey || this.getApiKey('openai');
 
+    const enableSearch = options?.enableWebSearch && !!process.env.TAVILY_API_KEY;
+
+    const body: Record<string, unknown> = {
+      model,
+      messages: messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      })),
+      temperature: options?.temperature ?? 0.7,
+      max_tokens: options?.maxTokens ?? 1024,
+      stop: options?.stopSequences,
+    };
+
+    if (enableSearch) {
+      body.tools = [WEB_SEARCH_TOOL];
+      body.tool_choice = 'auto';
+    }
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
       },
-      body: JSON.stringify({
-        model,
-        messages: messages.map(m => ({
-          role: m.role,
-          content: m.content,
-        })),
-        temperature: options?.temperature ?? 0.7,
-        max_tokens: options?.maxTokens ?? 1024,
-        stop: options?.stopSequences,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -208,7 +356,48 @@ export class AIClient {
     }
 
     const data = await response.json() as OpenAIChatResponse;
-    return data.choices[0]?.message?.content || '';
+    const choice = data.choices[0];
+
+    // Handle tool calls (web search)
+    if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+      const toolCall = choice.message.tool_calls[0];
+      if (toolCall.function.name === 'web_search') {
+        const args = JSON.parse(toolCall.function.arguments);
+        console.log(`[WebSearch] Query: ${args.query}`);
+        const searchResults = await tavilySearch(args.query);
+
+        // Build follow-up messages with search results
+        const followUpMessages = [
+          ...messages.map(m => ({ role: m.role, content: m.content })),
+          { role: 'assistant' as const, content: null, tool_calls: [toolCall] },
+          { role: 'tool' as const, tool_call_id: toolCall.id, content: searchResults },
+        ];
+
+        const followUpResponse = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: followUpMessages,
+            temperature: options?.temperature ?? 0.7,
+            max_tokens: options?.maxTokens ?? 1024,
+          }),
+        });
+
+        if (!followUpResponse.ok) {
+          const error = await followUpResponse.json().catch(() => ({}));
+          throw new Error(`OpenAI API error (follow-up): ${followUpResponse.status} - ${JSON.stringify(error)}`);
+        }
+
+        const followUpData = await followUpResponse.json() as OpenAIChatResponse;
+        return followUpData.choices[0]?.message?.content || '';
+      }
+    }
+
+    return choice?.message?.content || '';
   }
 
   private async chatAnthropic(messages: AIMessage[], options?: ChatOptions, apiKey?: string): Promise<string> {
