@@ -14,13 +14,36 @@ const WEB_SEARCH_TOOL = {
   type: 'function' as const,
   function: {
     name: 'web_search',
-    description: 'Search the internet for real-time information when the user asks about recent events, current prices, weather, news, live data, or anything requiring up-to-date information beyond your training data.',
+    description: 'Search the internet for real-time information about news, events, people, weather, or general knowledge questions that need up-to-date answers. Do NOT use this for cryptocurrency/token prices - use crypto_price instead.',
     parameters: {
       type: 'object',
       properties: {
         query: { type: 'string', description: 'The search query in the same language as the user message' },
       },
       required: ['query'],
+    },
+  },
+};
+
+// Crypto Price Tool Definition
+const CRYPTO_PRICE_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'crypto_price',
+    description: 'Get real-time cryptocurrency prices. Use this when the user asks about the current price of any cryptocurrency or token (BTC, ETH, BNB, SOL, etc). Returns live market data.',
+    parameters: {
+      type: 'object',
+      properties: {
+        coins: {
+          type: 'string',
+          description: 'Comma-separated CoinGecko coin IDs. Common mappings: BTC=bitcoin, ETH=ethereum, BNB=binancecoin, SOL=solana, DOGE=dogecoin, ADA=cardano, XRP=ripple, DOT=polkadot, AVAX=avalanche-2, MATIC/POL=matic-network, LINK=chainlink, UNI=uniswap, SHIB=shiba-inu, ARB=arbitrum, OP=optimism',
+        },
+        vs_currency: {
+          type: 'string',
+          description: 'Target currency: usd, eur, cny, jpy, krw, etc. Default: usd',
+        },
+      },
+      required: ['coins'],
     },
   },
 };
@@ -135,6 +158,77 @@ async function tavilySearch(query: string): Promise<string> {
   } catch (error) {
     return `Search error: ${(error as Error).message}`;
   }
+}
+
+// CoinGecko Price Lookup (free, no API key needed)
+const priceCache = new Map<string, { result: string; expiry: number }>();
+const PRICE_CACHE_TTL = 60 * 1000; // 1 minute (prices update fast)
+
+async function cryptoPriceLookup(coins: string, vsCurrency: string = 'usd'): Promise<string> {
+  const cacheKey = `${coins.toLowerCase()}_${vsCurrency}`;
+  const cached = priceCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    console.log(`[CryptoPrice] Cache hit: ${coins}`);
+    return cached.result;
+  }
+
+  try {
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coins)}&vs_currencies=${vsCurrency}&include_24hr_change=true&include_market_cap=true`;
+
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return 'Price lookup rate limited. Please try again in a moment.';
+      }
+      return `Price lookup failed: ${response.status}`;
+    }
+
+    const data = await response.json() as Record<string, Record<string, number>>;
+
+    let formatted = '';
+    for (const [coinId, info] of Object.entries(data)) {
+      const price = info[vsCurrency];
+      const change = info[`${vsCurrency}_24h_change`];
+      const marketCap = info[`${vsCurrency}_market_cap`];
+
+      if (price !== undefined) {
+        const changeStr = change !== undefined
+          ? ` (24h: ${change >= 0 ? '+' : ''}${change.toFixed(2)}%)`
+          : '';
+        const mcStr = marketCap !== undefined
+          ? ` | Market Cap: ${formatMarketCap(marketCap, vsCurrency)}`
+          : '';
+        formatted += `${coinId}: ${formatPrice(price, vsCurrency)}${changeStr}${mcStr}\n`;
+      }
+    }
+
+    const result = formatted || `No price data found for: ${coins}`;
+
+    priceCache.set(cacheKey, { result, expiry: Date.now() + PRICE_CACHE_TTL });
+    console.log(`[CryptoPrice] Success: ${coins}`);
+    return result;
+  } catch (error) {
+    return `Price lookup error: ${(error as Error).message}`;
+  }
+}
+
+function formatPrice(price: number, currency: string): string {
+  const symbols: Record<string, string> = { usd: '$', eur: '€', cny: '¥', jpy: '¥', krw: '₩', gbp: '£' };
+  const sym = symbols[currency] || currency.toUpperCase() + ' ';
+  if (price >= 1) return `${sym}${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${sym}${price.toPrecision(4)}`;
+}
+
+function formatMarketCap(mc: number, currency: string): string {
+  const symbols: Record<string, string> = { usd: '$', eur: '€', cny: '¥', jpy: '¥', krw: '₩', gbp: '£' };
+  const sym = symbols[currency] || '';
+  if (mc >= 1e12) return `${sym}${(mc / 1e12).toFixed(2)}T`;
+  if (mc >= 1e9) return `${sym}${(mc / 1e9).toFixed(2)}B`;
+  if (mc >= 1e6) return `${sym}${(mc / 1e6).toFixed(2)}M`;
+  return `${sym}${mc.toLocaleString()}`;
 }
 
 // API Response Types
@@ -337,7 +431,7 @@ export class AIClient {
     };
 
     if (enableSearch) {
-      body.tools = [WEB_SEARCH_TOOL];
+      body.tools = [WEB_SEARCH_TOOL, CRYPTO_PRICE_TOOL];
       body.tool_choice = 'auto';
     }
 
@@ -358,19 +452,27 @@ export class AIClient {
     const data = await response.json() as OpenAIChatResponse;
     const choice = data.choices[0];
 
-    // Handle tool calls (web search)
+    // Handle tool calls (web search or crypto price)
     if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
       const toolCall = choice.message.tool_calls[0];
+      let toolResult: string | null = null;
+
       if (toolCall.function.name === 'web_search') {
         const args = JSON.parse(toolCall.function.arguments);
         console.log(`[WebSearch] Query: ${args.query}`);
-        const searchResults = await tavilySearch(args.query);
+        toolResult = await tavilySearch(args.query);
+      } else if (toolCall.function.name === 'crypto_price') {
+        const args = JSON.parse(toolCall.function.arguments);
+        console.log(`[CryptoPrice] Coins: ${args.coins}, Currency: ${args.vs_currency || 'usd'}`);
+        toolResult = await cryptoPriceLookup(args.coins, args.vs_currency || 'usd');
+      }
 
-        // Build follow-up messages with search results
+      if (toolResult) {
+        // Build follow-up messages with tool results
         const followUpMessages = [
           ...messages.map(m => ({ role: m.role, content: m.content })),
           { role: 'assistant' as const, content: null, tool_calls: [toolCall] },
-          { role: 'tool' as const, tool_call_id: toolCall.id, content: searchResults },
+          { role: 'tool' as const, tool_call_id: toolCall.id, content: toolResult },
         ];
 
         const followUpResponse = await fetch(`${baseUrl}/chat/completions`, {
