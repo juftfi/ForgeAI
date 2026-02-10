@@ -417,7 +417,8 @@ export class AIClient {
     const baseUrl = this.config.baseUrl || 'https://api.openai.com/v1';
     const key = apiKey || this.getApiKey('openai');
 
-    const enableSearch = options?.enableWebSearch && !!process.env.TAVILY_API_KEY;
+    const hasTavily = !!process.env.TAVILY_API_KEY;
+    const enableTools = !!options?.enableWebSearch;
 
     const body: Record<string, unknown> = {
       model,
@@ -430,8 +431,14 @@ export class AIClient {
       stop: options?.stopSequences,
     };
 
-    if (enableSearch) {
-      body.tools = [WEB_SEARCH_TOOL, CRYPTO_PRICE_TOOL];
+    if (enableTools) {
+      // crypto_price always available (free CoinGecko API, no key needed)
+      // web_search only available when TAVILY_API_KEY is configured
+      const tools: Array<typeof WEB_SEARCH_TOOL | typeof CRYPTO_PRICE_TOOL> = [CRYPTO_PRICE_TOOL];
+      if (hasTavily) {
+        tools.push(WEB_SEARCH_TOOL);
+      }
+      body.tools = tools;
       body.tool_choice = 'auto';
     }
 
