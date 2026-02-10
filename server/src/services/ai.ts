@@ -71,6 +71,11 @@ const READ_URL_TOOL = {
 const urlCache = new Map<string, { result: string; expiry: number }>();
 const URL_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
+// Domain fallbacks for geo-blocked APIs
+const DOMAIN_FALLBACKS: Record<string, string[]> = {
+  'api.binance.com': ['data-api.binance.vision', 'api1.binance.com', 'api2.binance.com'],
+};
+
 async function fetchUrlContent(url: string): Promise<string> {
   // Validate URL
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -84,67 +89,90 @@ async function fetchUrlContent(url: string): Promise<string> {
     return cached.result;
   }
 
+  // Build URL list: original + fallbacks
+  const urlsToTry = [url];
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; KinForgeAgent/1.0)',
-        'Accept': 'text/html,application/json,text/plain,*/*',
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.error(`[ReadURL] HTTP error: ${response.status} for ${url}`);
-      return `Failed to fetch URL: HTTP ${response.status}. The server may be blocking automated requests.`;
+    const parsed = new URL(url);
+    const fallbacks = DOMAIN_FALLBACKS[parsed.hostname];
+    if (fallbacks) {
+      for (const alt of fallbacks) {
+        urlsToTry.push(url.replace(parsed.hostname, alt));
+      }
     }
+  } catch { /* invalid URL, will fail on fetch */ }
 
-    const contentType = response.headers.get('content-type') || '';
-    console.log(`[ReadURL] Content-Type: ${contentType}, Status: ${response.status}`);
-    let result: string;
+  for (const tryUrl of urlsToTry) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
 
-    if (contentType.includes('application/json')) {
-      // JSON API response — return formatted
-      const json = await response.json();
-      const jsonStr = JSON.stringify(json, null, 2);
-      result = jsonStr.length > 4000 ? jsonStr.slice(0, 4000) + '\n... (truncated)' : jsonStr;
-    } else {
-      // HTML or text — strip tags, extract readable text
-      const html = await response.text();
-      const text = html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
-      result = text.length > 4000 ? text.slice(0, 4000) + '... (truncated)' : text;
+      const response = await fetch(tryUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; KinForgeAgent/1.0)',
+          'Accept': 'text/html,application/json,text/plain,*/*',
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.error(`[ReadURL] HTTP ${response.status} for ${tryUrl}`);
+        // Try next fallback if available
+        if (urlsToTry.indexOf(tryUrl) < urlsToTry.length - 1) {
+          console.log(`[ReadURL] Trying fallback...`);
+          continue;
+        }
+        return `Failed to fetch URL: HTTP ${response.status}. The server may be blocking automated requests.`;
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      console.log(`[ReadURL] Content-Type: ${contentType}, Status: ${response.status} (${tryUrl})`);
+      let result: string;
+
+      if (contentType.includes('application/json')) {
+        const json = await response.json();
+        const jsonStr = JSON.stringify(json, null, 2);
+        result = jsonStr.length > 4000 ? jsonStr.slice(0, 4000) + '\n... (truncated)' : jsonStr;
+      } else {
+        const html = await response.text();
+        const text = html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\s+/g, ' ')
+          .trim();
+        result = text.length > 4000 ? text.slice(0, 4000) + '... (truncated)' : text;
+      }
+
+      if (!result || result.length < 10) {
+        result = 'Page loaded but no readable content found.';
+      }
+
+      // Cache with original URL as key
+      urlCache.set(url, { result, expiry: Date.now() + URL_CACHE_TTL });
+      console.log(`[ReadURL] Success: ${tryUrl} (${result.length} chars)`);
+      return result;
+    } catch (error) {
+      const msg = (error as Error).message;
+      console.error(`[ReadURL] Error for ${tryUrl}: ${msg}`);
+      // Try next fallback if available
+      if (urlsToTry.indexOf(tryUrl) < urlsToTry.length - 1) {
+        console.log(`[ReadURL] Trying fallback...`);
+        continue;
+      }
+      if (msg.includes('abort')) {
+        return 'URL fetch timed out (10s limit). The website may be slow or blocking requests.';
+      }
+      return `URL fetch error: ${msg}`;
     }
-
-    if (!result || result.length < 10) {
-      result = 'Page loaded but no readable content found.';
-    }
-
-    // Cache result
-    urlCache.set(url, { result, expiry: Date.now() + URL_CACHE_TTL });
-    console.log(`[ReadURL] Success: ${url} (${result.length} chars)`);
-    return result;
-  } catch (error) {
-    const msg = (error as Error).message;
-    console.error(`[ReadURL] Fetch error for ${url}: ${msg}`);
-    if (msg.includes('abort')) {
-      return 'URL fetch timed out (10s limit). The website may be slow or blocking requests.';
-    }
-    return `URL fetch error: ${msg}`;
   }
+  return 'All URL endpoints failed.';
 }
 
 // Tavily Search with Rate Limiting & Caching
