@@ -101,11 +101,11 @@ export default function GalleryPage() {
             </p>
           )}
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-2 sm:gap-4">
           <select
             value={houseFilter}
             onChange={e => setHouseFilter(e.target.value)}
-            className="bg-black/60 border border-amber-500/20 rounded-lg px-4 py-2 text-white focus:border-amber-500/50 focus:outline-none"
+            className="bg-black/60 border border-amber-500/20 rounded-lg px-2 sm:px-4 py-2 text-sm sm:text-base text-white focus:border-amber-500/50 focus:outline-none"
           >
             {HOUSES.map(h => (
               <option key={h} value={h}>{HOUSE_NAMES[h]}</option>
@@ -114,7 +114,7 @@ export default function GalleryPage() {
           <select
             value={rarityFilter}
             onChange={e => setRarityFilter(e.target.value)}
-            className="bg-black/60 border border-amber-500/20 rounded-lg px-4 py-2 text-white focus:border-amber-500/50 focus:outline-none"
+            className="bg-black/60 border border-amber-500/20 rounded-lg px-2 sm:px-4 py-2 text-sm sm:text-base text-white focus:border-amber-500/50 focus:outline-none"
           >
             {RARITIES.map(r => (
               <option key={r} value={r}>{RARITY_NAMES[r]}</option>

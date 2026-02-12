@@ -201,7 +201,7 @@ export default function AgentChat({ tokenId, agentName, houseName, onClose }: Ag
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-        <div className="relative flex flex-col items-center justify-center w-full max-w-md bg-gray-900 rounded-xl border border-gray-700 shadow-2xl p-8">
+        <div className="relative flex flex-col items-center justify-center w-full max-w-md bg-gray-900 rounded-xl border border-gray-700 shadow-2xl p-6 sm:p-8">
           {onClose && (
             <button
               onClick={onClose}
@@ -242,7 +242,7 @@ export default function AgentChat({ tokenId, agentName, houseName, onClose }: Ag
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex flex-col w-full max-w-lg h-[70vh] max-h-[640px] bg-gray-900 rounded-xl border border-gray-700 shadow-2xl">
+      <div className="relative flex flex-col w-full max-w-lg h-[85vh] sm:h-[70vh] max-h-[640px] bg-gray-900 rounded-xl sm:rounded-xl border border-gray-700 shadow-2xl">
         {/* Header */}
         <div className={`px-4 py-3 bg-gradient-to-r ${gradientClass} rounded-t-xl flex items-center justify-between shrink-0`}>
           <div className="flex items-center gap-2">
@@ -342,7 +342,7 @@ export default function AgentChat({ tokenId, agentName, houseName, onClose }: Ag
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder="输入消息..."
               disabled={isLoading}
               maxLength={2000}

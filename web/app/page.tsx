@@ -93,8 +93,8 @@ export default function Home() {
       <section className="relative py-20 text-center">
         {/* Background glow - Gold DNA theme */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/15 rounded-full blur-[120px]" />
-          <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-yellow-500/10 rounded-full blur-[100px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[600px] sm:h-[600px] bg-amber-500/15 rounded-full blur-[80px] sm:blur-[120px]" />
+          <div className="absolute top-1/3 left-1/4 w-[200px] h-[200px] sm:w-[400px] sm:h-[400px] bg-yellow-500/10 rounded-full blur-[60px] sm:blur-[100px]" />
         </div>
 
         <div className="relative z-10">
@@ -123,13 +123,13 @@ export default function Home() {
           </div>
 
           {/* Contract Address */}
-          <div className="flex items-center justify-center gap-2 mb-6">
+          <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
             <span className="text-gray-500 text-sm">CA:</span>
             <a
               href="https://bscscan.com/address/0x2bbe12679fdb17ba51256a3a4142e9882aeeffff"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-sm text-amber-400 hover:text-amber-300 transition-colors"
+              className="font-mono text-xs sm:text-sm text-amber-400 hover:text-amber-300 transition-colors break-all"
             >
               0x2bbe12679fdb17ba51256a3a4142e9882aeeffff
             </a>
@@ -154,7 +154,7 @@ export default function Home() {
             </button>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight">
             <span className="text-gold-gradient">
               铸造血脉
             </span>
@@ -170,10 +170,10 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/mint" className="btn-primary text-lg px-8 py-4">
+            <Link href="/mint" className="btn-primary text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-4">
               铸造创世智能体
             </Link>
-            <Link href="/gallery" className="btn-secondary text-lg px-8 py-4">
+            <Link href="/gallery" className="btn-secondary text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-4">
               浏览图鉴
             </Link>
           </div>
@@ -181,22 +181,22 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="glass-card p-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="glass-card p-4 sm:p-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
           <div className="text-center">
-            <div className="text-4xl font-bold text-white mb-1">{stats?.totalSupply || '1,302'}</div>
+            <div className="text-2xl sm:text-4xl font-bold text-white mb-1">{stats?.totalSupply || '1,302'}</div>
             <div className="text-gray-400 text-sm">总供应量</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-amber-400 mb-1">7</div>
+            <div className="text-2xl sm:text-4xl font-bold text-amber-400 mb-1">7</div>
             <div className="text-gray-400 text-sm">天气家族</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-yellow-400 mb-1">5</div>
+            <div className="text-2xl sm:text-4xl font-bold text-yellow-400 mb-1">5</div>
             <div className="text-gray-400 text-sm">稀有度等级</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-amber-500 mb-1">{stats?.generatedMetadata || '—'}</div>
+            <div className="text-2xl sm:text-4xl font-bold text-amber-500 mb-1">{stats?.generatedMetadata || '—'}</div>
             <div className="text-gray-400 text-sm">已渲染</div>
           </div>
         </div>
@@ -313,8 +313,8 @@ export default function Home() {
       </section>
 
       {/* BAP-578 Section */}
-      <section className="glass-card p-12">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+      <section className="glass-card p-6 sm:p-12">
+        <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
           <div>
             <div className="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-sm font-medium mb-4">
               技术标准
@@ -379,10 +379,10 @@ struct LearningState {
           加入 BNB Chain 上非同质化智能体的创世一代。
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/mint" className="btn-primary text-lg px-8 py-4">
+          <Link href="/mint" className="btn-primary text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-4">
             立即铸造
           </Link>
-          <Link href="/docs" className="btn-secondary text-lg px-8 py-4">
+          <Link href="/docs" className="btn-secondary text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-4">
             阅读文档
           </Link>
         </div>

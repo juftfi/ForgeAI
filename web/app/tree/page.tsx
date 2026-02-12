@@ -150,7 +150,7 @@ function TreePageContent() {
         {/* Parents row - only show if expanded */}
         {hasParents && isExpanded && (
           <>
-            <div className="flex gap-12 mb-2">
+            <div className="flex gap-4 sm:gap-12 mb-2">
               {node.parentA && renderTreeNode(node.parentA, false, level + 1)}
               {node.parentB && renderTreeNode(node.parentB, false, level + 1)}
             </div>
@@ -164,7 +164,7 @@ function TreePageContent() {
 
         {/* Current node */}
         <div
-          className={`relative glass-card p-4 min-w-[140px] transition-all hover:border-amber-500/50 ${
+          className={`relative glass-card p-3 sm:p-4 min-w-[100px] sm:min-w-[140px] transition-all hover:border-amber-500/50 ${
             isRoot ? 'ring-2 ring-amber-500 shadow-lg shadow-amber-500/20' : ''
           } ${node.sealed || node.burned ? 'opacity-60' : ''}`}
         >
@@ -288,7 +288,7 @@ function TreePageContent() {
 
       {/* Tree Stats */}
       {tree && (
-        <div className="max-w-2xl mx-auto grid grid-cols-3 gap-4">
+        <div className="max-w-2xl mx-auto grid grid-cols-3 gap-2 sm:gap-4">
           <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-amber-400">{treeStats.totalNodes}</div>
             <div className="text-sm text-gray-400">祖先总数</div>

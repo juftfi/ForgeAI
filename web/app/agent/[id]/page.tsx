@@ -229,7 +229,7 @@ export default function AgentDetailPage() {
         <span className="text-white">智能体 #{id}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Image Section */}
         <div>
           <div className="aspect-square rounded-xl overflow-hidden glass-card">
@@ -247,7 +247,7 @@ export default function AgentDetailPage() {
                   background: `linear-gradient(135deg, ${HOUSES[lineage?.houseId as keyof typeof HOUSES]?.color || '#fbbf24'}, transparent)`,
                 }}
               >
-                <span className="text-8xl font-bold text-white/30">#{id}</span>
+                <span className="text-5xl sm:text-8xl font-bold text-white/30">#{id}</span>
               </div>
             )}
           </div>
@@ -270,10 +270,10 @@ export default function AgentDetailPage() {
         {/* Details Section */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-gold-gradient">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gold-gradient">
               {metadata.name.replace('HouseForge', 'KinForge').replace('House ', '')} — {HOUSE_NAMES[lineage?.houseId || 1] || house}
             </h1>
-            <p className="text-gray-400 mt-2">
+            <p className="text-gray-400 mt-2 text-sm sm:text-base">
               在 KinForge 诞生的可交易非同质化智能体。血脉和学习记录可通过 vaultHash/learningRoot 验证；详细信息存储在保险库中。
             </p>
             <p className="text-amber-400 text-sm mt-2 font-mono">{weatherId}</p>

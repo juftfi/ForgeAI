@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Web3Provider } from '@/components/providers/Web3Provider';
 import { ConnectButton } from '@/components/wallet/ConnectButton';
+import MobileNav from '@/components/nav/MobileNav';
 
 export const metadata: Metadata = {
   title: 'KinForge - 链上基因智能体 | BNB Chain',
@@ -57,7 +58,7 @@ export default function RootLayout({
         <Web3Provider>
           {/* Navigation */}
           <nav className="fixed top-0 left-0 right-0 z-50 border-b border-amber-500/20 bg-black/90 backdrop-blur-xl">
-            <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
               <div className="flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-3 group">
@@ -103,17 +104,15 @@ export default function RootLayout({
                   </div>
                 </div>
 
-                {/* Mobile Menu Button */}
-                <div className="md:hidden flex items-center gap-4">
-                  <ConnectButton />
-                </div>
+                {/* Mobile Menu */}
+                <MobileNav />
               </div>
             </div>
           </nav>
 
           {/* Main Content */}
           <main className="pt-20 min-h-screen">
-            <div className="max-w-7xl mx-auto px-6 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
               {children}
             </div>
           </main>
@@ -121,7 +120,7 @@ export default function RootLayout({
           {/* Footer */}
           <footer className="border-t border-amber-500/20 bg-black/50 mt-20">
             <div className="max-w-7xl mx-auto px-6 py-12">
-              <div className="grid md:grid-cols-5 gap-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 sm:gap-8">
                 {/* Brand */}
                 <div>
                   <div className="flex items-center gap-2 mb-4">
