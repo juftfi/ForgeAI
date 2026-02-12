@@ -21,8 +21,7 @@ export default function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <div className="md:hidden flex items-center gap-3">
-      <ConnectButton />
+    <div className="md:hidden flex items-center">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 text-gray-300 hover:text-amber-400 transition-colors"
@@ -35,7 +34,7 @@ export default function MobileNav() {
 
       {/* Mobile Menu Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-amber-500/20 py-4 px-6">
+        <div className="absolute top-full left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-amber-500/20 py-4 px-4">
           <div className="grid grid-cols-4 gap-2">
             {NAV_LINKS.map(link => (
               <Link
@@ -51,6 +50,9 @@ export default function MobileNav() {
                 {link.label}
               </Link>
             ))}
+          </div>
+          <div className="mt-3 pt-3 border-t border-amber-500/20">
+            <ConnectButton />
           </div>
         </div>
       )}
