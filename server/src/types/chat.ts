@@ -159,6 +159,7 @@ export interface ChatOptions {
   maxTokens?: number;
   stopSequences?: string[];
   enableWebSearch?: boolean;
+  modelOverride?: string;
 }
 
 export interface EmbeddingResult {

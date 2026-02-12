@@ -250,10 +250,16 @@ export class ChatService {
     }
 
     // Call AI (with web search if TAVILY_API_KEY configured)
+    // Token #2 uses Nina V6 fine-tuned model
+    const modelOverride = session.tokenId === 2
+      ? 'ft:gpt-4o-mini-2024-07-18:personal:nina-rong-v6:D6v1wVxP'
+      : undefined;
+
     const response = await this.aiClient.chat(aiMessages, {
       temperature: this.getTemperatureForPersona(profile.personaVector),
       maxTokens: 512,
       enableWebSearch: true,
+      modelOverride,
     });
 
     // Store agent response

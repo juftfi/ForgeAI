@@ -515,9 +515,13 @@ export class AIClient {
   }
 
   private async chatOpenAI(messages: AIMessage[], options?: ChatOptions, apiKey?: string): Promise<string> {
-    const model = this.config.model || this.defaultModel;
+    const model = options?.modelOverride || this.config.model || this.defaultModel;
     const baseUrl = this.config.baseUrl || 'https://api.openai.com/v1';
     const key = apiKey || this.getApiKey('openai');
+
+    if (options?.modelOverride) {
+      console.log(`[AI] Using model override: ${model}`);
+    }
 
     const hasTavily = !!process.env.TAVILY_API_KEY;
     const enableTools = !!options?.enableWebSearch;
