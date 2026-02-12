@@ -33,11 +33,12 @@ interface AgentChatProps {
   tokenId: number;
   agentName?: string;
   houseName?: string;
+  onClose?: () => void;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export default function AgentChat({ tokenId, agentName, houseName }: AgentChatProps) {
+export default function AgentChat({ tokenId, agentName, houseName, onClose }: AgentChatProps) {
   const { address, isConnected } = useAccount();
   const [session, setSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -45,7 +46,7 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentEmotion, setCurrentEmotion] = useState<EmotionState | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // 情绪显示配置
   const emotionConfig: Record<EmotionType, { emoji: string; label: string; color: string }> = {
@@ -59,9 +60,12 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
     neutral: { emoji: '😐', label: '平静', color: 'text-gray-300' },
   };
 
-  // Scroll to bottom when new messages arrive
+  // Scroll within messages container only (not the page)
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, []);
 
   useEffect(() => {
@@ -192,144 +196,170 @@ export default function AgentChat({ tokenId, agentName, houseName }: AgentChatPr
 
   const gradientClass = houseColors[houseName || ''] || 'from-blue-500 to-purple-600';
 
+  // Pre-session: floating dialog with start button
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center h-80 bg-gray-900/50 rounded-lg border border-gray-700">
-        <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${gradientClass} flex items-center justify-center mb-4`}>
-          <span className="text-2xl">🤖</span>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative flex flex-col items-center justify-center w-full max-w-md bg-gray-900 rounded-xl border border-gray-700 shadow-2xl p-8">
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              ✕
+            </button>
+          )}
+          <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${gradientClass} flex items-center justify-center mb-4`}>
+            <span className="text-2xl">🤖</span>
+          </div>
+          <h3 className="text-lg font-medium text-white mb-2">
+            与 {agentName || `Agent #${tokenId}`} 对话
+          </h3>
+          <p className="text-gray-400 text-sm mb-4 text-center px-4">
+            只有持有者才能与智能体对话。它会记住你们的对话并随时间成长。
+          </p>
+          {error && (
+            <p className="text-red-400 text-sm mb-4">{error}</p>
+          )}
+          <button
+            onClick={startSession}
+            disabled={isLoading || !isConnected}
+            className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              isConnected
+                ? `bg-gradient-to-r ${gradientClass} text-white hover:opacity-90`
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {isLoading ? '连接中...' : isConnected ? '开始对话' : '请先连接钱包'}
+          </button>
         </div>
-        <h3 className="text-lg font-medium text-white mb-2">
-          与 {agentName || `Agent #${tokenId}`} 对话
-        </h3>
-        <p className="text-gray-400 text-sm mb-4 text-center px-4">
-          只有持有者才能与智能体对话。它会记住你们的对话并随时间成长。
-        </p>
-        {error && (
-          <p className="text-red-400 text-sm mb-4">{error}</p>
-        )}
-        <button
-          onClick={startSession}
-          disabled={isLoading || !isConnected}
-          className={`px-6 py-2 rounded-lg font-medium transition-all ${
-            isConnected
-              ? `bg-gradient-to-r ${gradientClass} text-white hover:opacity-90`
-              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          {isLoading ? '连接中...' : isConnected ? '开始对话' : '请先连接钱包'}
-        </button>
       </div>
     );
   }
 
+  // Active session: floating chat dialog
   return (
-    <div className="flex flex-col h-96 bg-gray-900/50 rounded-lg border border-gray-700">
-      {/* Header */}
-      <div className={`px-4 py-3 bg-gradient-to-r ${gradientClass} rounded-t-lg flex items-center justify-between`}>
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🤖</span>
-          <span className="font-medium text-white">
-            {agentName || `Agent #${tokenId}`}
-          </span>
-          {houseName && (
-            <span className="text-xs bg-black/20 px-2 py-0.5 rounded text-white/80">
-              {houseName}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative flex flex-col w-full max-w-lg h-[70vh] max-h-[640px] bg-gray-900 rounded-xl border border-gray-700 shadow-2xl">
+        {/* Header */}
+        <div className={`px-4 py-3 bg-gradient-to-r ${gradientClass} rounded-t-xl flex items-center justify-between shrink-0`}>
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🤖</span>
+            <span className="font-medium text-white">
+              {agentName || `Agent #${tokenId}`}
             </span>
-          )}
-          {/* 情绪状态显示 */}
-          {currentEmotion && currentEmotion.primary !== 'neutral' && currentEmotion.confidence > 0.4 && (
-            <span
-              className="text-xs bg-black/30 px-2 py-0.5 rounded flex items-center gap-1"
-              title={`检测到情绪: ${emotionConfig[currentEmotion.primary].label} (强度: ${Math.round(currentEmotion.intensity * 100)}%)`}
+            {houseName && (
+              <span className="text-xs bg-black/20 px-2 py-0.5 rounded text-white/80">
+                {houseName}
+              </span>
+            )}
+            {/* 情绪状态显示 */}
+            {currentEmotion && currentEmotion.primary !== 'neutral' && currentEmotion.confidence > 0.4 && (
+              <span
+                className="text-xs bg-black/30 px-2 py-0.5 rounded flex items-center gap-1"
+                title={`检测到情绪: ${emotionConfig[currentEmotion.primary].label} (强度: ${Math.round(currentEmotion.intensity * 100)}%)`}
+              >
+                <span>{emotionConfig[currentEmotion.primary].emoji}</span>
+                <span className="text-white/80">{emotionConfig[currentEmotion.primary].label}</span>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={endSession}
+              className="text-white/80 hover:text-white text-sm"
+              title="结束对话"
             >
-              <span>{emotionConfig[currentEmotion.primary].emoji}</span>
-              <span className="text-white/80">{emotionConfig[currentEmotion.primary].label}</span>
-            </span>
-          )}
+              结束
+            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="w-7 h-7 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                title="关闭窗口"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
-        <button
-          onClick={endSession}
-          className="text-white/80 hover:text-white text-sm"
-          title="结束对话"
-        >
-          结束
-        </button>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            发送消息开始对话...
-          </div>
-        )}
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                msg.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-100'
-              }`}
-            >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-              <p className="text-xs opacity-50 mt-1">
-                {new Date(msg.createdAt).toLocaleTimeString('zh-CN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
+        {/* Messages */}
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+          {messages.length === 0 && (
+            <div className="text-center text-gray-500 py-8">
+              发送消息开始对话...
             </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-700 px-4 py-2 rounded-lg">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          )}
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] px-4 py-2 rounded-lg ${
+                  msg.role === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-100'
+                }`}
+              >
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                <p className="text-xs opacity-50 mt-1">
+                  {new Date(msg.createdAt).toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
               </div>
             </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-gray-700 px-4 py-2 rounded-lg">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Error display */}
+        {error && (
+          <div className="px-4 py-2 bg-red-900/50 border-t border-red-800 shrink-0">
+            <p className="text-red-300 text-sm">{error}</p>
           </div>
         )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      {/* Error display */}
-      {error && (
-        <div className="px-4 py-2 bg-red-900/50 border-t border-red-800">
-          <p className="text-red-300 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Input */}
-      <div className="p-3 border-t border-gray-700">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="输入消息..."
-            disabled={isLoading}
-            maxLength={2000}
-            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              input.trim() && !isLoading
-                ? `bg-gradient-to-r ${gradientClass} text-white hover:opacity-90`
-                : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            发送
-          </button>
+        {/* Input */}
+        <div className="p-3 border-t border-gray-700 shrink-0">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="输入消息..."
+              disabled={isLoading}
+              maxLength={2000}
+              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={isLoading || !input.trim()}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                input.trim() && !isLoading
+                  ? `bg-gradient-to-r ${gradientClass} text-white hover:opacity-90`
+                  : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              发送
+            </button>
+          </div>
         </div>
       </div>
     </div>

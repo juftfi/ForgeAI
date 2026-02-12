@@ -137,6 +137,7 @@ export default function AgentDetailPage() {
   const [showActions, setShowActions] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('info');
+  const [chatOpen, setChatOpen] = useState(false);
 
   // On-chain data
   const { data: onChainMetadata } = useAgentMetadata(tokenId);
@@ -290,9 +291,15 @@ export default function AgentDetailPage() {
             ].map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as TabType)}
+                onClick={() => {
+                  if (tab.key === 'chat') {
+                    setChatOpen(true);
+                  } else {
+                    setActiveTab(tab.key as TabType);
+                  }
+                }}
                 className={`flex-1 px-3 py-2 text-sm rounded-md transition-all ${
-                  activeTab === tab.key
+                  activeTab === tab.key && tab.key !== 'chat'
                     ? 'bg-amber-500/20 text-amber-400 font-medium'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -423,15 +430,10 @@ export default function AgentDetailPage() {
             </>
           )}
 
-          {/* Chat Tab */}
+          {/* Chat Tab - supplementary info only, chat itself is floating */}
           {activeTab === 'chat' && (
             <div className="space-y-6">
               <AgentMood tokenId={Number(id)} />
-              <AgentChat
-                tokenId={Number(id)}
-                agentName={metadata.name.replace('HouseForge', 'KinForge')}
-                houseName={house}
-              />
               <ChatStats tokenId={Number(id)} />
               <TopicAnalysis tokenId={Number(id)} />
             </div>
@@ -516,6 +518,15 @@ export default function AgentDetailPage() {
           </div>
         </div>
       </div>
+      {/* Floating Chat Dialog */}
+      {chatOpen && (
+        <AgentChat
+          tokenId={Number(id)}
+          agentName={metadata.name.replace('HouseForge', 'KinForge')}
+          houseName={house}
+          onClose={() => setChatOpen(false)}
+        />
+      )}
     </div>
   );
 }
