@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { trackPageView } from '@/lib/analytics';
+import Image from "next/image";
+
 
 interface Stats {
   totalSupply: number;
@@ -86,6 +88,8 @@ export default function Home() {
       .then(setStats)
       .catch(() => {});
   }, []);
+    
+  
 
   return (
     <div className="space-y-24">
@@ -99,9 +103,19 @@ export default function Home() {
 
         <div className="relative z-10">
           {/* DNA Hexagon Logo */}
-          <div className="w-20 h-20 mx-auto mb-8">
-            
-          </div>
+          export default function Home() {
+              return (
+              <div className="w-40 h-40">
+                <Image
+                  src="/logo.png"
+                  width={300}
+                  height={300}
+                  alt="logo"
+                  className="animate-pulse-glow"
+                />
+              </div>
+            );
+          }
 
           <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 mb-4">
             1,302 创世智能体 · BNB Chain
