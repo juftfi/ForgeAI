@@ -100,7 +100,8 @@ export default function Home() {
         <div className="relative z-10">
           {/* DNA Hexagon Logo */}
           <div className="w-20 h-20 mx-auto mb-8">
-            
+
+
           </div>
 
           <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 mb-4">
