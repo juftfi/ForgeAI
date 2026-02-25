@@ -8,9 +8,9 @@ const DOCS = [
   {
     category: '入门指南',
     items: [
-      { title: '简介', slug: 'introduction', description: 'KinForge 和非同质化智能体概述' },
+      { title: '简介', slug: 'introduction', description: 'ForgeAI 和非同质化智能体概述' },
       { title: '快速开始', slug: 'quickstart', description: '铸造、查看和融合智能体入门' },
-      { title: '常见问题', slug: 'faq', description: '关于 KinForge 的常见问题' },
+      { title: '常见问题', slug: 'faq', description: '关于 ForgeAI 的常见问题' },
     ],
   },
   {
@@ -41,7 +41,7 @@ const DOCS = [
     category: '开发',
     items: [
       { title: 'API 参考', slug: 'api', description: '服务器 API 端点和用法' },
-      { title: '集成指南', slug: 'integration', description: '基于 KinForge 进行构建' },
+      { title: '集成指南', slug: 'integration', description: '基于 ForgeAI 进行构建' },
     ],
   },
 ];
@@ -59,7 +59,7 @@ export default function DocsPage() {
           文档中心
         </h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-          了解、构建和扩展 KinForge 所需的一切
+          了解、构建和扩展 ForgeAI 所需的一切
         </p>
       </div>
 
@@ -108,7 +108,7 @@ export default function DocsPage() {
         <h2 className="text-xl font-bold mb-4 text-amber-400">外部资源</h2>
         <div className="grid md:grid-cols-2 gap-4">
           <a
-            href="https://github.com/KinForgeLab/kinforge"
+            href="https://github.com/ForgeAILab/kinforge"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 p-4 bg-black/60 rounded-lg hover:bg-black/80 transition-colors border border-amber-500/10"

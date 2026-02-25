@@ -1,6 +1,6 @@
-# KinForge 演示指南
+# ForgeAI 演示指南
 
-本指南将引导您从头运行完整的 KinForge 演示。
+本指南将引导您从头运行完整的 ForgeAI 演示。
 
 ## 前置要求
 
@@ -13,7 +13,7 @@
 ### 1. 安装依赖
 
 ```bash
-cd KinForge
+cd ForgeAI
 pnpm install
 ```
 
@@ -196,7 +196,7 @@ assert(keccak256(stableStringify(traits)) === onChainTraitsHash);
 ## 项目结构
 
 ```
-KinForge/
+ForgeAI/
 ├── config/           # YAML 配置文件
 ├── contracts/        # Foundry 智能合约
 │   ├── src/          # 合约源码

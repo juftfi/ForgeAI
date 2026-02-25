@@ -76,7 +76,7 @@ export default function StatusPage() {
           系统状态
         </h1>
         <p className="text-gray-400">
-          KinForge 基础设施实时状态
+          ForgeAI 基础设施实时状态
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export default function StatusPage() {
           </div>
 
           <div className="p-4 bg-black/60 rounded-lg border border-amber-500/10">
-            <div className="font-medium mb-2 text-white">KinForgeAgent 合约</div>
+            <div className="font-medium mb-2 text-white">ForgeAIAgent 合约</div>
             <div className="font-mono text-sm text-gray-400 break-all">{agentAddress}</div>
             {agentAddress !== '0x0000000000000000000000000000000000000000' && (
               <a

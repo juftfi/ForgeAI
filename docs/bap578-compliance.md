@@ -2,7 +2,7 @@
 
 ## Overview
 
-KinForge implements the BAP-578 (Blockchain Agent Protocol 578) standard for Non-Fungible Agents (NFAs). This document details what aspects of BAP-578 are implemented, how they map to KinForge's functionality, and verification procedures.
+ForgeAI implements the BAP-578 (Blockchain Agent Protocol 578) standard for Non-Fungible Agents (NFAs). This document details what aspects of BAP-578 are implemented, how they map to ForgeAI's functionality, and verification procedures.
 
 ## What is BAP-578?
 
@@ -288,7 +288,7 @@ pnpm export-vault --all --out full-backup.json
 {
   "version": "1.0.0",
   "exportedAt": "2024-01-15T10:30:00Z",
-  "source": "KinForge",
+  "source": "ForgeAI",
   "tokenCount": 3,
   "vaults": [
     {
@@ -331,7 +331,7 @@ pnpm import-vault --file pack.json
 
 ### Cross-Instance Migration
 
-To migrate agents between KinForge instances:
+To migrate agents between ForgeAI instances:
 
 1. **Export** from source instance
 2. **Transfer** pack file to destination
@@ -341,7 +341,7 @@ To migrate agents between KinForge instances:
 
 ## Event Emissions
 
-BAP-578 compliant events emitted by KinForge:
+BAP-578 compliant events emitted by ForgeAI:
 
 | Event | Description |
 |-------|-------------|
@@ -383,7 +383,7 @@ BAP-578 compliant events emitted by KinForge:
 
 ## Future Extensions
 
-Planned BAP-578 extensions for KinForge:
+Planned BAP-578 extensions for ForgeAI:
 
 - **Multi-sig Ownership**: Require multiple approvals for sensitive actions
 - **Time-locked Actions**: Schedule actions for future execution

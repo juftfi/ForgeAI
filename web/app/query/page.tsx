@@ -157,7 +157,7 @@ export default function QueryPage() {
         <div className="glass-card p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-amber-400">
-              KinForge Agent #{result.tokenId}
+              ForgeAI Agent #{result.tokenId}
             </h2>
             <Link
               href={`/agent/${result.tokenId}`}
@@ -283,7 +283,7 @@ export default function QueryPage() {
             <div>
               <h3 className="font-medium text-white mb-1">打开合约页面</h3>
               <p className="text-gray-400 text-sm mb-2">
-                访问 BSCScan 上的 KinForgeAgent 合约，点击 &quot;Read Contract&quot; 标签页。
+                访问 BSCScan 上的 ForgeAIAgent 合约，点击 &quot;Read Contract&quot; 标签页。
               </p>
               <a
                 href={`${BSCSCAN_BASE}/address/${CONTRACT_ADDRESS}#readContract`}
@@ -376,7 +376,7 @@ export default function QueryPage() {
         <div className="space-y-3">
           <div className="p-4 bg-black/60 rounded-lg border border-amber-500/10">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-white font-medium">KinForgeAgent (ERC-721)</span>
+              <span className="text-white font-medium">ForgeAIAgent (ERC-721)</span>
               <span className="text-green-400 text-xs flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
                 已验证

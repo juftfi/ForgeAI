@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // KinForge - Dark background palette (don't override 'black' to preserve opacity modifiers)
+        // ForgeAI - Dark background palette (don't override 'black' to preserve opacity modifiers)
         dark: {
           950: '#000000',
           900: '#0a0a0a',

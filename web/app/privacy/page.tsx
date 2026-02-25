@@ -11,7 +11,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">1. Introduction</h2>
           <p>
-            KinForge (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is a decentralized application (DApp) deployed on BNB Chain.
+            ForgeAI (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is a decentralized application (DApp) deployed on BNB Chain.
             This Privacy Policy explains how we handle information when you interact with our website
             at kinforge.xyz and our smart contracts.
           </p>
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">8. Children</h2>
           <p>
-            KinForge is not intended for use by individuals under the age of 18. We do not knowingly
+            ForgeAI is not intended for use by individuals under the age of 18. We do not knowingly
             collect information from children.
           </p>
         </section>
@@ -130,7 +130,7 @@ export default function PrivacyPage() {
               X (Twitter)
             </a>{' '}
             or{' '}
-            <a href="https://github.com/KinForgeLab/kinforge" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300">
+            <a href="https://github.com/ForgeAILab/kinforge" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300">
               GitHub
             </a>.
           </p>

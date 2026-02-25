@@ -153,7 +153,7 @@ export default function GalleryPage() {
                   </div>
                   <div className="p-3">
                     <div className="text-sm font-medium truncate text-white">
-                      {token.metadata.name.replace('HouseForge', 'KinForge').replace(/House\s+/g, '')}
+                      {token.metadata.name.replace('HouseForge', 'ForgeAI').replace(/House\s+/g, '')}
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs text-amber-400/70">{HOUSE_NAMES[house] || house}</span>

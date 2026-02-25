@@ -1,4 +1,4 @@
-# KinForge API 文档
+# ForgeAI API 文档
 
 ## 基础信息
 
@@ -142,8 +142,8 @@
 
 ```json
 {
-  "name": "KinForge Agent #1 — MONSOON — Monsoon 家族",
-  "description": "在 KinForge 诞生的可交易非同质化智能体。",
+  "name": "ForgeAI Agent #1 — MONSOON — Monsoon 家族",
+  "description": "在 ForgeAI 诞生的可交易非同质化智能体。",
   "image": "/images/1.webp",
   "attributes": [
     { "trait_type": "House", "value": "MONSOON" },
@@ -162,8 +162,8 @@
 
 ```json
 {
-  "name": "KinForge Genesis",
-  "description": "KinForge 非同质化智能体创世系列。",
+  "name": "ForgeAI Genesis",
+  "description": "ForgeAI 非同质化智能体创世系列。",
   "image": "/placeholder/collection.svg",
   "external_link": "https://kinforge.io"
 }
@@ -219,7 +219,7 @@
     "id": "msg-uuid",
     "sessionId": "session-uuid",
     "role": "agent",
-    "content": "你好！我是来自 Monsoon 家族的 KinForge Agent...",
+    "content": "你好！我是来自 Monsoon 家族的 ForgeAI Agent...",
     "createdAt": "2024-02-04T15:31:00.000Z",
     "tokenCount": 45
   },
@@ -900,7 +900,7 @@
 ```json
 {
   "offspring": {
-    "name": "KinForge Agent #3 — MONSOON",
+    "name": "ForgeAI Agent #3 — MONSOON",
     "attributes": [ ... ]
   },
   "vault": {
@@ -939,7 +939,7 @@
 {
   "tokenId": 42,
   "metadata": {
-    "name": "KinForge Agent #42 — MONSOON",
+    "name": "ForgeAI Agent #42 — MONSOON",
     "image": "/images/42.webp",
     "attributes": [ ... ]
   },

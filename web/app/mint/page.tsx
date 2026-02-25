@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { CONTRACTS, HOUSE_FORGE_AGENT_ABI } from '@/config/contracts';
 import { trackEvent, trackMintAttempt } from '@/lib/analytics';
 
-// 七大天气家族 - KinForge Weather Theme
+// 七大天气家族 - ForgeAI Weather Theme
 const HOUSE_DATA = {
   CLEAR: { id: 1, name: 'Clear 家族', theme: '高压清澈', desc: '精准、洞察、透明', color: '#60A5FA' },
   MONSOON: { id: 2, name: 'Monsoon 家族', theme: '霓虹雨潮', desc: '适应、流动、更新', color: '#34D399' },
@@ -369,7 +369,7 @@ export default function MintPage() {
             <div className="space-y-4">
               <div>
                 <h3 className="text-2xl font-bold text-white">
-                  {reservedAgent.metadata.name.replace('HouseForge', 'KinForge').replace(/House\s+/g, '')}
+                  {reservedAgent.metadata.name.replace('HouseForge', 'ForgeAI').replace(/House\s+/g, '')}
                 </h3>
                 <p className="text-amber-400/70 text-sm mt-1">{getTraitValue('WeatherID')}</p>
               </div>

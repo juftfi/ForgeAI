@@ -17,7 +17,7 @@ export default function WhitepaperPage() {
           技术文档
         </div>
         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gold-gradient">
-          KinForge 白皮书
+          ForgeAI 白皮书
         </h1>
         <p className="text-gray-400 text-lg">
           BNB Chain 上具有可验证成长能力的非同质化智能体
@@ -49,12 +49,12 @@ export default function WhitepaperPage() {
           <h2 className="text-2xl font-bold text-white mb-4">1. 摘要</h2>
           <div className="glass-card p-6">
             <p className="text-gray-300 leading-relaxed">
-              KinForge 引入了非同质化智能体（NFA）— 代表具有可验证成长能力的自主数字身份的 ERC-721 代币。
+              ForgeAI 引入了非同质化智能体（NFA）— 代表具有可验证成长能力的自主数字身份的 ERC-721 代币。
               基于 BNB Chain 构建并实现 BAP-578 标准，每个智能体属于七大家族之一，携带确定性特征，
               并可参与融合繁殖以创造具有遗传和突变特征的后代。
             </p>
             <p className="text-gray-300 leading-relaxed mt-4">
-              与代表静态图像的传统 NFT 不同，KinForge 智能体在链上维护元数据摘要，
+              与代表静态图像的传统 NFT 不同，ForgeAI 智能体在链上维护元数据摘要，
               同时在链下保险库中存储扩展学习数据。所有保险库内容都可通过存储在链上的加密哈希
               （vaultHash、learningRoot）进行不可篡改的验证。
             </p>
@@ -77,7 +77,7 @@ export default function WhitepaperPage() {
 
           <h3 className="text-xl font-semibold text-gray-200 mb-3">2.2 解决方案</h3>
           <p className="text-gray-300 leading-relaxed">
-            KinForge 实现了 BAP-578，一个区块链原生智能体的协议标准。每个智能体都是一个一等数字身份，
+            ForgeAI 实现了 BAP-578，一个区块链原生智能体的协议标准。每个智能体都是一个一等数字身份，
             可以成长、学习和繁殖 — 所有这些都有透明、可验证的规则。
           </p>
         </section>
@@ -89,7 +89,7 @@ export default function WhitepaperPage() {
           <h3 className="text-xl font-semibold text-gray-200 mb-3">3.1 智能合约</h3>
           <div className="bg-black/60 rounded-xl p-4 border border-amber-500/20 mb-6">
             <code className="text-sm text-amber-400">
-              KinForgeAgent.sol — 带有 BAP-578 扩展的核心 ERC-721<br/>
+              ForgeAIAgent.sol — 带有 BAP-578 扩展的核心 ERC-721<br/>
               FusionCore.sol — 提交-揭示融合繁殖系统<br/>
               DemoLogic.sol — 委托操作执行示例
             </code>
@@ -331,7 +331,7 @@ export default function WhitepaperPage() {
           <h2 className="text-2xl font-bold text-white mb-4">10. 法律声明</h2>
           <div className="glass-card p-6 border-l-4 border-yellow-500">
             <p className="text-gray-300 text-sm leading-relaxed">
-              KinForge 智能体是 BNB Chain 上的数字收藏品。它们不是投资产品，不承诺任何财务回报。
+              ForgeAI 智能体是 BNB Chain 上的数字收藏品。它们不是投资产品，不承诺任何财务回报。
               NFT 的价值可能会大幅波动，甚至可能变得毫无价值。用户只应使用他们能够承受损失的资金参与。
             </p>
             <p className="text-gray-300 text-sm leading-relaxed mt-3">

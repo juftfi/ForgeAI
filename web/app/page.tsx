@@ -11,7 +11,7 @@ interface Stats {
   rarityDistribution: Record<string, number>;
 }
 
-// 七大天气家族 - KinForge Weather Theme
+// 七大天气家族 - ForgeAI Weather Theme
 const HOUSES = [
   { key: 'CLEAR', name: 'Clear 家族', theme: '高压清澈', desc: '精准、洞察、透明', color: '#60A5FA' },
   { key: 'MONSOON', name: 'Monsoon 家族', theme: '霓虹雨潮', desc: '适应、流动、更新', color: '#34D399' },

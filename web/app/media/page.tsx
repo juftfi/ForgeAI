@@ -44,11 +44,11 @@ export default function MediaKitPage() {
         <h2 className="text-2xl font-bold mb-4 text-amber-400">新闻稿模板</h2>
         <div className="prose prose-invert max-w-none">
           <p className="text-gray-300 leading-relaxed">
-            <strong className="text-white">KinForge</strong> 是一个建立在 BNB Chain 上的开创性非同质化智能体（NFA）平台。
+            <strong className="text-white">ForgeAI</strong> 是一个建立在 BNB Chain 上的开创性非同质化智能体（NFA）平台。
             该项目引入了 1,302 个创世智能体，分布在七大家族中，每个智能体都具有确定性特征、可验证的成长能力和融合繁殖机制。
           </p>
           <p className="text-gray-300 leading-relaxed mt-4">
-            实现 BAP-578 标准，KinForge 智能体在链上维护元数据摘要，同时在链下保险库中存储扩展学习数据。
+            实现 BAP-578 标准，ForgeAI 智能体在链上维护元数据摘要，同时在链下保险库中存储扩展学习数据。
             所有数据都可通过存储在区块链上的加密哈希进行不可篡改的验证。
           </p>
           <p className="text-gray-300 leading-relaxed mt-4">
@@ -92,7 +92,7 @@ export default function MediaKitPage() {
           <div className="bg-black/60 rounded-xl p-6 text-center border border-amber-500/10">
             <div className="h-24 flex items-center justify-center mb-4">
               <div className="text-3xl font-bold text-gold-gradient">
-                KinForge
+                ForgeAI
               </div>
             </div>
             <p className="text-gray-400 text-sm mb-4">主标志</p>
@@ -140,7 +140,7 @@ export default function MediaKitPage() {
           <div className="bg-amber-500/20 rounded-xl p-6 text-center border border-amber-500/30">
             <div className="h-24 flex items-center justify-center mb-4">
               <div className="text-3xl font-bold text-white">
-                KinForge
+                ForgeAI
               </div>
             </div>
             <p className="text-gray-300 text-sm mb-4">白色版本</p>

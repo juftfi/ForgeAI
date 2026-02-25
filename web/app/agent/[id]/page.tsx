@@ -271,10 +271,10 @@ export default function AgentDetailPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gold-gradient">
-              {metadata.name.replace('HouseForge', 'KinForge').replace('House ', '')} — {HOUSE_NAMES[lineage?.houseId || 1] || house}
+              {metadata.name.replace('HouseForge', 'ForgeAI').replace('House ', '')} — {HOUSE_NAMES[lineage?.houseId || 1] || house}
             </h1>
             <p className="text-gray-400 mt-2 text-sm sm:text-base">
-              在 KinForge 诞生的可交易非同质化智能体。血脉和学习记录可通过 vaultHash/learningRoot 验证；详细信息存储在保险库中。
+              在 ForgeAI 诞生的可交易非同质化智能体。血脉和学习记录可通过 vaultHash/learningRoot 验证；详细信息存储在保险库中。
             </p>
             <p className="text-amber-400 text-sm mt-2 font-mono">{weatherId}</p>
           </div>
@@ -522,7 +522,7 @@ export default function AgentDetailPage() {
       {chatOpen && (
         <AgentChat
           tokenId={Number(id)}
-          agentName={metadata.name.replace('HouseForge', 'KinForge')}
+          agentName={metadata.name.replace('HouseForge', 'ForgeAI')}
           houseName={house}
           onClose={() => setChatOpen(false)}
         />

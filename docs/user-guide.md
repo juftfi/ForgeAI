@@ -1,6 +1,6 @@
-# KinForge 用户指南
+# ForgeAI 用户指南
 
-本指南将帮助您了解如何使用 KinForge 平台，包括铸造、对话、融合和查看您的 AI Agent。
+本指南将帮助您了解如何使用 ForgeAI 平台，包括铸造、对话、融合和查看您的 AI Agent。
 
 ## 目录
 
@@ -333,8 +333,8 @@
 
 如有问题或建议，请通过以下方式联系:
 
-- GitHub Issues: https://github.com/KinForgeLab/kinforge/issues
-- Twitter: @KinForgeLab
+- GitHub Issues: https://github.com/ForgeAILab/kinforge/issues
+- Twitter: @ForgeAILab
 
 ---
 

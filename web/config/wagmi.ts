@@ -32,7 +32,7 @@ const connectors = connectorsForWallets(
     },
   ],
   {
-    appName: 'KinForge',
+    appName: 'ForgeAI',
     projectId,
   }
 );

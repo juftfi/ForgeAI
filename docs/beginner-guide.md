@@ -1,12 +1,12 @@
-# KinForge 小白入门指南
+# ForgeAI 小白入门指南
 
-欢迎来到 KinForge！这是一份超级简单的入门教程，即使你完全不懂区块链也能看懂。
+欢迎来到 ForgeAI！这是一份超级简单的入门教程，即使你完全不懂区块链也能看懂。
 
 ---
 
 ## 🎯 一句话说清楚
 
-**KinForge = 会说话的数字宠物 + 能生宝宝 + 能卖钱**
+**ForgeAI = 会说话的数字宠物 + 能生宝宝 + 能卖钱**
 
 就这么简单！
 
@@ -71,7 +71,7 @@
 
 ```
 ┌─────────────────────────────────────────────────┐
-│            KinForge Protocol Stack              │
+│            ForgeAI Protocol Stack              │
 ├─────────────────────────────────────────────────┤
 │  BAP-578 (Blockchain Agent Protocol)            │
 │  ├── ERC-721 Non-Fungible Token Standard        │
@@ -277,6 +277,6 @@ FusionCore.sol          // 融合引擎
 ## 联系我们
 
 - Twitter: [@kinforge_lab](https://x.com/kinforge_lab)
-- GitHub: [KinForgeLab/kinforge](https://github.com/KinForgeLab/kinforge)
+- GitHub: [ForgeAILab/kinforge](https://github.com/ForgeAILab/kinforge)
 
 有问题随时问！

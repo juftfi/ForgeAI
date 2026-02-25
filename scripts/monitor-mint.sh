@@ -1,5 +1,5 @@
 #!/bin/bash
-# KinForge Genesis Mint Monitor
+# ForgeAI Genesis Mint Monitor
 # Monitors totalSupply and auto-closes minting at target cap
 
 CONTRACT="0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f"
@@ -15,7 +15,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "${CYAN}========================================${NC}"
-echo -e "${CYAN}  KinForge Genesis Mint Monitor${NC}"
+echo -e "${CYAN}  ForgeAI Genesis Mint Monitor${NC}"
 echo -e "${CYAN}  Target: ${CAP} | Interval: ${INTERVAL}s${NC}"
 echo -e "${CYAN}========================================${NC}"
 echo ""

@@ -206,8 +206,8 @@ router.get('/metadata/:tokenId', async (req: Request, res: Response) => {
     if (vault) {
       // Generate metadata from vault
       const metadata = {
-        name: `KinForge Agent #${tokenId} — ${vault.traits.House} 家族`,
-        description: '在 KinForge 诞生的可交易非同质化智能体。',
+        name: `ForgeAI Agent #${tokenId} — ${vault.traits.House} 家族`,
+        description: '在 ForgeAI 诞生的可交易非同质化智能体。',
         image: getImageUrl(tokenId),
         attributes: Object.entries(vault.traits).map(([trait_type, value]) => ({
           trait_type,
@@ -238,8 +238,8 @@ router.get('/metadata/collection', (_req: Request, res: Response) => {
 
     // Default collection metadata
     res.json({
-      name: 'KinForge Genesis',
-      description: 'KinForge 非同质化智能体创世系列。',
+      name: 'ForgeAI Genesis',
+      description: 'ForgeAI 非同质化智能体创世系列。',
       image: '/placeholder/collection.svg',
       external_link: 'https://kinforge.io',
     });
@@ -777,8 +777,8 @@ router.post('/genesis/reserve', async (req: Request, res: Response) => {
 
     // 构建预览元数据（不保存文件）
     const previewMetadata = {
-      name: `KinForge Agent — ${houseUpper}`,
-      description: `在 KinForge 诞生的可交易非同质化智能体。血脉和学习记录可通过 vaultHash/learningRoot 验证；详细信息存储在保险库中。`,
+      name: `ForgeAI Agent — ${houseUpper}`,
+      description: `在 ForgeAI 诞生的可交易非同质化智能体。血脉和学习记录可通过 vaultHash/learningRoot 验证；详细信息存储在保险库中。`,
       image: `ipfs://PENDING`,
       attributes: Object.entries(fullTraits).map(([trait_type, value]) => ({
         trait_type,
@@ -1320,9 +1320,9 @@ router.get('/placeholder/house/:house.svg', (req: Request, res: Response) => {
     ${house}
   </text>
 
-  <!-- KinForge branding -->
+  <!-- ForgeAI branding -->
   <text x="200" y="380" font-family="sans-serif" font-size="12" fill="#444" text-anchor="middle">
-    KinForge
+    ForgeAI
   </text>
 </svg>`;
 
@@ -1414,9 +1414,9 @@ router.get('/placeholder/:tokenId.svg', (req: Request, res: Response) => {
     ${house}
   </text>
 
-  <!-- KinForge branding -->
+  <!-- ForgeAI branding -->
   <text x="200" y="380" font-family="sans-serif" font-size="12" fill="#444" text-anchor="middle">
-    KinForge
+    ForgeAI
   </text>
 </svg>`;
 

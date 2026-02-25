@@ -1,4 +1,4 @@
-# KinForge
+# ForgeAI
 
 [![在线演示](https://img.shields.io/badge/在线-kinforge.xyz-blue)](https://www.kinforge.xyz/)
 [![BSC 主网](https://img.shields.io/badge/BSC-主网-yellow)](https://bscscan.com/address/0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f)
@@ -54,7 +54,7 @@
 ## 项目结构
 
 ```
-KinForge/
+ForgeAI/
 ├── config/                    # YAML 配置文件
 │   ├── houses.yaml           # 7 大家族及性格种子
 │   ├── traits.yaml           # 特征域及权重
@@ -127,7 +127,7 @@ KinForge/
 
 ```bash
 # 克隆并安装
-git clone https://github.com/KinForgeLab/kinforge.git
+git clone https://github.com/ForgeAILab/kinforge.git
 cd kinforge
 pnpm install
 
@@ -469,7 +469,7 @@ cd server && pnpm test
 ## 文档
 
 - [更新日志](CHANGELOG.md) - 版本更新记录
-- [用户指南](docs/user-guide.md) - 如何使用 KinForge
+- [用户指南](docs/user-guide.md) - 如何使用 ForgeAI
 - [技术白皮书](docs/whitepaper.md) - 技术设计详情
 - [API 参考](docs/api.md) - 完整 API 文档
 - [部署指南](docs/deployment.md) - 部署说明
@@ -481,7 +481,7 @@ cd server && pnpm test
 ## 链接
 
 - 官网: https://www.kinforge.xyz/
-- GitHub: https://github.com/KinForgeLab/kinforge
+- GitHub: https://github.com/ForgeAILab/kinforge
 - BSCScan: [HouseForgeAgent](https://bscscan.com/address/0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f) | [FusionCore](https://bscscan.com/address/0xa62E109Db724308FEB530A0b00431cf47BBC1f6E)
 
 ## 许可证

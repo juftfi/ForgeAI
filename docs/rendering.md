@@ -1,6 +1,6 @@
-# KinForge 3D Rendering Pipeline
+# ForgeAI 3D Rendering Pipeline
 
-This document explains how to generate the 2100 ultra-realistic 3D rendered images for the KinForge NFT collection using Blender + Cycles.
+This document explains how to generate the 2100 ultra-realistic 3D rendered images for the ForgeAI NFT collection using Blender + Cycles.
 
 ## Overview
 
@@ -44,7 +44,7 @@ For faster renders, enable GPU computing in Blender:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    KinForge Render Pipeline                    │
+│                    ForgeAI Render Pipeline                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  1. Generate Templates    2. Generate Recipes    3. Build Jobs  │
@@ -83,7 +83,7 @@ Create the 7 house-specific Blender scene templates:
 
 ```bash
 # Navigate to project root
-cd KinForge
+cd ForgeAI
 
 # Generate all 7 templates
 blender -b -P render/scripts/generate_templates.py -- --output-dir render/scenes

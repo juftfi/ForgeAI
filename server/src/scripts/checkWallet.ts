@@ -52,7 +52,7 @@ async function main() {
   const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
 
   console.log('\n' + '='.repeat(60));
-  console.log('🔍 KinForge 钱包查询工具');
+  console.log('🔍 ForgeAI 钱包查询工具');
   console.log('='.repeat(60));
   console.log(`📍 合约地址: ${CONTRACT_ADDRESS}`);
   console.log(`👛 查询钱包: ${walletAddress}`);
@@ -68,7 +68,7 @@ async function main() {
     console.log(`💰 该钱包持有: ${balance.toString()} 个智能体\n`);
 
     if (balance === 0n) {
-      console.log('该钱包暂未持有任何 KinForge 智能体。');
+      console.log('该钱包暂未持有任何 ForgeAI 智能体。');
       return;
     }
 
@@ -108,7 +108,7 @@ async function main() {
     console.log('\n');
 
     if (ownedTokenIds.length === 0) {
-      console.log('该钱包暂未持有任何 KinForge 智能体。');
+      console.log('该钱包暂未持有任何 ForgeAI 智能体。');
       return;
     }
 

@@ -1,4 +1,4 @@
-# KinForge 技术白皮书
+# ForgeAI 技术白皮书
 
 **版本 2.5** | **2025年2月**
 
@@ -6,9 +6,9 @@
 
 ## 摘要
 
-KinForge 是基于 BNB Chain 的 Non-Fungible Agent (NFA) 系统，实现了 BAP-578 标准。该系统结合了区块链的不可篡改性、AI 驱动的对话能力、以及可验证的学习成长机制，创造出具有独特性格、能够记忆和成长的数字智能体。
+ForgeAI 是基于 BNB Chain 的 Non-Fungible Agent (NFA) 系统，实现了 BAP-578 标准。该系统结合了区块链的不可篡改性、AI 驱动的对话能力、以及可验证的学习成长机制，创造出具有独特性格、能够记忆和成长的数字智能体。
 
-本白皮书详细描述了 KinForge 的技术架构、AI 对话系统、学习机制、融合繁殖系统以及经济模型。
+本白皮书详细描述了 ForgeAI 的技术架构、AI 对话系统、学习机制、融合繁殖系统以及经济模型。
 
 ---
 
@@ -37,7 +37,7 @@ KinForge 是基于 BNB Chain 的 Non-Fungible Agent (NFA) 系统，实现了 BAP
 
 ### 1.2 愿景
 
-KinForge 旨在创造一个生态系统，其中每个 Agent 都是独一无二的数字生命：
+ForgeAI 旨在创造一个生态系统，其中每个 Agent 都是独一无二的数字生命：
 - 拥有基于 House 的独特性格
 - 能够与持有者进行个性化对话
 - 通过互动积累记忆和经验
@@ -106,7 +106,7 @@ KinForge 旨在创造一个生态系统，其中每个 Agent 都是独一无二�
 
 ### 3.1 七大 House
 
-KinForge 包含 7 个主题鲜明的 House，每个 House 代表不同的性格原型：
+ForgeAI 包含 7 个主题鲜明的 House，每个 House 代表不同的性格原型：
 
 | House | 主题 | 核心性格 | 视觉风格 |
 |-------|------|---------|---------|
@@ -228,7 +228,7 @@ const HOUSE_PERSONALITIES: Record<string, PersonaVector> = {
 系统提示词结构：
 
 ```
-你是 KinForge Agent #{tokenId}，来自 {House} 家族。
+你是 ForgeAI Agent #{tokenId}，来自 {House} 家族。
 
 ## 你的性格
 - 冷静度: {calm} (较高表示沉稳，较低表示活跃)
@@ -665,4 +665,4 @@ learningRoot = keccak256(
 
 ---
 
-*版权所有 © 2024 KinForge Team*
+*版权所有 © 2024 ForgeAI Team*

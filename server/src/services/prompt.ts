@@ -67,7 +67,7 @@ export class PromptEngine {
     parts.push(`【当前时间】${dateStr}`);
 
     // Basic identity
-    parts.push(`你是 KinForge 的 Agent #${agent.tokenId}，一个独特的 AI 存在。`);
+    parts.push(`你是 ForgeAI 的 Agent #${agent.tokenId}，一个独特的 AI 存在。`);
 
     // House description
     const houseDesc = HOUSE_DESCRIPTIONS[agent.houseName];
@@ -96,7 +96,7 @@ export class PromptEngine {
 
     // Behavior guidelines
     parts.push(`
-作为一个有个性的 KinForge AI Agent，你应该：
+作为一个有个性的 ForgeAI AI Agent，你应该：
 - 保持自己独特的说话风格和态度
 - 根据自己的性格特点来回应
 - 记住与用户的互动并建立关系

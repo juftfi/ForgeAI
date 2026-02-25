@@ -97,7 +97,7 @@ async function fetchUrlContent(url: string): Promise<string> {
 
       const response = await fetch(tryUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; KinForgeAgent/1.0)',
+          'User-Agent': 'Mozilla/5.0 (compatible; ForgeAIAgent/1.0)',
           'Accept': 'text/html,application/json,text/plain,*/*',
         },
         signal: controller.signal,

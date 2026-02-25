@@ -1,6 +1,6 @@
-# KinForge 部署指南
+# ForgeAI 部署指南
 
-本文档详细说明如何部署 KinForge 的各个组件。
+本文档详细说明如何部署 ForgeAI 的各个组件。
 
 ## 目录
 
@@ -42,7 +42,7 @@ npm install -g pnpm
 ### 克隆仓库
 
 ```bash
-git clone https://github.com/KinForgeLab/kinforge.git
+git clone https://github.com/ForgeAILab/kinforge.git
 cd kinforge
 pnpm install
 ```
@@ -89,7 +89,7 @@ forge test -vvv
 ### 4. 部署到 BSC 主网
 
 ```bash
-# 部署 KinForgeAgent
+# 部署 ForgeAIAgent
 forge script script/DeployAgent.s.sol:DeployAgent \
   --rpc-url $RPC_URL \
   --broadcast \

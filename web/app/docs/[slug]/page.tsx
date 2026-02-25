@@ -12,11 +12,11 @@ interface DocSection {
 
 const DOCS: Record<string, DocSection> = {
   introduction: {
-    title: 'KinForge 简介',
+    title: 'ForgeAI 简介',
     content: (
       <div className="prose prose-invert max-w-none">
         <p className="lead">
-          KinForge 是基于 BNB Chain 的非同质化智能体 (NFA) 平台，实现了 BAP-578 标准。
+          ForgeAI 是基于 BNB Chain 的非同质化智能体 (NFA) 平台，实现了 BAP-578 标准。
           每个智能体都是独特的、可交易的身份，拥有确定性特征、可验证成长和融合繁衍能力。
         </p>
 
@@ -66,11 +66,11 @@ const DOCS: Record<string, DocSection> = {
     title: '快速入门指南',
     content: (
       <div className="prose prose-invert max-w-none">
-        <p className="lead">几分钟内开始使用 KinForge。按照以下步骤铸造你的第一个智能体。</p>
+        <p className="lead">几分钟内开始使用 ForgeAI。按照以下步骤铸造你的第一个智能体。</p>
 
         <h2>步骤 1：连接钱包</h2>
         <p>
-          点击导航栏中的"连接钱包"按钮。KinForge 支持 MetaMask、WalletConnect 和其他流行钱包。
+          点击导航栏中的"连接钱包"按钮。ForgeAI 支持 MetaMask、WalletConnect 和其他流行钱包。
           请确保你已连接到 BNB Chain（主网或测试网）。
         </p>
 
@@ -107,9 +107,9 @@ const DOCS: Record<string, DocSection> = {
       <div className="prose prose-invert max-w-none">
         <h2>基础问题</h2>
 
-        <h3>什么是 KinForge？</h3>
+        <h3>什么是 ForgeAI？</h3>
         <p>
-          KinForge 是一个非同质化智能体平台，在 BNB Chain 上创建具有可验证成长和繁衍能力的可交易数字身份。
+          ForgeAI 是一个非同质化智能体平台，在 BNB Chain 上创建具有可验证成长和繁衍能力的可交易数字身份。
         </p>
 
         <h3>NFA 与 NFT 有什么不同？</h3>
@@ -178,7 +178,7 @@ const DOCS: Record<string, DocSection> = {
 
         <h2>铸造流程（S3 策略）</h2>
         <p>
-          KinForge 使用"S3"tokenURI 策略，所有元数据参数在铸造时传入：
+          ForgeAI 使用"S3"tokenURI 策略，所有元数据参数在铸造时传入：
         </p>
         <pre className="bg-black/60 p-4 rounded-lg overflow-x-auto border border-amber-500/10">
 {`mintGenesisPublic(
@@ -218,7 +218,7 @@ const DOCS: Record<string, DocSection> = {
     content: (
       <div className="prose prose-invert max-w-none">
         <p className="lead">
-          KinForge 提供独特的两阶段流程：无钱包预览，然后钱包预订和铸造。
+          ForgeAI 提供独特的两阶段流程：无钱包预览，然后钱包预订和铸造。
         </p>
 
         <h2>预览模式（无需钱包）</h2>
@@ -339,7 +339,7 @@ uint256 lastLearningUpdate; // 时间戳`}</pre>
     title: '智能合约',
     content: (
       <div className="prose prose-invert max-w-none">
-        <p className="lead">KinForge 由两个主要合约组成：HouseForgeAgent 和 FusionCore。</p>
+        <p className="lead">ForgeAI 由两个主要合约组成：HouseForgeAgent 和 FusionCore。</p>
 
         <h2>HouseForgeAgent.sol</h2>
         <p>实现 BAP-578 标准的主 ERC-721 合约。</p>
@@ -519,7 +519,7 @@ async function verifyVault(vaultJson, onChainHash) {
     content: (
       <div className="prose prose-invert max-w-none">
         <p className="lead">
-          KinForge 使用 Blender Cycles 进行高质量 GPU 渲染智能体图像。
+          ForgeAI 使用 Blender Cycles 进行高质量 GPU 渲染智能体图像。
         </p>
 
         <h2>规格</h2>
@@ -594,7 +594,7 @@ async function verifyVault(vaultJson, onChainHash) {
     content: (
       <div className="prose prose-invert max-w-none">
         <p className="lead">
-          使用 wagmi 和 viem 基于 KinForge 进行构建。
+          使用 wagmi 和 viem 基于 ForgeAI 进行构建。
         </p>
 
         <h2>安装</h2>

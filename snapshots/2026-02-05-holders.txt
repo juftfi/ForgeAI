@@ -1,4 +1,4 @@
-KinForge NFT 持有者快照
+ForgeAI NFT 持有者快照
 ========================
 时间: 2026-02-05 11:00 UTC
 合约: 0x713Be3D43c5DdfE145215Cd366c553c75A06Ce7f

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to KinForge will be documented in this file.
+All notable changes to ForgeAI will be documented in this file.
 
 ## [0.6.0] - 2026-02-06
 

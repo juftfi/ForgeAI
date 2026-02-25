@@ -6,7 +6,7 @@ import { ConnectButton } from '@/components/wallet/ConnectButton';
 import MobileNav from '@/components/nav/MobileNav';
 
 export const metadata: Metadata = {
-  title: 'KinForge - 链上基因智能体 | BNB Chain',
+  title: 'ForgeAI - 链上基因智能体 | BNB Chain',
   description: '铸造血脉，交易身份。1,302 个创世智能体，跨越 7 大基因家族，在 BNB Chain 上实现可验证的成长与进化。',
   keywords: ['NFT', 'NFA', 'BNB Chain', 'BSC', 'AI智能体', '区块链', 'BAP-578', '基因', 'DNA'],
   icons: {
@@ -18,15 +18,15 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: 'KinForge - 链上基因智能体',
+    title: 'ForgeAI - 链上基因智能体',
     description: '铸造血脉，交易身份。1,302 个创世智能体，可验证的成长与进化。',
     type: 'website',
     locale: 'zh_CN',
-    siteName: 'KinForge',
+    siteName: 'ForgeAI',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'KinForge - 链上基因智能体',
+    title: 'ForgeAI - 链上基因智能体',
     description: '铸造血脉，交易身份。1,302 个创世智能体，可验证的成长与进化。',
   },
 };
@@ -84,7 +84,7 @@ export default function RootLayout({
                     </svg>
                   </div>
                   <span className="text-2xl font-bold text-gold-gradient">
-                    KinForge
+                    ForgeAI
                   </span>
                 </Link>
 
@@ -130,7 +130,7 @@ export default function RootLayout({
                         <path d="M15,10 Q20,15 25,10 M15,15 Q20,20 25,15 M15,20 Q20,25 25,20 M15,25 Q20,30 25,25" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <span className="text-xl font-bold text-gold-gradient">KinForge</span>
+                    <span className="text-xl font-bold text-gold-gradient">ForgeAI</span>
                   </div>
                   <p className="text-gray-400 text-sm">
                     链上基因智能体，可验证的成长与进化。
@@ -178,14 +178,14 @@ export default function RootLayout({
                   <h4 className="font-semibold mb-4 text-amber-400">社区</h4>
                   <div className="space-y-2">
                     <a href="https://x.com/kinforge_lab" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">X (Twitter)</a>
-                    <a href="https://github.com/KinForgeLab/kinforge" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">GitHub</a>
+                    <a href="https://github.com/ForgeAILab/kinforge" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">GitHub</a>
                   </div>
                 </div>
               </div>
 
               <div className="border-t border-amber-500/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                 <p className="text-gray-500 text-sm">
-                  © 2026 KinForge. 保留所有权利。
+                  © 2026 ForgeAI. 保留所有权利。
                 </p>
                 <div className="flex items-center gap-4">
                   <Link href="/privacy" className="text-gray-500 hover:text-amber-400 text-xs transition-colors">Privacy Policy</Link>

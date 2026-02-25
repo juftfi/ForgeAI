@@ -1,8 +1,8 @@
-# KinForge 经济模型文档
+# ForgeAI 经济模型文档
 
 ## 概述
 
-KinForge 实现了低门槛、高参与度的经济模型，专为 BSC 上的大规模采用而设计。所有价格以 BNB 计价。
+ForgeAI 实现了低门槛、高参与度的经济模型，专为 BSC 上的大规模采用而设计。所有价格以 BNB 计价。
 
 ## 配置
 
@@ -242,11 +242,11 @@ economics:
 
 | 项目 | 铸造价格 | 链 |
 |------|----------|-----|
-| KinForge | 0.01 BNB (~$6) | BSC |
+| ForgeAI | 0.01 BNB (~$6) | BSC |
 | 典型 PFP | 0.05-0.1 ETH ($100-200) | Ethereum |
 | Ordinals | 可变 sats | Bitcoin |
 
-KinForge 定位于**可及的游戏收藏品**细分市场，而非奢侈数字艺术。
+ForgeAI 定位于**可及的游戏收藏品**细分市场，而非奢侈数字艺术。
 
 ## 经济可持续性
 
@@ -352,7 +352,7 @@ function setTreasury(address _treasury) external onlyAdmin;
 
 ## 总结
 
-KinForge 的经济模型优先考虑：
+ForgeAI 的经济模型优先考虑：
 - **可及性**：低入门价格（0.01 BNB）
 - **可持续性**：循环融合费用为持续开发提供资金
 - **透明性**：所有费用链上计算，即时转发

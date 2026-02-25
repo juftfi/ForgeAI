@@ -11,7 +11,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using KinForge (kinforge.xyz), including interacting with our smart
+            By accessing or using ForgeAI (kinforge.xyz), including interacting with our smart
             contracts on BNB Chain, you agree to be bound by these Terms of Service. If you do not
             agree to these terms, please do not use our service.
           </p>
@@ -20,7 +20,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">2. Service Description</h2>
           <p>
-            KinForge is a decentralized application that provides Non-Fungible Agent (NFA) tokens
+            ForgeAI is a decentralized application that provides Non-Fungible Agent (NFA) tokens
             on the BNB Chain blockchain. Our services include:
           </p>
           <ul className="list-disc list-inside space-y-2 ml-2 mt-2">
@@ -35,7 +35,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">3. Wallet Connection</h2>
           <p>
-            To use certain features of KinForge, you must connect a compatible blockchain wallet
+            To use certain features of ForgeAI, you must connect a compatible blockchain wallet
             (e.g., MetaMask, WalletConnect-compatible wallets). By connecting your wallet, you
             authorize the application to:
           </p>
@@ -53,7 +53,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">4. NFT Ownership</h2>
           <p>
-            When you mint or acquire a KinForge NFT, you own the token on the blockchain. Ownership
+            When you mint or acquire a ForgeAI NFT, you own the token on the blockchain. Ownership
             grants you:
           </p>
           <ul className="list-disc list-inside space-y-2 ml-2 mt-2">
@@ -71,7 +71,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">5. Digital Collectibles Disclaimer</h2>
           <p>
-            KinForge NFTs are digital collectibles. They are <strong>not</strong> investment products,
+            ForgeAI NFTs are digital collectibles. They are <strong>not</strong> investment products,
             securities, or financial instruments. We make no guarantees regarding:
           </p>
           <ul className="list-disc list-inside space-y-2 ml-2 mt-2">
@@ -146,7 +146,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-amber-400 mb-3">10. Limitation of Liability</h2>
           <p>
-            KinForge is provided &quot;as is&quot; without warranties of any kind. To the maximum extent
+            ForgeAI is provided &quot;as is&quot; without warranties of any kind. To the maximum extent
             permitted by law, we shall not be liable for any direct, indirect, incidental, or
             consequential damages arising from your use of the service, including but not limited to
             loss of funds, data, or digital assets.
@@ -178,7 +178,7 @@ export default function TermsPage() {
               X (Twitter)
             </a>{' '}
             or{' '}
-            <a href="https://github.com/KinForgeLab/kinforge" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300">
+            <a href="https://github.com/ForgeAILab/kinforge" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300">
               GitHub
             </a>.
           </p>
