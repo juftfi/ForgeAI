@@ -159,7 +159,7 @@ export default function RootLayout({
                   <h4 className="font-semibold mb-4 text-amber-400">社区</h4>
                   <div className="space-y-2">
                     <a href="https://x.com/ForgeAI_NFa" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">X (Twitter)</a>
-                    <a href="https://t.me/ForgeAI_NFa" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">X (Telegram)</a>
+                    <a href="https://t.me/ForgeAI_NFa" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">Telegram</a>
                     <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-amber-400 text-sm transition-colors">GitHub</a>
                   </div>
                 </div>
