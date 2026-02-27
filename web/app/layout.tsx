@@ -64,7 +64,15 @@ export default function RootLayout({
                 <Link href="/" className="flex items-center gap-3 group">
                   {/* DNA Hexagon Icon */}
                   <div className="relative w-10 h-10">
-                    
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <polygon points="32,4 60,16 60,48 32,60 4,48 4,16" fill="url(#gradient)" />
+                      <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#FFD700" />
+                          <stop offset="1" stopColor="#FFA500" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
 
                   </div>
                   <span className="text-2xl font-bold text-gold-gradient">
@@ -109,7 +117,15 @@ export default function RootLayout({
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-8 h-8">
-                      
+                      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                        <polygon points="32,4 60,16 60,48 32,60 4,48 4,16" fill="url(#gradient)" />
+                        <defs>
+                          <linearGradient id="gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#FFD700" />
+                            <stop offset="1" stopColor="#FFA500" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
                     </div>
                     <span className="text-xl font-bold text-gold-gradient">ForgeAI</span>
                   </div>
