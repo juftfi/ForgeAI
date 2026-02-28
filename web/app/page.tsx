@@ -112,12 +112,12 @@ export default function Home() {
           <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
             <span className="text-gray-500 text-sm">CA:</span>
             <a
-              href="https://bscscan.com/address/0x3b39ba57251175e95ff1909b45e06428e4157777"
+              href="https://bscscan.com/address/7777"
               target="_blank"
               rel="noopener noreferrer"
               className="font-mono text-xs sm:text-sm text-amber-400 hover:text-amber-300 transition-colors break-all"
             >
-              0x3b39ba57251175e95ff1909b45e06428e4157777
+              7777
             </a>
             <button
               onClick={() => {
