@@ -112,16 +112,16 @@ export default function Home() {
           <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
             <span className="text-gray-500 text-sm">CA:</span>
             <a
-              href="https://bscscan.com/address/0xd2ac85ba85d34d0572662ac5c93f55e90eff7777"
+              href="https://bscscan.com/address/7777"
               target="_blank"
               rel="noopener noreferrer"
               className="font-mono text-xs sm:text-sm text-amber-400 hover:text-amber-300 transition-colors break-all"
             >
-              0xd2ac85ba85d34d0572662ac5c93f55e90eff7777
+              7777
             </a>
             <button
               onClick={() => {
-                navigator.clipboard.writeText('0xd2ac85ba85d34d0572662ac5c93f55e90eff7777');
+                navigator.clipboard.writeText('7777');
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}
